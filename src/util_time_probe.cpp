@@ -1,5 +1,7 @@
 /*
- * Copyright © 2019 Daimler TSS
+ * Smack C++
+ *
+ * Copyright © 2019 Michael Binz
  */
 
 #include <iostream>
