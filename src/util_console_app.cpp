@@ -1,7 +1,8 @@
-/*
- * Smack C++
+/* $Id: 528b24919929c65ff5bf571071f613e1925b7461 $
  *
- * Copyright © 2019 Michael Binz
+ * Console application helper.
+ *
+ * Copyright (c) 2019-2020 Michael Binz
  */
 
 #include "util_console_app.hpp"
@@ -57,4 +58,4 @@ void transform(const char* in, bool& out) {
 }
 
 } // namespace util
-} // namespace tss
+} // namespace smack

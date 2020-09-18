@@ -1,7 +1,9 @@
 /*
- * Smack C++
+ * $Id: 5d9b36a7883830a97f9c90d57b644e02f8fba503 $
  *
- * Copyright © 2019 Michael Binz
+ * Console application helper.
+ *
+ * Copyright (c) 2019-2020 Michael Binz
  */
 
 #pragma once
@@ -9,7 +11,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <experimental/filesystem>
 #include <functional>
+#include <initializer_list>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -28,6 +33,7 @@ using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::initializer_list;
 using std::size_t;
 
 // Produces the necessary transformations for the char* types
@@ -68,8 +74,10 @@ constexpr const char* resolve_type() {
         return "string";
     else if (typeid(string) == typeid(T))
         return "string";
+    else if (typeid(std::experimental::filesystem::path) == typeid(T))
+        return "filename";
 
-    return "unknown";
+    return typeid(T).name();
 }
 
 template<typename R, size_t I = 0, typename Func, typename ...Ts>
@@ -97,10 +105,26 @@ class CliApplication
 {
     std::tuple<Cs...> commands_;
 
+    bool found_{};
+
     template <size_t I>
     typename std::enable_if<I == sizeof...(Cs), int>::type
-    find(const string& name, const std::vector<string>&) {
-        std::cerr << "Unknown command '" << name << "'." << endl;
+    find(const string& name, const std::vector<string>& argv) {
+        if (found_) {
+            cerr << 
+                "Command '" <<
+                name <<
+                "' does not support " <<
+                std::to_string( argv.size() ) <<
+                " parameters." <<
+                endl;
+            printHelp(name);
+        }
+        else
+        {
+            cerr << "Unknown command '" << name << "'." << endl;
+            printHelp();
+        }
         return EXIT_FAILURE;
     }
     template <size_t I>
@@ -109,18 +133,23 @@ class CliApplication
         auto c = std::get<I>(commands_);
         if (name == c.get_name() && argv.size() == c.kParameterCount)
             return c(argv);
+        else if (name == c.get_name()) {
+            found_ = true;
+        }
         return find<I + 1>(name, argv);
     }
 
-    void printHelp() {
+    void printHelp( const string& command = "" ) {
         std::array<string, sizeof ... (Cs)> x = map_tuple<string>(
             commands_,
             [](auto t) {
             return t.to_string();
         });
 
-        for (const string& c : x)
-            cout << c << endl;
+        for (const string& c : x) {
+            if (c.empty() || c.find( command ) == 0)
+                cerr << c << endl;
+        }
     }
 
 public:
@@ -201,6 +230,8 @@ private:
         return operator()(std::get<S>(params) ...);
     }
 
+    initializer_list<const char*> parameterHelp_;
+
     /**
      * Trigger mapping.
      */
@@ -242,10 +273,15 @@ private:
 public:
     Command(
         string name,
-        F f)
+        F f,
+        initializer_list<const char*> parameterHelp = {})
         :
         name_(name),
-        func_(f) {
+        func_(f),
+        parameterHelp_(parameterHelp)
+    {
+        if ( parameterHelp.size() > parameterHelp_.size() )
+            throw std::invalid_argument("Too many parameter help strings.");
     }
 
     /**
@@ -284,9 +320,13 @@ public:
         return name_ + " " + type_name();
     }
 
-    constexpr std::string type_name() const {
+    constexpr string type_name() const {
         std::array<const char*, kParameterCount>
             expander{ (resolve_type<Args>()) ... };
+
+        size_t idx = 0;
+        for (auto c : parameterHelp_)
+            expander[idx++] = c;
 
         string result;
 
@@ -314,15 +354,15 @@ public:
 
 template <typename ... Args> 
 class Commands {
-	template <typename H, typename F>
-	static auto makeF(H& host, F member) {
+    template <typename H, typename F>
+    static auto make_(H& host, F member) {
         return [&host, member](Args ... a) mutable {
             return (host.*(member))(a...);
         };
-	}
+    }
 
-	template <typename F>
-    static auto makeF(F member) {
+    template <typename F>
+    static auto make_(F member) {
         return [member](Args ... a) {
             return member(a...);
         };
@@ -330,22 +370,31 @@ class Commands {
 
 public:
     template <typename H, typename F>
-    static auto make(std::string name, H& host, F member) {
+    static auto make(
+        string name, 
+        H& host, 
+        F member, 
+        initializer_list<const char*> parameterHelper = {})
+    {
         auto functor =
-            makeF(host, member);
+            make_(host, member);
         Command<decltype(functor), Args ...>
-            result(name, functor);
+            result(name, functor, parameterHelper);
         return result;
     }
     template <typename F>
-    static auto make(std::string name, F function) {
+    static auto make(
+        string name,
+        F function,
+        initializer_list<const char*> parameterHelper = {})
+    {
         auto functor =
-            makeF(function);
+            make_(function);
         Command<decltype(functor), Args ...>
-            result(name, functor);
+            result(name, functor, parameterHelper);
         return result;
     }
 };
 
 } // namespace util
-} // namespace tss
+} // namespace smack
