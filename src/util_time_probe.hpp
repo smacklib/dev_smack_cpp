@@ -127,4 +127,4 @@ public:
 };
 
 } // namespace util
-} // namespace tss
+} // namespace smack

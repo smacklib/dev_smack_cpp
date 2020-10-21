@@ -10,15 +10,18 @@ cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Default.")
 set( CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 
-project(tss_tools VERSION 0.1.0 LANGUAGES CXX)
+project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
 
 enable_testing()
 
 #
 # Common for all architectures..
 #
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14 -D_POSIX_SOURCE=1 -D_XOPEN_SOURCE=500")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 add_subdirectory(src)
 add_subdirectory(test)

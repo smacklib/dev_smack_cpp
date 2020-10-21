@@ -4,13 +4,13 @@ set(headers
     test_common.hpp
 )
 
-add_executable( tss_util_test
+add_executable( smack_cpp_test
     main.cpp
-	test_time_probe.cpp
+    test_time_probe.cpp
 )
-target_link_libraries( tss_util_test
+target_link_libraries( smack_cpp_test
   gtest
-  tss_tools
+  smack_cpp
 )
 
 add_executable( cli_class
@@ -18,7 +18,7 @@ add_executable( cli_class
     ${headers}
 )
 target_link_libraries( cli_class
-  tss_tools
+  smack_cpp
 )
 
 add_executable( cli_functional
@@ -26,7 +26,7 @@ add_executable( cli_functional
     ${headers}
 )
 target_link_libraries( cli_functional
-  tss_tools
+  smack_cpp
 )
 
-add_test(NAME tss_util_test COMMAND tss_util_test)
+add_test(NAME smack_cpp_test COMMAND smack_cpp_test)

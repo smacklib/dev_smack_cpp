@@ -41,4 +41,4 @@ void TimeProbe::toString() {
 }
 
 } // namepace util
-} // namespace tss
+} // namespace smack

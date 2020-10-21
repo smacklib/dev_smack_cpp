@@ -9,16 +9,16 @@ set(implementation
     util_time_probe.cpp
 )
 
-add_library(tss_tools STATIC
+add_library(smack_cpp STATIC
     ${implementation}
     ${headers}
 )
 
-target_include_directories(tss_tools INTERFACE ..)
+target_include_directories(smack_cpp INTERFACE ..)
 
 install(TARGETS
-  tss_tools
+  smack_cpp
   DESTINATION lib)
 install(FILES
   ${headers}
-  DESTINATION include/tss_tools)
+  DESTINATION include/smack_cpp)
