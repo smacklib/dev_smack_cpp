@@ -17,5 +17,5 @@ TEST(StrCompare, CStrEqual) {
 }
 
 TEST(StrCompare, CStrNotEqual) {
-    EXPECT_STREQ(expectVal, actualValFalse);
+    EXPECT_STRNE(expectVal, actualValFalse);
 }

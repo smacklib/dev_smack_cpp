@@ -7,8 +7,7 @@
 
 #include "util_console_app.hpp"
 
-namespace smack {
-namespace util {
+namespace smack::util {
 
 void transform(const char* in, int& out) {
     std::size_t pos;
@@ -57,5 +56,4 @@ void transform(const char* in, bool& out) {
     throw std::invalid_argument(in);
 }
 
-} // namespace util
-} // namespace smack
+} // namespace smack::util
