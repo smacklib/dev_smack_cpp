@@ -13,7 +13,7 @@
 #include <cmath>
 #include <numeric>
 
-namespace tss {
+namespace smack {
 namespace util {
 
 /**

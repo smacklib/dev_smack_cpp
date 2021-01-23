@@ -26,7 +26,7 @@
 #include <typeinfo>
 #include <vector>
 
-namespace tss {
+namespace smack {
 namespace util {
 
 using std::string;

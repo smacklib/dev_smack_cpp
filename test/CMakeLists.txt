@@ -7,6 +7,7 @@ set(headers
 add_executable( smack_cpp_test
     main.cpp
     test_time_probe.cpp
+	test_util.cpp
 )
 target_link_libraries( smack_cpp_test
   gtest

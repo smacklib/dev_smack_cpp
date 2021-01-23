@@ -6,16 +6,14 @@
 
 using std::string;
 
-namespace {
-    const char* actualValTrue = "hello gtest";
-    const char* actualValFalse = "hello world";
-    const char* expectVal = "hello gtest";
-};
+const char *actualValTrue  = "hello gtest";
+const char *actualValFalse = "hello world";
+const char *expectVal      = "hello gtest";
 
-TEST(StrCompare, CStrEqual) {
+TEST(SmackUtilTest, CStrEqual) {
     EXPECT_STREQ(expectVal, actualValTrue);
 }
 
-TEST(StrCompare, CStrNotEqual) {
+TEST(SmackUtilTest, CStrNotEqual) {
     EXPECT_STREQ(expectVal, actualValFalse);
 }

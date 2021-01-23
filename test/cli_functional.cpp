@@ -42,41 +42,41 @@ static int f7(int p1, double p2) {
 }
 
 static int execute(const std::vector<std::string>& argv) {
-    auto cmd1 = tss::util::Commands<
+    auto cmd1 = smack::util::Commands<
         int>::make(
         "eins",
         f1);
 
-    auto cmd2 = tss::util::Commands<
+    auto cmd2 = smack::util::Commands<
         int,
         const char*>::make(
             "zwei",
             f2);
 
-    auto cmd3 = tss::util::Commands<
+    auto cmd3 = smack::util::Commands<
         int,
         double,
         const char*>::make(
             "drei",
             f3);
 
-    auto cmd4 = tss::util::Commands<
+    auto cmd4 = smack::util::Commands<
         std::string>::make(
             "vier",
             f4);
 
-    auto cmd5 = tss::util::Commands<
+    auto cmd5 = smack::util::Commands<
         const std::string&>::make(
             "fuenf",
             f5);
 
-    auto cmd6 = tss::util::Commands<
+    auto cmd6 = smack::util::Commands<
         bool>::make(
             "sechs",
             f6);
 
     // Example for an overloaded function.
-    auto cmd7 = tss::util::Commands<
+    auto cmd7 = smack::util::Commands<
         int> ::make(
             "sieben",
             static_cast<int(*)(int)>(f7));
@@ -84,12 +84,12 @@ static int execute(const std::vector<std::string>& argv) {
     // Example for an overloaded function. Generally this is doable but
     // does not make a lot of sense.  The alternative, a different name for
     // the overloaded function, is much simpler.
-    auto cmd7_2 = tss::util::Commands<
+    auto cmd7_2 = smack::util::Commands<
         int,double>::make(
             "sieben",
             static_cast<int(*)(int,double)>(f7));
 
-    auto cli = tss::util::makeCliApplication(
+    auto cli = smack::util::makeCliApplication(
         cmd1,
         cmd2,
         cmd3,

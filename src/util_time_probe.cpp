@@ -8,7 +8,7 @@
 
 #include "util_time_probe.hpp"
 
-namespace tss {
+namespace smack {
 namespace util {
 
 void TimeProbe::reset() {

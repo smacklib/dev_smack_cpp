@@ -65,20 +65,20 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        auto cmd1 = tss::util::Commands<
+        auto cmd1 = smack::util::Commands<
             int>::make(
             "eins",
             *this,
             &TestApplication::f1);
 
-        auto cmd2 = tss::util::Commands<
+        auto cmd2 = smack::util::Commands<
             int,
             const char*>::make(
                 "zwei",
                 *this,
                 &TestApplication::f2);
 
-        auto cmd3 = tss::util::Commands<
+        auto cmd3 = smack::util::Commands<
             int,
             double,
             const char*>::make(
@@ -86,43 +86,43 @@ public:
                 *this,
                 &TestApplication::f3);
 
-        auto cmd4 = tss::util::Commands<
+        auto cmd4 = smack::util::Commands<
             std::string>::make(
                 "vier",
                 *this,
                 &TestApplication::f4);
 
-        auto cmd5 = tss::util::Commands<
+        auto cmd5 = smack::util::Commands<
             const std::string&>::make(
                 "fuenf",
                 *this,
                 &TestApplication::f5);
 
-        auto cmd6 = tss::util::Commands<
+        auto cmd6 = smack::util::Commands<
             bool>::make(
                 "sechs",
                 *this,
                 &TestApplication::f6);
 
-        auto cmd7 = tss::util::Commands<
+        auto cmd7 = smack::util::Commands<
             int> ::make(
                 "sieben",
                 *this,
                 &TestApplication::f7);
 
-        auto cmd7_2 = tss::util::Commands<
+        auto cmd7_2 = smack::util::Commands<
             int,double>::make(
                 "sieben",
                 *this,
                 &TestApplication::f7_2);
 
-        auto cmd8 = tss::util::Commands<
+        auto cmd8 = smack::util::Commands<
             int>::make(
                 "acht",
                 free_function
             );
 
-        auto cli = tss::util::makeCliApplication(
+        auto cli = smack::util::makeCliApplication(
             cmd1,
             cmd2,
             cmd3,

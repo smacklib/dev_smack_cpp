@@ -7,7 +7,7 @@
 
 #include "util_console_app.hpp"
 
-namespace tss {
+namespace smack {
 namespace util {
 
 void transform(const char* in, int& out) {
