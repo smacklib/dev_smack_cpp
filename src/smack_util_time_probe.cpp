@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "util_time_probe.hpp"
+#include "smack_util_time_probe.hpp"
 
 namespace smack {
 namespace util {

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "src/util.hpp"
+#include "src/smack_util.hpp"
 
 using std::string;
 

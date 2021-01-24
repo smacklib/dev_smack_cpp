@@ -9,7 +9,7 @@
 
 #include "test_common.hpp"
 
-#include "../src/util_console_app.hpp"
+#include "../src/smack_util_console_app.hpp"
 
 static int free_function(int p1) {
     std::cout <<

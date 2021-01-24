@@ -1,13 +1,13 @@
 ﻿cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 
 set(headers
-    util.hpp
-    util_console_app.hpp
-    util_time_probe.hpp
+    smack_util.hpp
+    smack_util_console_app.hpp
+    smack_util_time_probe.hpp
 )
 set(implementation
-    util_console_app.cpp
-    util_time_probe.cpp
+    smack_util_console_app.cpp
+    smack_util_time_probe.cpp
 )
 
 add_library(smack_cpp STATIC

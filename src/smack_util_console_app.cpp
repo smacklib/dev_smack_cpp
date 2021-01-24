@@ -5,7 +5,7 @@
  * Copyright (c) 2019-2020 Michael Binz
  */
 
-#include "util_console_app.hpp"
+#include "smack_util_console_app.hpp"
 
 namespace smack::util {
 

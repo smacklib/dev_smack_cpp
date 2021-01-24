@@ -8,7 +8,7 @@
 
 #include "test_common.hpp"
 
-#include "../src/util_console_app.hpp"
+#include "../src/smack_util_console_app.hpp"
 
 static int f1(int p1) {
     return tss::test::common::f(__func__, p1);
