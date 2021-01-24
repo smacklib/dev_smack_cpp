@@ -13,44 +13,26 @@ namespace {
 
     int closedCount = 0;
 
-    int argOpen()
-    {
+    int argOpen() {
         auto seven = 7;
-        cout << "Opening " << seven << endl;
         return seven;
     }
 
-    int argDo(int what)
-    {
-        cout << "Doing " << what << endl;
+    int argDo(int what) {
         return 313;
     }
-    void argClose(int what)
-    {
-        closedCount++;
-        cout << "Closed " << what << endl;
-    }
 
-    template <typename H, typename F>
-    auto make(
-        H handle,
-        F function)
-    {
-        Disposer<decltype(handle), decltype(function)>
-            result(handle, function);
-        return result;
+    void argClose(int what) {
+        closedCount++;
     }
 }
 
 TEST(SmackUtilTest, Disposer) {
-    auto handle = make(
-        argOpen(),
-        argClose);
-
-    // The disposer must be moved, the close operation must not be called.
-    EXPECT_EQ( 0, closedCount );
-
-    argDo(handle);
-
-    std::cout << "Hello World!\n";
+    {
+        Disposer handle{ argOpen(), argClose };
+        EXPECT_EQ(7, handle);
+        EXPECT_EQ(0, closedCount);
+        EXPECT_EQ(313, argDo(handle));
+    }
+    EXPECT_EQ(1, closedCount);
 }
