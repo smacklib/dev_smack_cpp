@@ -11,8 +11,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace smack {
-namespace util {
+namespace smack::util {
 
 /**
  * Resource management with explict non-destructor-based release.
@@ -34,8 +33,8 @@ public:
      * Creates a Disposer with an handle argument and a cleanup
      * operation of cleanupOp.
      * @param arg The handle argument.
-     *
      */
+    // Requires C++17 Class template argument deduction.
     Disposer(T handle, C cleanupOp) : 
         cleanupArg_( handle ),
         cleanup_( cleanupOp ),
@@ -69,5 +68,4 @@ public:
     }
 };
 
-} // namespace util
-} // namespace smack
+} // namespace smack::util
