@@ -1,5 +1,7 @@
 /*
- * Copyright © 2019 Daimler TSS
+ * Smack C++
+ *
+ * Copyright © 2019 Michael Binz
  */
 
 #pragma once
@@ -7,7 +9,7 @@
 #include <cstdlib>
 #include <iostream>
 
-namespace tss {
+namespace smack {
 namespace test {
 namespace common {
 
@@ -34,4 +36,4 @@ int f(const char* func, TT ... args) {
 
 } // namespace common
 } // namespace test
-} // namespace tss
+} // namespace smack
