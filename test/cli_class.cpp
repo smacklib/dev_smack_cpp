@@ -22,6 +22,7 @@ static int free_function(int p1) {
     return EXIT_SUCCESS;
 }
 
+#if 1
 class TestApplication
 {
     std::string name_;
@@ -67,8 +68,7 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        auto cmd1 = smack::util::Commands<
-            int>::make(
+        auto cmd1 = smack::util::Commands<int>::make(
             "eins",
             *this,
             &TestApplication::f1);
@@ -118,7 +118,7 @@ public:
                 *this,
                 &TestApplication::f7_2);
 
-        auto cmd8 = smack::util::CommandsX_<free_function>::make(
+        auto cmd8 = smack::util::CommandsX<free_function>::make(
                 "achtX",
                 free_function
             );
@@ -151,25 +151,44 @@ int main(int argc, char**argv)
     return ta.execute(cmdArgv);
 }
 
+#else
+
 #include <algorithm>
 #include <iostream>
 
 using std::cout;
 using std::endl;
 
-void do_something(int value, double amount) {
-    cout << "value=" << value << " amount=" << amount << endl;
-}
 
-void do_something_else(std::string const& first, double& second, int third) {
-    cout << "first=" << first << " second=" << second << " third=" << third << endl;
-}
+class Some
+{
+public:
+    void do_something(int value, double amount) {
+        cout << "value=" << value << " amount=" << amount << endl;
+    }
+
+    void do_something_else(std::string const& first, double& second, int third) {
+        cout << "first=" << first << " second=" << second << " third=" << third << endl;
+    }
+
+    int execute(const std::vector<std::string>& argv) {
+        // Editor moans, compiler cool.
+        Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
+        // Editor moans, compiler cool.
+        obj(5, 17.4); //Would call do_something(5, 17.4);
+        Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
+        // Editor moans, compiler cool.
+        obj2(313); //Would call do_something_else("Hello there!", value, 70);
+
+        return 0;
+    }
+};
 
 template <auto* F>
-class Wrapper {};
+class WrapperO {};
 
 template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
-struct Wrapper<F>
+struct WrapperO<F>
 {
     auto operator()(Args... args) const
     {
@@ -177,17 +196,53 @@ struct Wrapper<F>
     }
 };
 
-int mai_n()
+int main( int argc, char**argv )
 {
     cout << __cplusplus << endl;
 
-    // Editor moans, compiler cool.
-    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
-    // Editor moans, compiler cool.
-    obj(5, 17.4); //Would call do_something(5, 17.4);
-    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
-    // Editor moans, compiler cool.
-    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
+    Some some;
 
-    return 0;
+    std::vector<std::string> cmdArgv(
+        argv + 1,
+        argv + argc);
+
+    return some.execute(cmdArgv);
 }
+
+#endif
+
+//
+//void do_something(int value, double amount) {
+//    cout << "value=" << value << " amount=" << amount << endl;
+//}
+//
+//void do_something_else(std::string const& first, double& second, int third) {
+//    cout << "first=" << first << " second=" << second << " third=" << third << endl;
+//}
+//
+//template <auto* F>
+//class Wrapper {};
+//
+//template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
+//struct Wrapper<F>
+//{
+//    auto operator()(Args... args) const
+//    {
+//        return F(args...);
+//    }
+//};
+//
+//int mai_n()
+//{
+//    cout << __cplusplus << endl;
+//
+//    // Editor moans, compiler cool.
+//    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
+//    // Editor moans, compiler cool.
+//    obj(5, 17.4); //Would call do_something(5, 17.4);
+//    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
+//    // Editor moans, compiler cool.
+//    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
+//
+//    return 0;
+//}
