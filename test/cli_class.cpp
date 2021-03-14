@@ -73,7 +73,7 @@ public:
             *this,
             &TestApplication::f1);
 
-        auto cmd2 = smack::util::CommandsX<
+        auto cmd2 = smack::util::Commands<
             int,
             const char*>::make(
                 "zwei",
@@ -118,9 +118,8 @@ public:
                 *this,
                 &TestApplication::f7_2);
 
-        auto cmd8 = smack::util::Commands<
-            int>::make(
-                "acht",
+        auto cmd8 = smack::util::CommandsX_<free_function>::make(
+                "achtX",
                 free_function
             );
 
@@ -139,7 +138,7 @@ public:
     }
 };
 
-int main_(int argc, char**argv)
+int main(int argc, char**argv)
 {
     TestApplication ta{ 
         argv[0] 
@@ -178,7 +177,7 @@ struct Wrapper<F>
     }
 };
 
-int main()
+int mai_n()
 {
     cout << __cplusplus << endl;
 

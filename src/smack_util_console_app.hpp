@@ -399,8 +399,8 @@ public:
 template <auto* F>
 class CommandsX_ {};
 
-template <typename ... Args>
-class CommandsX {
+template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
+class CommandsX_<F> {
     template <typename H, typename F>
     static auto make_(H& host, F member) {
         return [&host, member](Args ... a) mutable {
