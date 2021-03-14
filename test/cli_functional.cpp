@@ -1,5 +1,7 @@
 /*
- * Copyright © 2019 Daimler TSS
+ * Smack C++
+ *
+ * Copyright © 2019 Michael Binz
  */
 
 #include <iostream>
@@ -11,34 +13,34 @@
 #include "../src/smack_util_console_app.hpp"
 
 static int f1(int p1) {
-    return tss::test::common::f(__func__, p1);
+    return smack::test::common::f(__func__, p1);
 }
 
 static int f2(int p1, const char* p2) {
-    return tss::test::common::f(__func__, p1, p2);
+    return smack::test::common::f(__func__, p1, p2);
 }
 
 static int f3(int p1, double p2, const char* p3) {
-    return tss::test::common::f(__func__, p1, p2, p3);
+    return smack::test::common::f(__func__, p1, p2, p3);
 }
 
 static int f4(const std::string p1) {
-    return tss::test::common::f(__func__, p1);
+    return smack::test::common::f(__func__, p1);
 }
 
 static int f5(const std::string& p1) {
-    return tss::test::common::f(__func__, p1);
+    return smack::test::common::f(__func__, p1);
 }
 
 static int f6(bool p1) {
-    return tss::test::common::f(__func__, p1);
+    return smack::test::common::f(__func__, p1);
 }
 
 static int f7(int p1) {
-    return tss::test::common::f(__func__, p1);
+    return smack::test::common::f(__func__, p1);
 }
 static int f7(int p1, double p2) {
-    return tss::test::common::f(__func__, p1, p2);
+    return smack::test::common::f(__func__, p1, p2);
 }
 
 static int execute(const std::vector<std::string>& argv) {

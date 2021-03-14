@@ -1,5 +1,7 @@
 /*
- * Copyright © 2019 Daimler TSS
+ * Smack C++
+ *
+ * Copyright © 2019 Michael Binz
  */
 
 #include <iostream>
@@ -34,34 +36,34 @@ public:
     TestApplication& operator=(const TestApplication&) = delete;
 
     int f1(int p1) {
-        return tss::test::common::f(__func__, p1);
+        return smack::test::common::f(__func__, p1);
     }
 
     int f2(int p1, const char* p2) {
-        return tss::test::common::f(__func__, p1, p2);
+        return smack::test::common::f(__func__, p1, p2);
     }
 
     int f3(int p1, double p2, const char* p3) {
-        return tss::test::common::f(__func__, p1, p2, p3);
+        return smack::test::common::f(__func__, p1, p2, p3);
     }
 
     int f4(const std::string p1) {
-        return tss::test::common::f(__func__, p1);
+        return smack::test::common::f(__func__, p1);
     }
 
     int f5(const std::string& p1) {
-        return tss::test::common::f(__func__, p1);
+        return smack::test::common::f(__func__, p1);
     }
 
     int f6(bool p1) {
-        return tss::test::common::f(__func__, p1);
+        return smack::test::common::f(__func__, p1);
     }
 
     int f7(int p1) const {
-        return tss::test::common::f(__func__, p1);
+        return smack::test::common::f(__func__, p1);
     }
     int f7_2(int p1, double p2) const {
-        return tss::test::common::f(__func__, p1, p2);
+        return smack::test::common::f(__func__, p1, p2);
     }
 
     int execute(const std::vector<std::string>& argv) {
