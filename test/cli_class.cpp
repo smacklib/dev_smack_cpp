@@ -73,7 +73,7 @@ public:
             *this,
             &TestApplication::f1);
 
-        auto cmd2 = smack::util::Commands<
+        auto cmd2 = smack::util::CommandsX<
             int,
             const char*>::make(
                 "zwei",
@@ -139,7 +139,7 @@ public:
     }
 };
 
-int main(int argc, char**argv)
+int main_(int argc, char**argv)
 {
     TestApplication ta{ 
         argv[0] 
@@ -150,4 +150,45 @@ int main(int argc, char**argv)
         argv + argc);
 
     return ta.execute(cmdArgv);
+}
+
+#include <algorithm>
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
+void do_something(int value, double amount) {
+    cout << "value=" << value << " amount=" << amount << endl;
+}
+
+void do_something_else(std::string const& first, double& second, int third) {
+    cout << "first=" << first << " second=" << second << " third=" << third << endl;
+}
+
+template <auto* F>
+class Wrapper {};
+
+template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
+struct Wrapper<F>
+{
+    auto operator()(Args... args) const
+    {
+        return F(args...);
+    }
+};
+
+int main()
+{
+    cout << __cplusplus << endl;
+
+    // Editor moans, compiler cool.
+    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
+    // Editor moans, compiler cool.
+    obj(5, 17.4); //Would call do_something(5, 17.4);
+    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
+    // Editor moans, compiler cool.
+    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
+
+    return 0;
 }

@@ -352,7 +352,7 @@ public:
     }
 };
 
-template <typename ... Args> 
+template <typename ... Args>
 class Commands {
     template <typename H, typename F>
     static auto make_(H& host, F member) {
@@ -371,9 +371,56 @@ class Commands {
 public:
     template <typename H, typename F>
     static auto make(
-        string name, 
-        H& host, 
-        F member, 
+        string name,
+        H& host,
+        F member,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            make_(host, member);
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+    template <typename F>
+    static auto make(
+        string name,
+        F function,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            make_(function);
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+};
+
+template <auto* F>
+class CommandsX_ {};
+
+template <typename ... Args>
+class CommandsX {
+    template <typename H, typename F>
+    static auto make_(H& host, F member) {
+        return [&host, member](Args ... a) mutable {
+            return (host.*(member))(a...);
+        };
+    }
+
+    template <typename F>
+    static auto make_(F member) {
+        return [member](Args ... a) {
+            return member(a...);
+        };
+    }
+
+public:
+    template <typename H, typename F>
+    static auto make(
+        string name,
+        H& host,
+        F member,
         initializer_list<const char*> parameterHelper = {})
     {
         auto functor =
