@@ -416,19 +416,19 @@ class CommandsX<F> {
     }
 
 public:
-    template <typename H, typename F>
-    static auto make(
-        string name,
-        H& host,
-        F member,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            make_(host, member);
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
+    //template <typename H, typename F>
+    //static auto make(
+    //    string name,
+    //    H& host,
+    //    F member,
+    //    initializer_list<const char*> parameterHelper = {})
+    //{
+    //    auto functor =
+    //        make_(host, member);
+    //    Command<decltype(functor), Args ...>
+    //        result(name, functor, parameterHelper);
+    //    return result;
+    //}
     template <typename F>
     static auto make(
         string name,
@@ -442,6 +442,18 @@ public:
         return result;
     }
 };
+
+// https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
+template <auto F>
+auto makeX(
+    string name,
+    initializer_list<const char*> parameterHelper = {})
+{
+    return smack::util::CommandsX<F>::make(
+        name,
+        F
+    );
+}
 
 } // namespace util
 } // namespace smack

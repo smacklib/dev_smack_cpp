@@ -118,10 +118,12 @@ public:
                 *this,
                 &TestApplication::f7_2);
 
-        auto cmd8 = smack::util::CommandsX<free_function>::make(
-                "achtX",
-                free_function
-            );
+        auto cmd9 = smack::util::CommandsX<free_function>::make(
+            "achtX",
+            free_function
+        );
+
+        auto cmd8 = smack::util::makeX<free_function>("achtX");
 
         auto cli = smack::util::makeCliApplication(
             cmd1,
