@@ -160,20 +160,21 @@ int main(int argc, char**argv)
     return ta.execute(cmdArgv);
 }
 
-#elif 0
+#elif 1
+
+// https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
 
 #include <algorithm>
 #include <iostream>
+#include <functional>
 
 using std::cout;
 using std::endl;
 
-template <auto* F>
-class Wrapper {};
+template <class F> struct Wrapper;
 
-template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
-struct Wrapper<F>
-{
+template <typename Ret, typename Cls, typename T, typename... Args>
+struct Wrapper<Ret(Cls::*)(T, Args...)> {
     auto operator()(Args... args) const
     {
         return F(args...);
@@ -193,12 +194,12 @@ public:
 
     int execute(const std::vector<std::string>& argv) {
         // Editor moans, compiler cool.
-        Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
-        // Editor moans, compiler cool.
-        obj(5, 17.4); //Would call do_something(5, 17.4);
-        Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
-        // Editor moans, compiler cool.
-        obj2(313); //Would call do_something_else("Hello there!", value, 70);
+        //Wrapper<decltype(&do_something)> obj{}; //Should be able to deduce Args to be [int, double]
+        //// Editor moans, compiler cool.
+        //obj(5, 17.4); //Would call do_something(5, 17.4);
+        //Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
+        //// Editor moans, compiler cool.
+        //obj2(313); //Would call do_something_else("Hello there!", value, 70);
 
         return 0;
     }
@@ -206,9 +207,14 @@ public:
 
 int main( int argc, char**argv )
 {
-    cout << __cplusplus << endl;
-
     Some some;
+    using namespace std::placeholders;  // for _1, _2, _3...
+    auto w = std::bind(
+        &Some::do_something,
+        &some,
+        _1, _2 );
+    w( 313, 3.14159265);
+    return 0;
 
     std::vector<std::string> cmdArgv(
         argv + 1,

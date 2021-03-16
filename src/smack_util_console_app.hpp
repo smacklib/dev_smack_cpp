@@ -396,6 +396,7 @@ public:
     }
 };
 
+// https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
 // https://stackoverflow.com/questions/46533698/how-to-deduce-argument-list-from-function-pointer
 // https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
 
@@ -417,6 +418,7 @@ class ParameterListDed<F> {
     }
 
 public:
+    // https ://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
     template <typename H, typename F>
     static auto make(
         string name,
