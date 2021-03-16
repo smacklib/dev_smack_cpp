@@ -396,11 +396,18 @@ public:
     }
 };
 
-template <auto* F>
-class CommandsX {};
+// https://stackoverflow.com/questions/46533698/how-to-deduce-argument-list-from-function-pointer
+// https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
+
+/**
+ * Used for template function argument deduction.
+ * Use xxx below as a handier interface.
+ */
+template <auto F>
+class ParameterListDed {};
 
 template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
-class CommandsX<F> {
+class ParameterListDed<F> {
     template <typename H, typename F>
     static auto make_(H& host, F member) {
         return [&host, member](Args ... a) mutable {
@@ -443,17 +450,24 @@ public:
     }
 };
 
-// https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
-template <auto F>
-auto makeX(
-    string name,
-    initializer_list<const char*> parameterHelper = {})
-{
-    return smack::util::CommandsX<F>::make(
-        name,
-        F
-    );
-}
+/**
+ * Offers the external interface.
+ */
+struct Outer {
+    /**
+     * Create a command for a free function.
+     */
+    template <auto F>
+    static auto make(
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return ParameterListDed<F>::make(
+            name,
+            F
+        );
+    }
+};
 
 } // namespace util
 } // namespace smack

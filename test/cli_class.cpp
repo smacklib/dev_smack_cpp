@@ -22,6 +22,15 @@ static int free_function(int p1) {
     return EXIT_SUCCESS;
 }
 
+static int free_functionB(int p1) {
+    std::cout <<
+        __func__ <<
+        " : " <<
+        p1 <<
+        std::endl;
+    return EXIT_SUCCESS;
+}
+
 #if 1
 class TestApplication
 {
@@ -118,12 +127,7 @@ public:
                 *this,
                 &TestApplication::f7_2);
 
-        auto cmd9 = smack::util::CommandsX<free_function>::make(
-            "achtX",
-            free_function
-        );
-
-        auto cmd8 = smack::util::makeX<free_function>("achtX");
+        auto cmd8 = smack::util::Outer::make<free_function>("achtX");
 
         auto cli = smack::util::makeCliApplication(
             cmd1,
