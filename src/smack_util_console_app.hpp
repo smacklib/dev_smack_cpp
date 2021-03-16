@@ -440,7 +440,7 @@ public:
     static auto make(
         string name,
         F function,
-        initializer_list<const char*> parameterHelper = {})
+        initializer_list<const char*> parameterHelper)
     {
         auto functor =
             make_(function);
@@ -464,7 +464,8 @@ struct Outer {
     {
         return ParameterListDed<F>::make(
             name,
-            F
+            F,
+            parameterHelper
         );
     }
 };

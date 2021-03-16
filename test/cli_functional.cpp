@@ -12,84 +12,70 @@
 
 #include "../src/smack_util_console_app.hpp"
 
-static int f1(int p1) {
+namespace {
+
+using smack::util::Outer;
+
+int f1(int p1) {
     return smack::test::common::f(__func__, p1);
 }
 
-static int f2(int p1, const char* p2) {
+int f2(int p1, const char* p2) {
     return smack::test::common::f(__func__, p1, p2);
 }
 
-static int f3(int p1, double p2, const char* p3) {
+int f3(int p1, double p2, const char* p3) {
     return smack::test::common::f(__func__, p1, p2, p3);
 }
 
-static int f4(const std::string p1) {
+int f4(const std::string p1) {
     return smack::test::common::f(__func__, p1);
 }
 
-static int f5(const std::string& p1) {
+int f5(const std::string& p1) {
     return smack::test::common::f(__func__, p1);
 }
 
-static int f6(bool p1) {
+int f6(bool p1) {
     return smack::test::common::f(__func__, p1);
 }
 
-static int f7(int p1) {
+int f7(int p1) {
     return smack::test::common::f(__func__, p1);
 }
-static int f7(int p1, double p2) {
+int f7(int p1, double p2) {
     return smack::test::common::f(__func__, p1, p2);
 }
 
-static int execute(const std::vector<std::string>& argv) {
-    auto cmd1 = smack::util::Commands<
-        int>::make(
+int execute(const std::vector<std::string>& argv) {
+    auto cmd1 = Outer::make<f1>(
         "eins",
-        f1);
+        { "p1" });
 
-    auto cmd2 = smack::util::Commands<
-        int,
-        const char*>::make(
-            "zwei",
-            f2);
+    auto cmd2 = Outer::make<f2>(
+        "zwei");
 
-    auto cmd3 = smack::util::Commands<
-        int,
-        double,
-        const char*>::make(
-            "drei",
-            f3);
+    auto cmd3 = Outer::make<f3>(
+        "drei");
 
-    auto cmd4 = smack::util::Commands<
-        std::string>::make(
-            "vier",
-            f4);
+    auto cmd4 = Outer::make<f4>(
+        "vier");
 
-    auto cmd5 = smack::util::Commands<
-        const std::string&>::make(
-            "fuenf",
-            f5);
+    auto cmd5 = Outer::make<f5>(
+        "fuenf");
 
-    auto cmd6 = smack::util::Commands<
-        bool>::make(
-            "sechs",
-            f6);
+    auto cmd6 = Outer::make<f6>(
+        "sechs");
 
     // Example for an overloaded function.
-    auto cmd7 = smack::util::Commands<
-        int> ::make(
-            "sieben",
-            static_cast<int(*)(int)>(f7));
+    auto cmd7 = Outer::make<static_cast<int(*)(int)>(f7)>(
+        "sieben");
 
     // Example for an overloaded function. Generally this is doable but
     // does not make a lot of sense.  The alternative, a different name for
     // the overloaded function, is much simpler.
-    auto cmd7_2 = smack::util::Commands<
-        int,double>::make(
-            "sieben",
-            static_cast<int(*)(int,double)>(f7));
+    auto cmd7_2 = Outer::make<static_cast<int(*)(int, double)>(f7)>(
+        "sieben_2");
 
     auto cli = smack::util::makeCliApplication(
         cmd1,
@@ -104,6 +90,8 @@ static int execute(const std::vector<std::string>& argv) {
 
     return cli.launch(argv);
 }
+
+} // namespace anonymous
 
 int main(int argc, char**argv) {
     std::cout << argv[0] << std::endl;
