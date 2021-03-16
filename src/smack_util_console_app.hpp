@@ -406,7 +406,7 @@ public:
 template <auto F>
 class ParameterListDed {};
 
-template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
+template <typename Ret, typename... Args, auto (F)(Args...)->Ret>
 class ParameterListDed<F> {
     template <typename H, typename F>
     static auto make_(H& host, F member) {

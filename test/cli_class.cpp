@@ -13,6 +13,9 @@
 
 #include "../src/smack_util_console_app.hpp"
 
+using std::cout;
+using std::endl;
+
 static int free_function(int p1) {
     std::cout <<
         __func__ <<
@@ -31,7 +34,7 @@ static int free_functionB(int p1) {
     return EXIT_SUCCESS;
 }
 
-#if 1
+#if 0
 class TestApplication
 {
     std::string name_;
@@ -157,7 +160,7 @@ int main(int argc, char**argv)
     return ta.execute(cmdArgv);
 }
 
-#else
+#elif 0
 
 #include <algorithm>
 #include <iostream>
@@ -165,6 +168,17 @@ int main(int argc, char**argv)
 using std::cout;
 using std::endl;
 
+template <auto* F>
+class Wrapper {};
+
+template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
+struct Wrapper<F>
+{
+    auto operator()(Args... args) const
+    {
+        return F(args...);
+    }
+};
 
 class Some
 {
@@ -190,18 +204,6 @@ public:
     }
 };
 
-template <auto* F>
-class WrapperO {};
-
-template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
-struct WrapperO<F>
-{
-    auto operator()(Args... args) const
-    {
-        return F(args...);
-    }
-};
-
 int main( int argc, char**argv )
 {
     cout << __cplusplus << endl;
@@ -215,40 +217,41 @@ int main( int argc, char**argv )
     return some.execute(cmdArgv);
 }
 
-#endif
+#else 
 
-//
-//void do_something(int value, double amount) {
-//    cout << "value=" << value << " amount=" << amount << endl;
-//}
-//
-//void do_something_else(std::string const& first, double& second, int third) {
-//    cout << "first=" << first << " second=" << second << " third=" << third << endl;
-//}
-//
-//template <auto* F>
-//class Wrapper {};
-//
-//template <typename Ret, typename... Args, auto (*F)(Args...)->Ret>
-//struct Wrapper<F>
-//{
-//    auto operator()(Args... args) const
-//    {
-//        return F(args...);
-//    }
-//};
-//
-//int mai_n()
-//{
-//    cout << __cplusplus << endl;
-//
-//    // Editor moans, compiler cool.
-//    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
-//    // Editor moans, compiler cool.
-//    obj(5, 17.4); //Would call do_something(5, 17.4);
-//    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
-//    // Editor moans, compiler cool.
-//    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
-//
-//    return 0;
-//}
+void do_something(int value, double amount) {
+    cout << "value=" << value << " amount=" << amount << endl;
+}
+
+void do_something_else(std::string const& first, double& second, int third) {
+    cout << "first=" << first << " second=" << second << " third=" << third << endl;
+}
+
+template <auto F>
+class Wrapper {};
+
+template <typename Ret, typename... Args, auto (F)(Args...)->Ret>
+struct Wrapper<F>
+{
+    auto operator()(Args... args) const
+    {
+        return F(args...);
+    }
+};
+
+int main()
+{
+    cout << __cplusplus << endl;
+
+    // Editor moans, compiler cool.
+    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
+    // Editor moans, compiler cool.
+    obj(5, 17.4); //Would call do_something(5, 17.4);
+    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
+    // Editor moans, compiler cool.
+    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
+
+    return 0;
+}
+
+#endif
