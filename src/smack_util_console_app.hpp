@@ -406,6 +406,7 @@ public:
 template <auto F>
 class ParameterListDed {};
 
+// https://stackoverflow.com/questions/23619152/strange-expression-in-c-source-code-of-cpp-react-library
 template <typename Ret, typename... Args, auto (F)(Args...)->Ret>
 class ParameterListDed<F> {
     template <typename H, typename F>
@@ -415,27 +416,21 @@ class ParameterListDed<F> {
         };
     }
 
-    template <typename F>
-    static auto make_(F member) {
-        return [member](Args ... a) {
-            return member(a...);
-        };
+public:
+    template <typename H, typename F>
+    static auto make(
+        string name,
+        H& host,
+        F member,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            make_(host, member);
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
     }
 
-public:
-    //template <typename H, typename F>
-    //static auto make(
-    //    string name,
-    //    H& host,
-    //    F member,
-    //    initializer_list<const char*> parameterHelper = {})
-    //{
-    //    auto functor =
-    //        make_(host, member);
-    //    Command<decltype(functor), Args ...>
-    //        result(name, functor, parameterHelper);
-    //    return result;
-    //}
     template <typename F>
     static auto make(
         string name,
@@ -443,7 +438,10 @@ public:
         initializer_list<const char*> parameterHelper)
     {
         auto functor =
-            make_(function);
+            [function](Args ... a) {
+               return function(a...);
+            };
+
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
         return result;
