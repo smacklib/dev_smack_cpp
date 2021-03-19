@@ -25,15 +25,6 @@ static int free_function(int p1) {
     return EXIT_SUCCESS;
 }
 
-static int free_functionB(int p1) {
-    std::cout <<
-        __func__ <<
-        " : " <<
-        p1 <<
-        std::endl;
-    return EXIT_SUCCESS;
-}
-
 #if 0
 class TestApplication
 {
@@ -124,9 +115,11 @@ public:
                 *this,
                 &TestApplication::f7);
 
+//        smack::util::Wrap<&TestApplication::f6> f{*this};
+
         auto cmd7_2 = smack::util::Commands<
             int,double>::make(
-                "sieben",
+                "sieben_2",
                 *this,
                 &TestApplication::f7_2);
 
@@ -163,6 +156,8 @@ int main(int argc, char**argv)
 #elif 1
 
 // https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
+// https://codereview.stackexchange.com/questions/69632/wrap-function-pointers-in-template-classes
+// https://developercommunity.visualstudio.com/t/a-template-that-takes-a-member-function-pointer-as/435474
 
 #include <algorithm>
 #include <iostream>
@@ -171,15 +166,43 @@ int main(int argc, char**argv)
 using std::cout;
 using std::endl;
 
-template <class F> struct Wrapper;
+template <auto F>
+struct Wrap;
 
-template <typename Ret, typename Cls, typename T, typename... Args>
-struct Wrapper<Ret(Cls::*)(T, Args...)> {
-    auto operator()(Args... args) const
-    {
-        return F(args...);
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+struct Wrap<F> {
+    T obj;
+
+    Wrap<F>(T instance) : obj(instance) {}
+
+    // it seems you don't take care of the cvref qualifiers, so I won't write all the overloads.
+    auto operator()(T obj, Args... args) {
+        return (obj.*F)(args...);
+    }
+    auto operator()(T* obj, Args... args) {
+        return (obj->*F)(args...);
     }
 };
+
+struct foo {
+    int bar(double) { 
+        return 313; };
+};
+
+template <auto X>
+auto makexx(decltype(X) x) {
+    return Wrap<decltype(X)>{ x };
+}
+
+int main() {
+    foo x;
+    x.bar(3.1415);
+    Wrap<&foo::bar> f{ x };
+
+    std::cout << f(x, 3.14159265) << std::endl;
+
+    return 0;
+}
 
 class Some
 {
@@ -205,58 +228,67 @@ public:
     }
 };
 
-int main( int argc, char**argv )
-{
-    Some some;
-    using namespace std::placeholders;  // for _1, _2, _3...
-    auto w = std::bind(
-        &Some::do_something,
-        &some,
-        _1, _2 );
-    w( 313, 3.14159265);
-    return 0;
-
-    std::vector<std::string> cmdArgv(
-        argv + 1,
-        argv + argc);
-
-    return some.execute(cmdArgv);
-}
+//int main( int argc, char**argv )
+//{
+//    Some some;
+//    using namespace std::placeholders;  // for _1, _2, _3...
+//    auto w = std::bind(
+//        &Some::do_something,
+//        &some,
+//        // Don't want this.
+//        _1, _2 );
+//    w( 313, 3.14159265);
+//    return 0;
+//
+//    std::vector<std::string> cmdArgv(
+//        argv + 1,
+//        argv + argc);
+//
+//    return some.execute(cmdArgv);
+//}
 
 #else 
 
-void do_something(int value, double amount) {
-    cout << "value=" << value << " amount=" << amount << endl;
+#include <iostream>
+
+void free_funct(int p1, double p2) {
+    std::cout << "p1=" << p1 << " p2=" << p2 << endl;
 }
 
-void do_something_else(std::string const& first, double& second, int third) {
-    cout << "first=" << first << " second=" << second << " third=" << third << endl;
-}
+struct object {
+    void object_funct(double p1, int p2) const {
+        std::cout << "p1=" << p1 << " p2=" << p2 << endl;
+    }
+    int exec(double p1, int p2) {
+        // Ultimate goal:
+        // Wrapper<(???::object_funct> functor3;
+        // functor_3(p1, p2;)
+    }
+};
 
 template <auto F>
 class Wrapper {};
 
-template <typename Ret, typename... Args, auto (F)(Args...)->Ret>
+template <typename R, typename... Args, auto (F)(Args...)->R>
 struct Wrapper<F>
 {
-    auto operator()(Args... args) const
-    {
+    auto operator()(Args... args) const -> R {
         return F(args...);
     }
 };
 
-int main()
-{
-    cout << __cplusplus << endl;
-
-    // Editor moans, compiler cool.
-    Wrapper<do_something> obj{}; //Should be able to deduce Args to be [int, double]
-    // Editor moans, compiler cool.
-    obj(5, 17.4); //Would call do_something(5, 17.4);
-    Wrapper<free_function> obj2; //Should be able to deduce Args to be [std::string const&, double&, int]
-    // Editor moans, compiler cool.
-    obj2( 313 ); //Would call do_something_else("Hello there!", value, 70);
-
+int main() {
+    // Free funct.
+    Wrapper<free_funct> functor1{};
+    functor1(313, 3.141592);
+    object object;
+    // Extrinsic call to member function.
+    object.object_funct(3.1415926, 313);
+    // Problem 1:
+    Wrapper<&object::object_funct> functor2;
+    // How to express this below
+    // functor2(3, 1415926, 313);
+    object.exec(2.718281, 121);
     return 0;
 }
 
