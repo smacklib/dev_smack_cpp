@@ -459,11 +459,7 @@ public:
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
-        //auto functor =
-        //    make_(host, member);
         WrapP<F> functor{ instance };
-
-//        return functor;
 
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
@@ -499,18 +495,12 @@ struct Outer {
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
-#if 0
-        WrapP<F> functor{ instance };
-        return functor;
-#else
         return ParameterListDedMember<F>::make<T>(
             instance,
             name,
             parameterHelper
         );
-#endif
     }
-
 };
 
 } // namespace util

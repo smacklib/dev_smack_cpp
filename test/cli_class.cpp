@@ -71,10 +71,11 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        auto cmd1 = smack::util::Commands<int>::make(
-            "eins",
-            *this,
-            &TestApplication::f1);
+        auto cmd1 = smack::util::Outer::makem<&TestApplication::f1>(this, "eins");
+            //smack::util::Commands<int>::make(
+            //"eins",
+            //*this,
+            //&TestApplication::f1);
 
         auto cmd2 = smack::util::Commands<
             int,
@@ -108,10 +109,8 @@ public:
                 "sechs",
                 *this,
                 &TestApplication::f6);
-        smack::util::WrapP<&TestApplication::f6> f{ this };
-        f(true);
+
         auto _313 = smack::util::Outer::makem<&TestApplication::f6>(this, "ddzhn");
-        _313(true);
 
         auto cmd7 = smack::util::Commands<
             int> ::make(
