@@ -400,6 +400,20 @@ public:
 // https://stackoverflow.com/questions/46533698/how-to-deduce-argument-list-from-function-pointer
 // https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
 
+template <auto F>
+struct WrapP;
+
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+struct WrapP<F> {
+    T* obj_;
+
+    WrapP(T* instance) : obj_(instance) {}
+
+    auto operator()(Args... args) {
+        return (obj_->*F)(args...);
+    }
+};
+
 /**
  * Used for template function argument deduction.
  * Use xxx below as a handier interface.
@@ -408,31 +422,10 @@ template <auto F>
 class ParameterListDed {};
 
 // https://stackoverflow.com/questions/23619152/strange-expression-in-c-source-code-of-cpp-react-library
-template <typename Ret, typename... Args, auto (F)(Args...)->Ret>
+template <typename R, typename... Args, auto (F)(Args...)->R>
 class ParameterListDed<F> {
-    template <typename H, typename F>
-    static auto make_(H& host, F member) {
-        return [&host, member](Args ... a) mutable {
-            return (host.*(member))(a...);
-        };
-    }
 
 public:
-    // https ://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
-    template <typename H, typename F>
-    static auto make(
-        string name,
-        H& host,
-        F member,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            make_(host, member);
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-
     template <typename F>
     static auto make(
         string name,
@@ -441,8 +434,36 @@ public:
     {
         auto functor =
             [function](Args ... a) {
-               return function(a...);
-            };
+            return function(a...);
+        };
+
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+};
+
+/**
+ * Used for template function argument deduction.
+ * Use xxx below as a handier interface.
+ */
+template <auto F>
+class ParameterListDedMember {};
+
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+class ParameterListDedMember<F> {
+public:
+    template <typename T>
+    static auto make(
+        T instance,
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        //auto functor =
+        //    make_(host, member);
+        WrapP<F> functor{ instance };
+
+//        return functor;
 
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
@@ -468,6 +489,28 @@ struct Outer {
             parameterHelper
         );
     }
+
+    /**
+     * Create a command for a member function.
+     */
+    template <auto F, typename T>
+    static auto makem(
+        T instance,
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+#if 0
+        WrapP<F> functor{ instance };
+        return functor;
+#else
+        return ParameterListDedMember<F>::make<T>(
+            instance,
+            name,
+            parameterHelper
+        );
+#endif
+    }
+
 };
 
 } // namespace util

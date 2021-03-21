@@ -25,7 +25,7 @@ static int free_function(int p1) {
     return EXIT_SUCCESS;
 }
 
-#if 0
+#if 1
 class TestApplication
 {
     std::string name_;
@@ -108,14 +108,16 @@ public:
                 "sechs",
                 *this,
                 &TestApplication::f6);
+        smack::util::WrapP<&TestApplication::f6> f{ this };
+        f(true);
+        auto _313 = smack::util::Outer::makem<&TestApplication::f6>(this, "ddzhn");
+        _313(true);
 
         auto cmd7 = smack::util::Commands<
             int> ::make(
                 "sieben",
                 *this,
                 &TestApplication::f7);
-
-//        smack::util::Wrap<&TestApplication::f6> f{*this};
 
         auto cmd7_2 = smack::util::Commands<
             int,double>::make(
@@ -126,6 +128,7 @@ public:
         auto cmd8 = smack::util::Outer::make<free_function>("achtX");
 
         auto cli = smack::util::makeCliApplication(
+            _313,
             cmd1,
             cmd2,
             cmd3,
@@ -153,7 +156,7 @@ int main(int argc, char**argv)
     return ta.execute(cmdArgv);
 }
 
-#elif 1
+#elif 0
 
 // https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
 // https://codereview.stackexchange.com/questions/69632/wrap-function-pointers-in-template-classes
@@ -168,25 +171,38 @@ using std::endl;
 
 template <auto F>
 struct Wrap;
-
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
 struct Wrap<F> {
-    T obj;
+    T obj_;
 
-    Wrap<F>(T instance) : obj(instance) {}
+    Wrap<F>(T instance) : obj_(instance) {}
 
     // it seems you don't take care of the cvref qualifiers, so I won't write all the overloads.
-    auto operator()(T obj, Args... args) {
-        return (obj.*F)(args...);
+    auto operator()(Args... args) {
+        return (obj_.*F)(args...);
     }
-    auto operator()(T* obj, Args... args) {
-        return (obj->*F)(args...);
-    }
+    //auto operator()(T* obj, Args... args) {
+    //    return (obj->*F)(args...);
+    //}
 };
+
+//template <auto F>
+//struct WrapP;
+//
+//template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+//struct WrapP<F> {
+//    T* obj_;
+//
+//    WrapP(T* instance) : obj_(instance) {}
+//
+//    auto operator()(Args... args) {
+//        return (obj_->*F)(args...);
+//    }
+//};
 
 struct foo {
     int bar(double) { 
-        return 313; };
+        return 314; };
 };
 
 template <auto X>
@@ -197,9 +213,12 @@ auto makexx(decltype(X) x) {
 int main() {
     foo x;
     x.bar(3.1415);
-    Wrap<&foo::bar> f{ x };
 
-    std::cout << f(x, 3.14159265) << std::endl;
+    Wrap<&foo::bar> f{ x };
+    std::cout << f(3.14159265) << std::endl;
+
+    smack::util::WrapP<&foo::bar> fp{ &x };
+    std::cout << fp( 3.14159265  ) << std::endl;
 
     return 0;
 }
