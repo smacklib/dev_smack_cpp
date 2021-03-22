@@ -73,47 +73,23 @@ public:
     int execute(const std::vector<std::string>& argv) {
         using smack::util::Commands;
 
-        auto cmd1 = Commands::makem<&TestApplication::f1>(
-            this, 
-            "eins");
-
-        auto cmd2 = Commands::makem<&TestApplication::f2>(
-            this,
-            "zwei");
-
-        auto cmd3 = Commands::makem<&TestApplication::f3>(
-            this,
-            "drei");
-
-        auto cmd4 = Commands::makem<&TestApplication::f4>(
-            this,
-            "vier");
-
-        auto cmd5 = Commands::makem<&TestApplication::f5>(
-            this,
-            "fuenf");
-
-        auto cmd6 = Commands::makem<&TestApplication::f6>(
-            this,
-            "sechs");
-
-        auto cmd7 = Commands::makem<&TestApplication::f7>(
-            this,
-            "sieben");
-
-        auto cmd7_2 = Commands::makem<&TestApplication::f7_2>(
-            this,
-            "sieben_2");
-
         auto cli = smack::util::makeCliApplication(
-            cmd1,
-            cmd2,
-            cmd3,
-            cmd4,
-            cmd5,
-            cmd6,
-            cmd7,
-            cmd7_2,
+            Commands::make<&TestApplication::f1>(
+                "eins", this),
+            Commands::make<&TestApplication::f2>(
+                "zwei", this),
+            Commands::make<&TestApplication::f3>(
+                "drei", this),
+            Commands::make<&TestApplication::f4>(
+                "vier", this),
+            Commands::make<&TestApplication::f5>(
+                "fuenf", this),
+            Commands::make<&TestApplication::f6>(
+                "sechs", this),
+            Commands::make<&TestApplication::f7>(
+                "sieben", this),
+            Commands::make<&TestApplication::f7_2>(
+                "sieben_2", this ),
             Commands::make<free_function>(
                 "acht") );
 

@@ -444,9 +444,9 @@ struct Commands {
      * Create a command for a member function.
      */
     template <auto const F, typename T>
-    static auto makem(
-        const T instance,
+    static auto make(
         string name,
+        const T instance,
         initializer_list<const char*> parameterHelper = {})
     {
         return PListDed<F>::make<T>(
