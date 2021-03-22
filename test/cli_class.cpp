@@ -71,37 +71,37 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        using smack::util::Outer;
+        using smack::util::Commands;
 
-        auto cmd1 = Outer::makem<&TestApplication::f1>(
+        auto cmd1 = Commands::makem<&TestApplication::f1>(
             this, 
             "eins");
 
-        auto cmd2 = Outer::makem<&TestApplication::f2>(
+        auto cmd2 = Commands::makem<&TestApplication::f2>(
             this,
             "zwei");
 
-        auto cmd3 = Outer::makem<&TestApplication::f3>(
+        auto cmd3 = Commands::makem<&TestApplication::f3>(
             this,
             "drei");
 
-        auto cmd4 = Outer::makem<&TestApplication::f4>(
+        auto cmd4 = Commands::makem<&TestApplication::f4>(
             this,
             "vier");
 
-        auto cmd5 = Outer::makem<&TestApplication::f5>(
+        auto cmd5 = Commands::makem<&TestApplication::f5>(
             this,
             "fuenf");
 
-        auto cmd6 = Outer::makem<&TestApplication::f6>(
+        auto cmd6 = Commands::makem<&TestApplication::f6>(
             this,
             "sechs");
 
-        auto cmd7 = Outer::makem<&TestApplication::f7>(
+        auto cmd7 = Commands::makem<&TestApplication::f7>(
             this,
             "sieben");
 
-        auto cmd7_2 = Outer::makem<&TestApplication::f7_2>(
+        auto cmd7_2 = Commands::makem<&TestApplication::f7_2>(
             this,
             "sieben_2");
 
@@ -114,7 +114,7 @@ public:
             cmd6,
             cmd7,
             cmd7_2,
-            Outer::make<free_function>(
+            Commands::make<free_function>(
                 "acht") );
 
         return cli.launch(argv);
@@ -293,38 +293,6 @@ int main()
 
     return 0;
 }
-#elif 0
-
-#include <iostream>
-#include <functional>
-
-struct foo {
-    auto bar(int d) -> int {
-        return d;
-    };
-    auto cbar(int d) const -> int {
-        return d;
-    };
-};
-
-int main() {
-    foo x;
-    using fooFn = int (foo::*)(int);
-    using cfooFn = int (foo::*)(int)const;
-    {
-        fooFn q = &foo::bar;
-        auto result = std::invoke(q, x, 313);
-        std::cout << result << std::endl;
-    }
-    {
-        cfooFn q = &foo::cbar;
-        auto result = std::invoke(q, x, 314);
-        std::cout << result << std::endl;
-    }
-
-    return 0;
-}
-
 #else
 #error Activate snippet.
 #endif

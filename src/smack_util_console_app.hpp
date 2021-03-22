@@ -352,78 +352,15 @@ public:
     }
 };
 
-template <typename ... Args>
-class Commands {
-    template <typename H, typename F>
-    static auto make_(H& host, F member) {
-        return [&host, member](Args ... a) mutable {
-            return (host.*(member))(a...);
-        };
-    }
-
-    template <typename F>
-    static auto make_(F member) {
-        return [member](Args ... a) {
-            return member(a...);
-        };
-    }
-
-public:
-    template <typename H, typename F>
-    static auto make(
-        string name,
-        H& host,
-        F member,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            make_(host, member);
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-    template <typename F>
-    static auto make(
-        string name,
-        F function,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            make_(function);
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-};
-
-// https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
-// https://stackoverflow.com/questions/46533698/how-to-deduce-argument-list-from-function-pointer
-// https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
-
-//template <auto F>
-//struct WrapP;
-//
-//template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-//struct WrapP<F> {
-//    T* const obj_;
-//
-//    WrapP(T* const instance) : obj_(instance) {}
-//
-//    auto operator()(Args... args) {
-//        return (obj_->*F)(args...);
-//    }
-//};
-
 /**
  * Used for template function argument deduction.
  * Use xxx below as a handier interface.
  */
-template <auto const F>
-class ParameterListDed {};
+template <auto F>
+class PListDed {};
 
-// https://stackoverflow.com/questions/23619152/strange-expression-in-c-source-code-of-cpp-react-library
 template <typename R, typename... Args, auto (F)(Args...)->R>
-class ParameterListDed<F> {
+class PListDed<F> {
 
 public:
     template <typename F>
@@ -443,15 +380,8 @@ public:
     }
 };
 
-/**
- * Used for template function argument deduction.
- * Use xxx below as a handier interface.
- */
-template <auto F>
-class ParameterListDedMember {};
-
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-class ParameterListDedMember<F> {
+class PListDed<F> {
 public:
     template <typename T>
     static auto make(
@@ -472,7 +402,7 @@ public:
 
 // Const overload.
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-class ParameterListDedMember<F> {
+class PListDed<F> {
 public:
     template <typename T>
     static auto make(
@@ -494,7 +424,7 @@ public:
 /**
  * Offers the external interface.
  */
-struct Outer {
+struct Commands {
     /**
      * Create a command for a free function.
      */
@@ -503,7 +433,7 @@ struct Outer {
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
-        return ParameterListDed<F>::make(
+        return PListDed<F>::make(
             name,
             F,
             parameterHelper
@@ -519,11 +449,11 @@ struct Outer {
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
-        return ParameterListDedMember<F>::make<T>(
+        return PListDed<F>::make<T>(
             instance,
             name,
             parameterHelper
-        );
+            );
     }
 };
 

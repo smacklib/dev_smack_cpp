@@ -14,7 +14,7 @@
 
 namespace {
 
-using smack::util::Outer;
+using smack::util::Commands;
 
 int f1(int p1) {
     return smack::test::common::f(__func__, p1);
@@ -48,33 +48,33 @@ int f7(int p1, double p2) {
 }
 
 int execute(const std::vector<std::string>& argv) {
-    auto cmd1 = Outer::make<f1>(
+    auto cmd1 = Commands::make<f1>(
         "eins",
         { "p1" });
 
-    auto cmd2 = Outer::make<f2>(
+    auto cmd2 = Commands::make<f2>(
         "zwei");
 
-    auto cmd3 = Outer::make<f3>(
+    auto cmd3 = Commands::make<f3>(
         "drei");
 
-    auto cmd4 = Outer::make<f4>(
+    auto cmd4 = Commands::make<f4>(
         "vier");
 
-    auto cmd5 = Outer::make<f5>(
+    auto cmd5 = Commands::make<f5>(
         "fuenf");
 
-    auto cmd6 = Outer::make<f6>(
+    auto cmd6 = Commands::make<f6>(
         "sechs");
 
     // Example for an overloaded function.
-    auto cmd7 = Outer::make<static_cast<int(*)(int)>(f7)>(
+    auto cmd7 = Commands::make<static_cast<int(*)(int)>(f7)>(
         "sieben");
 
     // Example for an overloaded function. Generally this is doable but
     // does not make a lot of sense.  The alternative, a different name for
     // the overloaded function, is much simpler.
-    auto cmd7_2 = Outer::make<static_cast<int(*)(int, double)>(f7)>(
+    auto cmd7_2 = Commands::make<static_cast<int(*)(int, double)>(f7)>(
         "sieben_2");
 
     auto cli = smack::util::makeCliApplication(
