@@ -71,46 +71,31 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        auto cmd1 = smack::util::Outer::makem<&TestApplication::f1>(this, "eins");
-            //smack::util::Commands<int>::make(
-            //"eins",
-            //*this,
-            //&TestApplication::f1);
+        using smack::util::Outer;
 
-        auto cmd2 = smack::util::Commands<
-            int,
-            const char*>::make(
-                "zwei",
-                *this,
-                &TestApplication::f2);
+        auto cmd1 = Outer::makem<&TestApplication::f1>(
+            this, 
+            "eins");
 
-        auto cmd3 = smack::util::Commands<
-            int,
-            double,
-            const char*>::make(
-                "drei",
-                *this,
-                &TestApplication::f3);
+        auto cmd2 = Outer::makem<&TestApplication::f2>(
+            this,
+            "zwei");
 
-        auto cmd4 = smack::util::Commands<
-            std::string>::make(
-                "vier",
-                *this,
-                &TestApplication::f4);
+        auto cmd3 = Outer::makem<&TestApplication::f3>(
+            this,
+            "drei");
 
-        auto cmd5 = smack::util::Commands<
-            const std::string&>::make(
-                "fuenf",
-                *this,
-                &TestApplication::f5);
+        auto cmd4 = Outer::makem<&TestApplication::f4>(
+            this,
+            "vier");
 
-        auto cmd6 = smack::util::Commands<
-            bool>::make(
-                "sechs",
-                *this,
-                &TestApplication::f6);
+        auto cmd5 = Outer::makem<&TestApplication::f5>(
+            this,
+            "fuenf");
 
-        auto _313 = smack::util::Outer::makem<&TestApplication::f6>(this, "ddzhn");
+        auto cmd6 = Outer::makem<&TestApplication::f6>(
+            this,
+            "sechs");
 
         auto cmd7 = smack::util::Commands<
             int> ::make(
@@ -127,7 +112,6 @@ public:
         auto cmd8 = smack::util::Outer::make<free_function>("achtX");
 
         auto cli = smack::util::makeCliApplication(
-            _313,
             cmd1,
             cmd2,
             cmd3,
