@@ -470,6 +470,27 @@ public:
     }
 };
 
+// Const overload.
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+class ParameterListDedMember<F> {
+public:
+    template <typename T>
+    static auto make(
+        const T instance,
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
+
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+};
+
 /**
  * Offers the external interface.
  */

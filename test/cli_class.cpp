@@ -97,23 +97,13 @@ public:
             this,
             "sechs");
 
-#if 0
         auto cmd7 = Outer::makem<&TestApplication::f7>(
             this,
             "sieben");
-#else
-        auto cmd7 = smack::util::Commands<
-            int> ::make(
-                "sieben",
-                *this,
-                &TestApplication::f7);
-#endif
 
-        auto cmd7_2 = smack::util::Commands<
-            int,double>::make(
-                "sieben_2",
-                *this,
-                &TestApplication::f7_2);
+        auto cmd7_2 = Outer::makem<&TestApplication::f7_2>(
+            this,
+            "sieben_2");
 
         auto cli = smack::util::makeCliApplication(
             cmd1,
@@ -146,67 +136,62 @@ int main(int argc, char**argv)
 
 #elif 0
 
+// https://stackoverflow.com/questions/61340631/stdfunction-incomplete-type-on-const-function
 // https://stackoverflow.com/questions/29906242/c-deduce-member-function-parameters
 // https://codereview.stackexchange.com/questions/69632/wrap-function-pointers-in-template-classes
 // https://developercommunity.visualstudio.com/t/a-template-that-takes-a-member-function-pointer-as/435474
 
 #include <algorithm>
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 using std::cout;
 using std::endl;
 
 template <auto F>
-struct Wrap;
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-struct Wrap<F> {
-    T obj_;
+struct WrapP;
 
-    Wrap<F>(T instance) : obj_(instance) {}
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+struct WrapP<F> {
+    T* const obj_;
 
-    // it seems you don't take care of the cvref qualifiers, so I won't write all the overloads.
-    auto operator()(Args... args) {
-        return (obj_.*F)(args...);
+    WrapP(T* instance) : obj_(instance) {}
+
+    auto operator()(Args... args) const {
+        return (obj_->*F)(args...);
     }
-    //auto operator()(T* obj, Args... args) {
-    //    return (obj->*F)(args...);
-    //}
 };
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+struct WrapP<F> {
+    T* obj_;
 
-//template <auto F>
-//struct WrapP;
-//
-//template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-//struct WrapP<F> {
-//    T* obj_;
-//
-//    WrapP(T* instance) : obj_(instance) {}
-//
-//    auto operator()(Args... args) {
-//        return (obj_->*F)(args...);
-//    }
-//};
+    WrapP(T* instance) : obj_(instance) {}
+
+    auto operator()(Args... args) const {
+        return (obj_->*F)(args...);
+    }
+};
 
 struct foo {
-    int bar(double) { 
-        return 314; };
+    // Const below is needed, but could not be activated.
+    auto bar(double) const -> int {
+        return 313;
+    };
+    auto baz(double) -> int {
+        return 121;
+    };
 };
-
-template <auto X>
-auto makexx(decltype(X) x) {
-    return Wrap<decltype(X)>{ x };
-}
-
 int main() {
     foo x;
-    x.bar(3.1415);
+    // Create a functor for foo::bar
+    WrapP<&foo::bar> fp{ &x };
+    // Call the functor.
+    std::cout << fp(3.14159265) << std::endl;
 
-    Wrap<&foo::bar> f{ x };
-    std::cout << f(3.14159265) << std::endl;
-
-    smack::util::WrapP<&foo::bar> fp{ &x };
-    std::cout << fp( 3.14159265  ) << std::endl;
+    // Create a functor for foo::bar
+    WrapP<&foo::baz> fpn{ &x };
+    // Call the functor.
+    std::cout << fpn(2.12) << std::endl;
 
     return 0;
 }
@@ -235,26 +220,7 @@ public:
     }
 };
 
-//int main( int argc, char**argv )
-//{
-//    Some some;
-//    using namespace std::placeholders;  // for _1, _2, _3...
-//    auto w = std::bind(
-//        &Some::do_something,
-//        &some,
-//        // Don't want this.
-//        _1, _2 );
-//    w( 313, 3.14159265);
-//    return 0;
-//
-//    std::vector<std::string> cmdArgv(
-//        argv + 1,
-//        argv + argc);
-//
-//    return some.execute(cmdArgv);
-//}
-
-#else 
+#elif 0
 
 #include <iostream>
 
@@ -299,4 +265,66 @@ int main() {
     return 0;
 }
 
+#elif 0
+#include <iostream>
+#include <functional>
+
+struct foo
+{
+    std::function<int()> get;
+};
+
+struct bar
+{
+    int get() const
+    {
+        return 42;
+    }
+};
+
+int main()
+{
+    foo f;
+    bar b;
+    f.get = std::bind(&bar::get, &b);
+
+    if (f.get())
+        std::cout << "f.get(): " << f.get() << std::endl;
+
+    return 0;
+}
+#elif 0
+
+#include <iostream>
+#include <functional>
+
+struct foo {
+    auto bar(int d) -> int {
+        return d;
+    };
+    auto cbar(int d) const -> int {
+        return d;
+    };
+};
+
+int main() {
+    foo x;
+    using fooFn = int (foo::*)(int);
+    using cfooFn = int (foo::*)(int)const;
+    {
+        fooFn q = &foo::bar;
+        auto result = std::invoke(q, x, 313);
+        std::cout << result << std::endl;
+    }
+    {
+        cfooFn q = &foo::cbar;
+        auto result = std::invoke(q, x, 314);
+        std::cout << result << std::endl;
+    }
+
+    return 0;
+}
+
+#else
+#error Activate snippet.
 #endif
