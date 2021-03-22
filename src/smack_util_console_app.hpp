@@ -400,25 +400,25 @@ public:
 // https://stackoverflow.com/questions/46533698/how-to-deduce-argument-list-from-function-pointer
 // https://stackoverflow.com/questions/6547056/template-parameter-deduction-with-function-pointers-and-references
 
-template <auto F>
-struct WrapP;
-
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-struct WrapP<F> {
-    T* obj_;
-
-    WrapP(T* instance) : obj_(instance) {}
-
-    auto operator()(Args... args) {
-        return (obj_->*F)(args...);
-    }
-};
+//template <auto F>
+//struct WrapP;
+//
+//template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+//struct WrapP<F> {
+//    T* const obj_;
+//
+//    WrapP(T* const instance) : obj_(instance) {}
+//
+//    auto operator()(Args... args) {
+//        return (obj_->*F)(args...);
+//    }
+//};
 
 /**
  * Used for template function argument deduction.
  * Use xxx below as a handier interface.
  */
-template <auto F>
+template <auto const F>
 class ParameterListDed {};
 
 // https://stackoverflow.com/questions/23619152/strange-expression-in-c-source-code-of-cpp-react-library
@@ -455,11 +455,14 @@ class ParameterListDedMember<F> {
 public:
     template <typename T>
     static auto make(
-        T instance,
+        const T instance,
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
-        WrapP<F> functor{ instance };
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
 
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
@@ -489,9 +492,9 @@ struct Outer {
     /**
      * Create a command for a member function.
      */
-    template <auto F, typename T>
+    template <auto const F, typename T>
     static auto makem(
-        T instance,
+        const T instance,
         string name,
         initializer_list<const char*> parameterHelper = {})
     {

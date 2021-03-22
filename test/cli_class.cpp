@@ -97,19 +97,23 @@ public:
             this,
             "sechs");
 
+#if 0
+        auto cmd7 = Outer::makem<&TestApplication::f7>(
+            this,
+            "sieben");
+#else
         auto cmd7 = smack::util::Commands<
             int> ::make(
                 "sieben",
                 *this,
                 &TestApplication::f7);
+#endif
 
         auto cmd7_2 = smack::util::Commands<
             int,double>::make(
                 "sieben_2",
                 *this,
                 &TestApplication::f7_2);
-
-        auto cmd8 = smack::util::Outer::make<free_function>("achtX");
 
         auto cli = smack::util::makeCliApplication(
             cmd1,
@@ -120,7 +124,8 @@ public:
             cmd6,
             cmd7,
             cmd7_2,
-            cmd8);
+            Outer::make<free_function>(
+                "acht") );
 
         return cli.launch(argv);
     }
