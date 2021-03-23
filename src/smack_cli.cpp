@@ -5,9 +5,9 @@
  * Copyright (c) 2019-2020 Michael Binz
  */
 
-#include "smack_util_console_app.hpp"
+#include "smack_cli.hpp"
 
-namespace smack::util {
+namespace smack::cli {
 
 void transform(const char* in, int& out) {
     std::size_t pos;

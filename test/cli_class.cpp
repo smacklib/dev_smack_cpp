@@ -11,7 +11,10 @@
 
 #include "test_common.hpp"
 
-#include "../src/smack_util_console_app.hpp"
+#include "../src/smack_cli.hpp"
+
+using std::cout;
+using std::endl;
 
 static int free_function(int p1) {
     std::cout <<
@@ -67,73 +70,27 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        auto cmd1 = smack::util::Commands<
-            int>::make(
-            "eins",
-            *this,
-            &TestApplication::f1);
+        using smack::cli::Commands;
 
-        auto cmd2 = smack::util::Commands<
-            int,
-            const char*>::make(
-                "zwei",
-                *this,
-                &TestApplication::f2);
-
-        auto cmd3 = smack::util::Commands<
-            int,
-            double,
-            const char*>::make(
-                "drei",
-                *this,
-                &TestApplication::f3);
-
-        auto cmd4 = smack::util::Commands<
-            std::string>::make(
-                "vier",
-                *this,
-                &TestApplication::f4);
-
-        auto cmd5 = smack::util::Commands<
-            const std::string&>::make(
-                "fuenf",
-                *this,
-                &TestApplication::f5);
-
-        auto cmd6 = smack::util::Commands<
-            bool>::make(
-                "sechs",
-                *this,
-                &TestApplication::f6);
-
-        auto cmd7 = smack::util::Commands<
-            int> ::make(
-                "sieben",
-                *this,
-                &TestApplication::f7);
-
-        auto cmd7_2 = smack::util::Commands<
-            int,double>::make(
-                "sieben",
-                *this,
-                &TestApplication::f7_2);
-
-        auto cmd8 = smack::util::Commands<
-            int>::make(
-                "acht",
-                free_function
-            );
-
-        auto cli = smack::util::makeCliApplication(
-            cmd1,
-            cmd2,
-            cmd3,
-            cmd4,
-            cmd5,
-            cmd6,
-            cmd7,
-            cmd7_2,
-            cmd8);
+        auto cli = smack::cli::makeCliApplication(
+            Commands::make<&TestApplication::f1>(
+                "eins", this),
+            Commands::make<&TestApplication::f2>(
+                "zwei", this),
+            Commands::make<&TestApplication::f3>(
+                "drei", this),
+            Commands::make<&TestApplication::f4>(
+                "vier", this),
+            Commands::make<&TestApplication::f5>(
+                "fuenf", this),
+            Commands::make<&TestApplication::f6>(
+                "sechs", this),
+            Commands::make<&TestApplication::f7>(
+                "sieben", this),
+            Commands::make<&TestApplication::f7_2>(
+                "sieben_2", this ),
+            Commands::make<free_function>(
+                "acht") );
 
         return cli.launch(argv);
     }

@@ -2,11 +2,11 @@
 
 set(headers
     smack_util.hpp
-    smack_util_console_app.hpp
+    smack_cli.hpp
     smack_util_time_probe.hpp
 )
 set(implementation
-    smack_util_console_app.cpp
+    smack_cli.cpp
     smack_util_time_probe.cpp
 )
 

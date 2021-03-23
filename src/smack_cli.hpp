@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace smack {
-namespace util {
+namespace cli {
 
 using std::string;
 using std::cout;
@@ -352,49 +352,110 @@ public:
     }
 };
 
-template <typename ... Args> 
-class Commands {
-    template <typename H, typename F>
-    static auto make_(H& host, F member) {
-        return [&host, member](Args ... a) mutable {
-            return (host.*(member))(a...);
-        };
-    }
+/**
+ * Used for template function argument deduction.
+ * Use xxx below as a handier interface.
+ */
+template <auto F>
+class PListDed {};
 
-    template <typename F>
-    static auto make_(F member) {
-        return [member](Args ... a) {
-            return member(a...);
-        };
-    }
+template <typename R, typename... Args, auto (F)(Args...)->R>
+class PListDed<F> {
 
 public:
-    template <typename H, typename F>
-    static auto make(
-        string name, 
-        H& host, 
-        F member, 
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            make_(host, member);
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
     template <typename F>
     static auto make(
         string name,
         F function,
-        initializer_list<const char*> parameterHelper = {})
+        initializer_list<const char*> parameterHelper)
     {
         auto functor =
-            make_(function);
+            [function](Args ... a) {
+            return function(a...);
+        };
+
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
         return result;
     }
 };
 
-} // namespace util
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+class PListDed<F> {
+public:
+    template <typename T>
+    static auto make(
+        const T instance,
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
+
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+};
+
+// Const overload.
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+class PListDed<F> {
+public:
+    template <typename T>
+    static auto make(
+        const T instance,
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
+
+        Command<decltype(functor), Args ...>
+            result(name, functor, parameterHelper);
+        return result;
+    }
+};
+
+/**
+ * Offers the external interface.
+ */
+struct Commands {
+    /**
+     * Create a command for a free function.
+     */
+    template <auto F>
+    static auto make(
+        string name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::make(
+            name,
+            F,
+            parameterHelper
+        );
+    }
+
+    /**
+     * Create a command for a member function.
+     */
+    template <auto const F, typename T>
+    static auto make(
+        string name,
+        const T instance,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::make<T>(
+            instance,
+            name,
+            parameterHelper
+            );
+    }
+};
+
+} // namespace cli
 } // namespace smack
