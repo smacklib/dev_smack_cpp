@@ -25,7 +25,6 @@ static int free_function(int p1) {
     return EXIT_SUCCESS;
 }
 
-#if 1
 class TestApplication
 {
     std::string name_;
@@ -71,9 +70,9 @@ public:
     }
 
     int execute(const std::vector<std::string>& argv) {
-        using smack::util::Commands;
+        using smack::cli::Commands;
 
-        auto cli = smack::util::makeCliApplication(
+        auto cli = smack::cli::makeCliApplication(
             Commands::make<&TestApplication::f1>(
                 "eins", this),
             Commands::make<&TestApplication::f2>(
@@ -109,7 +108,3 @@ int main(int argc, char**argv)
 
     return ta.execute(cmdArgv);
 }
-
-#else
-#error Activate snippet.
-#endif

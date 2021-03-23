@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace smack {
-namespace util {
+namespace cli {
 
 using std::string;
 using std::cout;
@@ -457,5 +457,5 @@ struct Commands {
     }
 };
 
-} // namespace util
+} // namespace cli
 } // namespace smack

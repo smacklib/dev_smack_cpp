@@ -14,7 +14,7 @@
 
 namespace {
 
-using smack::util::Commands;
+using smack::cli::Commands;
 
 int f1(int p1) {
     return smack::test::common::f(__func__, p1);
@@ -77,7 +77,7 @@ int execute(const std::vector<std::string>& argv) {
     auto cmd7_2 = Commands::make<static_cast<int(*)(int, double)>(f7)>(
         "sieben_2");
 
-    auto cli = smack::util::makeCliApplication(
+    auto cli = smack::cli::makeCliApplication(
         cmd1,
         cmd2,
         cmd3,

@@ -7,7 +7,7 @@
 
 #include "smack_util_console_app.hpp"
 
-namespace smack::util {
+namespace smack::cli {
 
 void transform(const char* in, int& out) {
     std::size_t pos;
