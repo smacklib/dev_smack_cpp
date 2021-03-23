@@ -10,7 +10,7 @@
 
 #include "test_common.hpp"
 
-#include "../src/smack_util_console_app.hpp"
+#include "../src/smack_cli.hpp"
 
 namespace {
 
