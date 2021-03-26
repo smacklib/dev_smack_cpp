@@ -81,18 +81,19 @@ constexpr const char* resolve_type() {
 }
 
 template<typename R, size_t I = 0, typename Func, typename ...Ts>
-typename std::enable_if<I == sizeof...(Ts),std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...> &, Func) {
+typename std::enable_if<I == sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
+map_tuple(std::tuple<Ts...>&, Func) {
     std::array<R, sizeof...(Ts)> result;
     return result;
 }
 
 template<typename R, size_t I = 0, typename Func, typename ...Ts>
 typename std::enable_if<I != sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...> & tpl, Func func) {
-    R c = func(std::get<I>(tpl));
-    std::array<R, sizeof...(Ts)> result = map_tuple<R, I + 1>(tpl, func);
-    result[I] = c;
+map_tuple(std::tuple<Ts...>& tpl, Func func) {
+    std::array<R, sizeof...(Ts)> result =
+        map_tuple<R, I + 1>(tpl, func);
+    result[I] =
+        func(std::get<I>(tpl));
     return result;
 }
 
@@ -147,6 +148,9 @@ class CliApplication
         });
 
         for (const string& c : x) {
+            // If the passed command is empty all lines are printed.
+            // Otherwise prints only the lines that contain the passed command
+            // name.
             if (c.empty() || c.find( command ) == 0)
                 cerr << c << endl;
         }
@@ -249,7 +253,7 @@ public:
 
 private:
     template<int ... S>
-    R callFunc(VT& params, std::integer_sequence<int, S...>) {
+    R callFunc(VT& params, std::integer_sequence<int, S...>) const {
         return operator()(std::get<S>(params) ...);
     }
 
@@ -259,11 +263,11 @@ private:
      * Trigger mapping.
      */
     template <typename ... TT>
-    void map(TT ...) {
+    void map(TT ...) const {
     }
 
     template <int I>
-    int tf(VT& params, const string& str) {
+    int tf(VT& params, const string& str) const {
         try {
             transform(str.c_str(), std::get<I>(params));
         }
@@ -284,7 +288,7 @@ private:
     void updateImpl(
         VT& params,
         const std::vector<string>& v,
-        const std::integer_sequence<int, S...>&) {
+        const std::integer_sequence<int, S...>&) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Bad array size.");
         }
@@ -310,7 +314,7 @@ public:
     /**
      * Supports a typesave call of the command.
      */
-    R operator()(Args... a) {
+    R operator()(Args... a) const {
         return func_(a...);
     }
 
@@ -319,7 +323,7 @@ public:
      * the number of parameters represents the actual number of offered
      * command parameters, not including the command name or other stuff.
      */
-    R operator()(const std::vector<string>& v) {
+    R operator()(const std::vector<string>& v) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Wrong number of parameters.");
         }
@@ -339,30 +343,39 @@ public:
             integer_sequence);
     }
 
-    string to_string() const {
-        return name_ + " " + type_name();
-    }
-
-    constexpr string type_name() const {
-        std::array<const char*, kParameterCount>
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    constexpr string to_string() const {
+        // Get the raw type names of the parameters.
+        std::array<string, kParameterCount>
             expander{ (resolve_type<Args>()) ... };
 
+        // If help was passed prepend the raw types with the 
+        // passed display names.
         size_t idx = 0;
-        for (auto c : parameterHelp_)
-            expander[idx++] = c;
+        for (string c : parameterHelp_) {
+            if (c.empty())
+                continue;
+            expander[idx++] = c + ":" + expander[idx];
+        }
 
-        string result;
+        // Line starts with the command name.
+        string result{ name_ };
 
         if (!expander.size())
             return result;
 
-        string comma(", ");
-
-        result = expander[0];
-
+        result.append(
+            " ");
+        // Add the first argument.
+        result.append(
+            expander[0]);
+        // For the remaining arguments.
         for (size_t i = 1; i < expander.size(); i++) {
             result.append(
-                comma);
+                ", ");
             result.append(
                 expander[i]);
         }
