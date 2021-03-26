@@ -3,7 +3,7 @@
  *
  * Console application helper.
  *
- * Copyright (c) 2019-2020 Michael Binz
+ * Copyright (c) 2019-2021 Michael Binz
  */
 
 #pragma once
@@ -186,6 +186,14 @@ public:
             return EXIT_FAILURE;
         }
     }
+
+    int launch(int argc, char** argv) {
+        std::vector<std::string> cmdArgv(
+            argv + 1,
+            argv + argc);
+
+        return launch(cmdArgv);
+    }
 };
 
 /**
@@ -353,12 +361,15 @@ public:
 };
 
 /**
- * Used for template function argument deduction.
- * Use xxx below as a handier interface.
+ * The required template specialisations used to create a functor for
+ * a callable entity.
  */
 template <auto F>
 class PListDed {};
 
+/**
+ * Specialisation for free functions. 
+ */
 template <typename R, typename... Args, auto (F)(Args...)->R>
 class PListDed<F> {
 
@@ -380,6 +391,9 @@ public:
     }
 };
 
+/**
+ * Specialisation for instance operations.
+ */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
 class PListDed<F> {
 public:
@@ -400,7 +414,9 @@ public:
     }
 };
 
-// Const overload.
+/**
+ * Specialisation for const instance operations.
+ */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
 class PListDed<F> {
 public:
@@ -427,6 +443,13 @@ public:
 struct Commands {
     /**
      * Create a command for a free function.
+     * 
+     * @param F The function reference.
+     * @param name The name of the resulting command.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
      */
     template <auto F>
     static auto make(
@@ -442,6 +465,16 @@ struct Commands {
 
     /**
      * Create a command for a member function.
+     *
+     * @param F The operation reference.
+     * @param T The type of the class implementing F.  This is deduced from the
+     * \p instance parameter.
+     * @param name The name of the resulting command.
+     * @param instance The instance to use when calling the operation.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
      */
     template <auto const F, typename T>
     static auto make(
