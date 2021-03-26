@@ -6,6 +6,7 @@ set(headers
 
 add_executable( smack_cpp_test
     main.cpp
+    test_cli.cpp
     test_time_probe.cpp
 	test_util.cpp
 )
