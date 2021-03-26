@@ -3,7 +3,7 @@
  *
  * Console application helper.
  *
- * Copyright (c) 2019-2020 Michael Binz
+ * Copyright (c) 2019-2021 Michael Binz
  */
 
 #pragma once
@@ -157,7 +157,13 @@ public:
         commands_(commands...) {
     }
 
-    int launch(std::vector<string> argv) {
+    /**
+     * Launch the application using the passed arguments.  Note that the 
+     * passed arguments must not include the name of the application. Do
+     * not pass argv[0].  See and prefer launch( int, char** ) which directly
+     * accepts the arguments received in a main()-function.
+     */
+    int launch(const std::vector<string>& argv) {
         if (argv.empty()) {
             cerr << "No arguments. Available commands:" << endl;
             printHelp();
@@ -168,9 +174,10 @@ public:
             return EXIT_SUCCESS;
         }
 
+        // Take the command name.
         const string& cmd_name =
             argv[0];
-
+        // And the parameter names, excluding the command name.
         std::vector<string> cmdArgv(
             argv.begin() + 1,
             argv.end());
@@ -185,6 +192,22 @@ public:
 
             return EXIT_FAILURE;
         }
+    }
+
+    /**
+     * Launch the application using the passed arguments.  Just forward the arguments
+     * that were passed to main().
+     * 
+     * @param argc The argument count, as defined by the C/C++ main()-function.
+     * @param argc The arguments, as defined by the C/C++ main()-function.
+     */
+    int launch(int argc, char** argv) {
+        // Skip the program name.
+        std::vector<std::string> cmdArgv(
+            argv + 1,
+            argv + argc);
+
+        return launch(cmdArgv);
     }
 };
 
@@ -353,12 +376,15 @@ public:
 };
 
 /**
- * Used for template function argument deduction.
- * Use xxx below as a handier interface.
+ * The required template specialisations used to create a functor for
+ * a callable entity.
  */
 template <auto F>
 class PListDed {};
 
+/**
+ * Specialisation for free functions. 
+ */
 template <typename R, typename... Args, auto (F)(Args...)->R>
 class PListDed<F> {
 
@@ -380,6 +406,9 @@ public:
     }
 };
 
+/**
+ * Specialisation for instance operations.
+ */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
 class PListDed<F> {
 public:
@@ -400,7 +429,9 @@ public:
     }
 };
 
-// Const overload.
+/**
+ * Specialisation for const instance operations.
+ */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
 class PListDed<F> {
 public:
@@ -427,6 +458,13 @@ public:
 struct Commands {
     /**
      * Create a command for a free function.
+     * 
+     * @param F The function reference.
+     * @param name The name of the resulting command.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
      */
     template <auto F>
     static auto make(
@@ -442,6 +480,16 @@ struct Commands {
 
     /**
      * Create a command for a member function.
+     *
+     * @param F The operation reference.
+     * @param T The type of the class implementing F.  This is deduced from the
+     * \p instance parameter.
+     * @param name The name of the resulting command.
+     * @param instance The instance to use when calling the operation.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
      */
     template <auto const F, typename T>
     static auto make(
