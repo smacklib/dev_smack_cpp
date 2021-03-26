@@ -158,12 +158,12 @@ public:
     }
 
     /**
-     * Launch the application using the passed arguments.  Note that the passed
-     * arguments must not include the name of the application. Do not pass
-     * argv[0].  See launch( int, char** ) which directly accepts the arguments
-     * received in a main()-function.
+     * Launch the application using the passed arguments.  Note that the 
+     * passed arguments must not include the name of the application. Do
+     * not pass argv[0].  See and prefer launch( int, char** ) which directly
+     * accepts the arguments received in a main()-function.
      */
-    int launch(std::vector<string> argv) {
+    int launch(const std::vector<string>& argv) {
         if (argv.empty()) {
             cerr << "No arguments. Available commands:" << endl;
             printHelp();
@@ -174,9 +174,10 @@ public:
             return EXIT_SUCCESS;
         }
 
+        // Take the command name.
         const string& cmd_name =
             argv[0];
-
+        // And the parameter names, excluding the command name.
         std::vector<string> cmdArgv(
             argv.begin() + 1,
             argv.end());
@@ -194,13 +195,14 @@ public:
     }
 
     /**
-     * Launch the application using the passed arguments.  Pass here directly
-     * the arguments that were passed to main().
+     * Launch the application using the passed arguments.  Just forward the arguments
+     * that were passed to main().
      * 
      * @param argc The argument count, as defined by the C/C++ main()-function.
      * @param argc The arguments, as defined by the C/C++ main()-function.
      */
     int launch(int argc, char** argv) {
+        // Skip the program name.
         std::vector<std::string> cmdArgv(
             argv + 1,
             argv + argc);
