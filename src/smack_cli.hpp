@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <cstdlib>
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+// #include <experimental/filesystem>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -74,8 +74,8 @@ constexpr const char* resolve_type() {
         return "string";
     else if (typeid(string) == typeid(T))
         return "string";
-    else if (typeid(std::experimental::filesystem::path) == typeid(T))
-        return "filename";
+    // else if (typeid(std::experimental::filesystem::path) == typeid(T))
+    //     return "filename";
 
     return typeid(T).name();
 }
@@ -347,7 +347,7 @@ public:
      * Creates a single-line command description that is displayed
      * in the generated cli help.
      */
-    constexpr string to_string() const {
+    string to_string() const {
         // Get the raw type names of the parameters.
         std::array<string, kParameterCount>
             expander{ (resolve_type<Args>()) ... };
@@ -358,7 +358,8 @@ public:
         for (string c : parameterHelp_) {
             if (c.empty())
                 continue;
-            expander[idx++] = c + ":" + expander[idx];
+            expander[idx] = c + ":" + expander[idx];
+            ++idx;
         }
 
         // Line starts with the command name.
@@ -402,10 +403,10 @@ template <typename R, typename... Args, auto (F)(Args...)->R>
 class PListDed<F> {
 
 public:
-    template <typename F>
+    template <typename Fu>
     static auto make(
         string name,
-        F function,
+        Fu function,
         initializer_list<const char*> parameterHelper)
     {
         auto functor =
@@ -425,9 +426,9 @@ public:
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
 class PListDed<F> {
 public:
-    template <typename T>
+    template <typename Ty>
     static auto make(
-        const T instance,
+        const Ty instance,
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
@@ -448,9 +449,9 @@ public:
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
 class PListDed<F> {
 public:
-    template <typename T>
+    template <typename Ty>
     static auto make(
-        const T instance,
+        const Ty instance,
         string name,
         initializer_list<const char*> parameterHelper = {})
     {
@@ -510,7 +511,7 @@ struct Commands {
         const T instance,
         initializer_list<const char*> parameterHelper = {})
     {
-        return PListDed<F>::make<T>(
+        return PListDed<F>::template make<T>(
             instance,
             name,
             parameterHelper
