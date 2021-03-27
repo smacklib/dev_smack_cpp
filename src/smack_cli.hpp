@@ -11,8 +11,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-// #include <experimental/filesystem>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -74,8 +72,6 @@ constexpr const char* resolve_type() {
         return "string";
     else if (typeid(string) == typeid(T))
         return "string";
-    // else if (typeid(std::experimental::filesystem::path) == typeid(T))
-    //     return "filename";
 
     return typeid(T).name();
 }
