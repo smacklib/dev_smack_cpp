@@ -2,14 +2,14 @@
  *
  * Console application helper.
  *
- * Copyright (c) 2019-2020 Michael Binz
+ * Copyright (c) 2019-2021 Michael Binz
  */
 
 #include "smack_cli.hpp"
 
 namespace smack::cli {
 
-void transform(const char* in, int& out) {
+template<> void transform(const char* in, int& out) {
     std::size_t pos;
     out = std::stoi(in, &pos, 0);
     if (in[pos]) {
@@ -17,7 +17,7 @@ void transform(const char* in, int& out) {
     }
 }
 
-void transform(const char* in, long& out) {
+template<> void transform(const char* in, long& out) {
     std::size_t pos;
     out = std::stol(in, &pos, 0);
     if (in[pos]) {
@@ -25,7 +25,7 @@ void transform(const char* in, long& out) {
     }
 }
 
-void transform(const char* in, float& out) {
+template<> void transform(const char* in, float& out) {
     std::size_t pos;
     out = std::stof(in, &pos);
     if (in[pos]) {
@@ -33,7 +33,7 @@ void transform(const char* in, float& out) {
     }
 }
 
-void transform(const char* in, double& out) {
+template<> void transform(const char* in, double& out) {
     std::size_t pos;
     out = std::stod(in, &pos);
     if (in[pos]) {
@@ -41,7 +41,7 @@ void transform(const char* in, double& out) {
     }
 }
 
-void transform(const char* in, bool& out) {
+template<> void transform(const char* in, bool& out) {
     std::string parameter = in;
 
     if (parameter == "true") {
@@ -54,6 +54,14 @@ void transform(const char* in, bool& out) {
     }
 
     throw std::invalid_argument(in);
+}
+
+template<> void transform(const char* in, std::string& out) {
+    out = in;
+}
+
+template<> void transform(const char* in, const char*& out) {
+    out = in;
 }
 
 } // namespace smack::util

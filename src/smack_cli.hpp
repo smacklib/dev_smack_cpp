@@ -34,18 +34,12 @@ using std::endl;
 using std::initializer_list;
 using std::size_t;
 
-// Produces the necessary transformations for the char* types
-// as well as for std::string.
+/**
+ * Define the transformation function.  Implementations for primitves 
+ * and string-like types are available in the implementation file.
+ */
 template <typename T>
-void transform(const char* in, T& out) {
-    out = in;
-}
-
-void transform(const char* in, int& out);
-void transform(const char* in, long& out);
-void transform(const char* in, float& out);
-void transform(const char* in, double& out);
-void transform(const char* in, bool& out);
+void transform(const char* in, T& out);
 
 /**
  * @return a string representation for the supported types.
