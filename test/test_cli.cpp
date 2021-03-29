@@ -47,11 +47,36 @@ TEST(SmackCliTest, CommandHelpNone) {
 TEST(SmackCliTest, CommandHelpPartial) {
     using smack::cli::Commands;
 
-        auto cmd = Commands::make<f3>(
-            "drei",
-            { "p1", "p2" });
+    auto cmd = Commands::make<f3>(
+        "drei",
+        { "p1", "p2" });
 
     auto help = cmd.to_string();
 
     EXPECT_EQ("drei p1:int, p2:double, string", help);
+}
+
+TEST(SmackCliTest, TransformChar) {
+    const char* in = "13";
+    char out;
+
+    smack::cli::transform(in, out);
+
+    EXPECT_EQ(13, out);
+}
+
+TEST(SmackCliTest, TransformCharFail) {
+    try {
+        const char* in = "dreizehn";
+        char out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (std::invalid_argument(in))
+    {
+        std::string exp{ "invalid stoi argument" };
+        EXPECT_EQ(exp, in.what());
+    }
 }

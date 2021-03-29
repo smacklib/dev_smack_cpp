@@ -9,6 +9,14 @@
 
 namespace smack::cli {
 
+template<> void transform(const char* in, char& out) {
+    std::size_t pos;
+    out = std::stoi(in, &pos, 0);
+    if (in[pos]) {
+        throw std::invalid_argument(in);
+    }
+}
+
 template<> void transform(const char* in, int& out) {
     std::size_t pos;
     out = std::stoi(in, &pos, 0);
