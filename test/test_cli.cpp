@@ -57,12 +57,11 @@ TEST(SmackCliTest, CommandHelpPartial) {
 }
 
 TEST(SmackCliTest, TransformChar) {
-    const char* in = "13";
     char out;
-
-    smack::cli::transform(in, out);
-
-    EXPECT_EQ(13, out);
+    smack::cli::transform("-128", out);
+    EXPECT_EQ(-128, out);
+    smack::cli::transform("127", out);
+    EXPECT_EQ(127, out);
 }
 
 TEST(SmackCliTest, TransformCharFail) {
@@ -74,9 +73,123 @@ TEST(SmackCliTest, TransformCharFail) {
 
         FAIL();
     }
-    catch (std::invalid_argument(in))
-    {
-        std::string exp{ "invalid stoi argument" };
+    catch (std::invalid_argument(in)) {
+        std::string exp{ "Cannot convert 'dreizehn' to char." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformCharFail2) {
+    try {
+        const char* in = "13e";
+        char out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Cannot convert '13e' to char." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformCharRangeOverflow) {
+    try {
+        const char* in = "128";
+        char out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Value 128 must be in range [-128..127]." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformCharRangeUnderflow) {
+    try {
+        const char* in = "-129";
+        char out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Value -129 must be in range [-128..127]." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformInt) {
+    int out;
+    smack::cli::transform("-2147483648", out);
+    EXPECT_EQ(-2147483648, out);
+    smack::cli::transform("2147483647", out);
+    EXPECT_EQ(2147483647, out);
+    smack::cli::transform("0x10", out);
+    EXPECT_EQ(0x10, out);
+}
+
+TEST(SmackCliTest, TransformIntFail) {
+    try {
+        const char* in = "dreizehn";
+        int out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (std::invalid_argument(in)) {
+        std::string exp{ "Cannot convert 'dreizehn' to int." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformIntFail2) {
+    try {
+        const char* in = "13e";
+        int out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Cannot convert '13e' to int." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformIntRangeOverflow) {
+    try {
+        const char* in = "2147483648";
+        int out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Value 2147483648 must be in range [-2147483648..2147483647]." };
+        EXPECT_EQ(exp, in.what());
+    }
+}
+
+TEST(SmackCliTest, TransformIntRangeUnderflow) {
+    try {
+        const char* in = "-2147483649";
+        int out;
+
+        smack::cli::transform(in, out);
+
+        FAIL();
+    }
+    catch (const std::invalid_argument& in) {
+        std::string exp{ "Value -2147483649 must be in range [-2147483648..2147483647]." };
         EXPECT_EQ(exp, in.what());
     }
 }

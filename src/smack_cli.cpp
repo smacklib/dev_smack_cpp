@@ -7,30 +7,86 @@
 
 #include "smack_cli.hpp"
 
+#include <limits>
+#include <sstream>
+
 namespace smack::cli {
 
-template<> void transform(const char* in, char& out) {
-    std::size_t pos;
-    out = std::stoi(in, &pos, 0);
-    if (in[pos]) {
-        throw std::invalid_argument(in);
+namespace {
+
+/**
+ * Common error handling.
+ */
+void throwConversionFailure(const char* what, const char* type) {
+    std::ostringstream msg;
+
+    msg <<
+        "Cannot convert '" <<
+        what <<
+        "' to " <<
+        type <<
+        ".";
+
+    throw std::invalid_argument(msg.str());
+}
+
+template <typename T>
+T validateRange(long long val) {
+    if (val < std::numeric_limits<T>::min()) {
+        throw std::out_of_range("");
     }
+    if (val > std::numeric_limits<T>::max()) {
+        throw std::out_of_range("");
+    }
+
+    return static_cast<T>(val);
+}
+
+template <typename T>
+void transform_impl_signed(const char* in, T& out, const char* tname) {
+    std::size_t pos;
+    try {
+        long long result = std::stoll(in, &pos, 0);
+        // If all input is processed ...
+        if (!in[pos]) {
+            // ... and is in range ...
+            out = validateRange<T>(result);
+            // ... were done
+            return;
+        }
+    }
+    catch (const std::invalid_argument&) {
+    }
+    catch (const std::out_of_range&) {
+        std::ostringstream msg;
+
+        msg <<
+            "Value " <<
+            in <<
+            " must be in range [" <<
+            static_cast<long>(std::numeric_limits<T>::min()) <<
+            ".." <<
+            static_cast<long>(std::numeric_limits<T>::max()) <<
+            "].";
+
+        throw std::invalid_argument(msg.str());
+    }
+
+    throwConversionFailure(in, tname);
+}
+
+} // namespace anonymous
+
+template<> void transform(const char* in, char& out) {
+    transform_impl_signed(in, out, "char");
 }
 
 template<> void transform(const char* in, int& out) {
-    std::size_t pos;
-    out = std::stoi(in, &pos, 0);
-    if (in[pos]) {
-        throw std::invalid_argument(in);
-    }
+    transform_impl_signed(in, out, "int");
 }
 
 template<> void transform(const char* in, long& out) {
-    std::size_t pos;
-    out = std::stol(in, &pos, 0);
-    if (in[pos]) {
-        throw std::invalid_argument(in);
-    }
+    transform_impl_signed(in, out, "long");
 }
 
 template<> void transform(const char* in, float& out) {
