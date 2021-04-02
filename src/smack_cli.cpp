@@ -57,93 +57,106 @@ T validateRangeX(F val) {
     return static_cast<T>(val);
 }
 
+/**
+ * Conversion function specialisation.
+ */
+template <auto F>
+struct ConvFu {};
 
-template <typename T>
-void transform_impl_signed(const char* in, T& out, const char* tname) {
-    std::size_t pos;
-    try {
-        long long result = std::stoll(in, &pos, 0);
-        // If all input is processed ...
-        if (!in[pos]) {
-            // ... and is in range ...
-            out = validateRange<T>(result);
-            // ... were done
-            return;
-        }
-    }
-    catch (const std::invalid_argument&) {
-    }
-    catch (const std::out_of_range&) {
-        std::ostringstream msg;
-
-        msg <<
-            "Value " <<
-            in <<
-            " must be in range [" <<
-            static_cast<long>(std::numeric_limits<T>::min()) <<
-            ".." <<
-            static_cast<long>(std::numeric_limits<T>::max()) <<
-            "].";
-
-        throw std::invalid_argument(msg.str());
-    }
-      
-    throwConversionFailure(in, tname);
-}
-
-template <typename R, R (*T)(int&)>
-void doOperation()
+/**
+ * Specialisation for free functions. 
+ */
+template <typename R, typename... Args, auto (F)(Args...)->R>
+struct ConvFu<F> 
 {
-    int temp = 0;
-    T(temp);
-    std::cout << "Result is " << temp << std::endl;
-}
-
-template <typename R, R(F)(const string&, std::size_t*, int), typename T>
-void transform_impl(const char* in, T& out, const char* tname) {
-    std::size_t pos = 0;
-    try {
-        R result = F(in, &pos, 0);
-        // If all input is processed ...
-        if (!in[pos]) {
-            // ... and is in range ...
-            out = validateRangeX<T>(result);
-            // ... were done
-            return;
+    template <typename T, typename Fu>
+    static void make(
+        Fu function,
+        const char* in,
+        T& out,
+        const char* tname)
+    {
+        std::size_t pos = 0;
+        try {
+            R result = function(in, &pos, 0);
+            // If all input is processed ...
+            if (!in[pos]) {
+                // ... and is in range ...
+                out = validateRangeX<T>(result);
+                // ... we're done
+                return;
+            }
         }
-    }
-    catch (const std::invalid_argument&) {
-    }
-    catch (const std::out_of_range&) {
-        std::ostringstream msg;
+        catch (const std::invalid_argument&) {
+            // Ignore this expection.  A corresponding exception
+            // with a better message is thrown below. 
+        }
+        catch (const std::out_of_range&) {
+            std::ostringstream msg;
 
-        msg <<
-            "Value " <<
-            in <<
-            " must be in range [" <<
-            static_cast<long>(std::numeric_limits<T>::min()) <<
-            ".." <<
-            static_cast<long>(std::numeric_limits<T>::max()) <<
-            "].";
+            msg <<
+                "Value " <<
+                in <<
+                " must be in range [" <<
+                static_cast<long>(std::numeric_limits<T>::min()) <<
+                ".." <<
+                static_cast<long>(std::numeric_limits<T>::max()) <<
+                "].";
 
-        throw std::invalid_argument(msg.str());
+            throw std::invalid_argument(msg.str());
+        }
+
+        throwConversionFailure(in, tname);
     }
+};
 
-    throwConversionFailure(in, tname);
+template <auto F, typename T>
+auto transformImpl( 
+    const char* in, 
+    T& out, 
+    const char* tname ) {
+    return ConvFu<F>::make(
+        F,
+        in,
+        out,
+        tname
+    );
 }
+
+// Select the string overloads of the respective standard functions.
+constexpr auto cvSigned = 
+    static_cast<long long(*)(const string&, size_t*, int)>(std::stoll);
+constexpr auto cvUnsigned = 
+    static_cast<unsigned long long(*)(const string&, size_t*, int)>(std::stoull);
+constexpr auto stold_ = 
+    static_cast<long double(*)(const string&, size_t*)>(std::stold);
 
 } // namespace anonymous
 
+// Define the explict instantiations of the conversion functions.
+
 template<> void transform(const char* in, char& out) {
-    transform_impl<long long, std::stoll>(in, out, "char");
+    transformImpl<cvSigned>(in, out, "char");
 }
 
 template<> void transform(const char* in, int& out) {
-    transform_impl_signed(in, out, "int");
+    transformImpl<cvSigned>(in, out, "int");
 }
 
 template<> void transform(const char* in, long& out) {
-    transform_impl_signed(in, out, "long");
+    transformImpl<cvSigned>(in, out, "long");
+}
+
+template<> void transform(const char* in, unsigned char& out) {
+    transformImpl<cvUnsigned>(in, out, "char");
+}
+
+template<> void transform(const char* in, unsigned int& out) {
+    transformImpl<cvUnsigned>(in, out, "int");
+}
+
+template<> void transform(const char* in, unsigned long& out) {
+    transformImpl<cvUnsigned>(in, out, "long");
 }
 
 template<> void transform(const char* in, float& out) {
