@@ -41,6 +41,22 @@ T validateRange(long long val) {
 
     return static_cast<T>(val);
 }
+/**
+ * Validate if a value from a wider type is in the limits of a narrower type.
+ * F is wider, T is the narrower type.
+ */
+template <typename T, typename F>
+T validateRangeX(F val) {
+    if (val < std::numeric_limits<T>::min()) {
+        throw std::out_of_range("");
+    }
+    if (val > std::numeric_limits<T>::max()) {
+        throw std::out_of_range("");
+    }
+
+    return static_cast<T>(val);
+}
+
 
 template <typename T>
 void transform_impl_signed(const char* in, T& out, const char* tname) {
@@ -71,6 +87,47 @@ void transform_impl_signed(const char* in, T& out, const char* tname) {
 
         throw std::invalid_argument(msg.str());
     }
+      
+    throwConversionFailure(in, tname);
+}
+
+template <typename R, R (*T)(int&)>
+void doOperation()
+{
+    int temp = 0;
+    T(temp);
+    std::cout << "Result is " << temp << std::endl;
+}
+
+template <typename R, R(F)(const string&, std::size_t*, int), typename T>
+void transform_impl(const char* in, T& out, const char* tname) {
+    std::size_t pos = 0;
+    try {
+        R result = F(in, &pos, 0);
+        // If all input is processed ...
+        if (!in[pos]) {
+            // ... and is in range ...
+            out = validateRangeX<T>(result);
+            // ... were done
+            return;
+        }
+    }
+    catch (const std::invalid_argument&) {
+    }
+    catch (const std::out_of_range&) {
+        std::ostringstream msg;
+
+        msg <<
+            "Value " <<
+            in <<
+            " must be in range [" <<
+            static_cast<long>(std::numeric_limits<T>::min()) <<
+            ".." <<
+            static_cast<long>(std::numeric_limits<T>::max()) <<
+            "].";
+
+        throw std::invalid_argument(msg.str());
+    }
 
     throwConversionFailure(in, tname);
 }
@@ -78,7 +135,7 @@ void transform_impl_signed(const char* in, T& out, const char* tname) {
 } // namespace anonymous
 
 template<> void transform(const char* in, char& out) {
-    transform_impl_signed(in, out, "char");
+    transform_impl<long long, std::stoll>(in, out, "char");
 }
 
 template<> void transform(const char* in, int& out) {

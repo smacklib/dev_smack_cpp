@@ -1,6 +1,7 @@
 #include <gtest/gtest.h> // googletest header file
 
 #include <string>
+#include <limits.h>
 
 #include "test_common.hpp"
 #include "src/smack_cli.hpp"
@@ -18,6 +19,10 @@ namespace {
 
     int f3(int p1, double p2, const char* p3) {
         return smack::test::common::f(__func__, p1, p2, p3);
+    }
+
+    int f4(uint8_t p1) {
+        return smack::test::common::f(__func__, p1);
     }
 }
 
@@ -54,6 +59,18 @@ TEST(SmackCliTest, CommandHelpPartial) {
     auto help = cmd.to_string();
 
     EXPECT_EQ("drei p1:int, p2:double, string", help);
+}
+
+TEST(SmackCliTest, CommandUint8) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<f4>(
+        "vier",
+        { "uint8" });
+
+    auto help = cmd.to_string();
+
+    EXPECT_EQ("vier uint8:unsigned char", help);
 }
 
 TEST(SmackCliTest, TransformChar) {
@@ -127,7 +144,8 @@ TEST(SmackCliTest, TransformCharRangeUnderflow) {
 TEST(SmackCliTest, TransformInt) {
     int out;
     smack::cli::transform("-2147483648", out);
-    EXPECT_EQ(-2147483648, out);
+    
+    EXPECT_EQ(std::numeric_limits<int>::min(), out);
     smack::cli::transform("2147483647", out);
     EXPECT_EQ(2147483647, out);
     smack::cli::transform("0x10", out);
