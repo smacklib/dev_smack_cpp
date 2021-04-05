@@ -63,16 +63,6 @@ TEST(SmackCliTest, CommandHelpPartial) {
     EXPECT_EQ("drei p1:int, p2:double, string", help);
 }
 
-
-struct T {
-    enum { int_t, float_t } type;
-    template <typename Integer,
-              std::enable_if_t<std::is_integral<Integer>::value, bool> = true
-    >
-    T(Integer) : type(int_t) {}
- 
-};
-
 template <typename T,
             std::enable_if_t<std::is_integral<T>::value, bool> = true
 >
@@ -118,8 +108,6 @@ const char* typename_b()
         return "double";
     case std::numeric_limits<long double>::digits:
         return "ldouble";
-    default:
-        return "badFloat";
     }
 
     return "badfloat";
@@ -128,7 +116,7 @@ const char* typename_b()
 template <typename T,
             std::enable_if_t<std::is_same<T,char*>::value, bool> = true
 >
-const char* typename_b()
+constexpr const char* typename_b()
 {
     return "string";
 }
@@ -277,11 +265,6 @@ void testConversion()
 
 TEST(SmackCliTest, TransformChar) {
     testConversion<char>();
-    // char out;
-    // smack::cli::transform("-128", out);
-    // EXPECT_EQ(-128, out);
-    // smack::cli::transform("127", out);
-    // EXPECT_EQ(127, out);
 }
 
 TEST(SmackCliTest, TransformCharFail) {
