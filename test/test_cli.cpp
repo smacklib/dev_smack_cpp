@@ -1,6 +1,7 @@
 #include <gtest/gtest.h> // googletest header file
 
 #include <string>
+#include <type_traits>
 #include <limits.h>
 
 #include "test_common.hpp"
@@ -62,17 +63,144 @@ TEST(SmackCliTest, CommandHelpPartial) {
     EXPECT_EQ("drei p1:int, p2:double, string", help);
 }
 
-// TEST(SmackCliTest, CommandUint8) {
-//     using smack::cli::Commands;
 
-//     auto cmd = Commands::make<f4>(
-//         "vier",
-//         { "uint8" });
+struct T {
+    enum { int_t, float_t } type;
+    template <typename Integer,
+              std::enable_if_t<std::is_integral<Integer>::value, bool> = true
+    >
+    T(Integer) : type(int_t) {}
+ 
+};
 
-//     auto help = cmd.to_string();
+template <typename T,
+            std::enable_if_t<std::is_integral<T>::value, bool> = true
+>
+const char* typename_b()
+{
+    if ( std::numeric_limits<T>::digits == 1 )
+        return "bool";
 
-//     EXPECT_EQ("vier uint8:unsigned char", help);
-// }
+    switch ( sizeof( T ) ) {
+        case 1: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ubyte" : "byte";
+        }
+        case 2: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ushort" : "short";
+        }
+        case 4: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "uint" : "int";
+        }
+        case 8: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ulong" : "long";
+        }
+        default:
+            return "badInt";
+    }
+
+    return "badint";
+}
+
+template <typename T,
+            std::enable_if_t<std::is_floating_point<T>::value, bool> = true
+>
+const char* typename_b()
+{
+    switch (std::numeric_limits<T>::digits)
+    {
+    case std::numeric_limits<float>::digits:
+        return "float";
+    case std::numeric_limits<double>::digits:
+        return "double";
+    case std::numeric_limits<long double>::digits:
+        return "ldouble";
+    default:
+        return "badFloat";
+    }
+
+    return "badfloat";
+}
+
+template <typename T,
+            std::enable_if_t<std::is_same<T,char*>::value, bool> = true
+>
+const char* typename_b()
+{
+    return "string";
+}
+
+template <typename T,
+            std::enable_if_t<std::is_same<T,std::string>::value, bool> = true
+>
+const char* typename_b()
+{
+    return "string";
+}
+
+template <typename T,
+            std::enable_if_t<std::is_pointer<T>::value, bool> = true
+>
+const char* typename_c()
+{
+    using i1 = typename std::remove_pointer<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+    using i3 = typename std::add_pointer<i2>::type;
+
+    return typename_b<i3>();
+}
+template <typename T,
+            std::enable_if_t<!std::is_pointer<T>::value, bool> = true
+>
+const char* typename_c()
+{
+    return typename_b<T>();
+}
+
+TEST(SmackCliTest, PrimitiveNames) {
+    using smack::cli::Commands;
+
+    EXPECT_EQ("bool", string{ typename_c<bool>() });
+
+    EXPECT_EQ("ubyte", string{ typename_c<uint8_t>() });
+    EXPECT_EQ("byte", string{ typename_c<int8_t>() });
+    EXPECT_EQ("ubyte", string{ typename_c<unsigned char>() });
+    EXPECT_EQ("byte", string{ typename_c<char>() });
+
+    EXPECT_EQ("ushort", string{ typename_c<uint16_t>() });
+    EXPECT_EQ("short", string{ typename_c<int16_t>() });
+    EXPECT_EQ("ushort", string{ typename_c<unsigned short>() });
+    EXPECT_EQ("short", string{ typename_c<short>() });
+
+    EXPECT_EQ("uint", string{ typename_c<uint32_t>() });
+    EXPECT_EQ("int", string{ typename_c<int32_t>() });
+    EXPECT_EQ("uint", string{ typename_c<unsigned>() });
+    EXPECT_EQ("int", string{ typename_c<int>() });
+
+    EXPECT_EQ("ulong", string{ typename_c<uint64_t>() });
+    EXPECT_EQ("long", string{ typename_c<int64_t>() });
+    EXPECT_EQ("ulong", string{ typename_c<unsigned long>() });
+    EXPECT_EQ("long", string{ typename_c<long>() });
+
+    EXPECT_EQ("float", string{ typename_c<float>() });
+    EXPECT_EQ("double", string{ typename_c<double>() });
+    EXPECT_EQ("ldouble", string{ typename_c<long double>() });
+
+    EXPECT_EQ("string", string{ typename_c<std::string>() });
+    EXPECT_EQ("string", string{ typename_c<char*>() });
+    EXPECT_EQ("string", string{ typename_c<const char*>() });
+
+    // auto cmd = Commands::make<f4>(
+    //     "vier",
+    //     { "uint8" });
+
+    // auto help = cmd.to_string();
+
+    // EXPECT_EQ("vier uint8:unsigned char", help);
+}
 
 template <typename T>
 void testConversion()

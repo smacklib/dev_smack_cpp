@@ -35,7 +35,7 @@ using std::initializer_list;
 using std::size_t;
 
 /**
- * Define the transformation function.  Implementations for primitives 
+ * Define the transformation function.  Implementations for primitves 
  * and string-like types are available in the implementation file.
  */
 template <typename T>
