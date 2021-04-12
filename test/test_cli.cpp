@@ -190,6 +190,45 @@ TEST(SmackCliTest, PrimitiveNames) {
     // EXPECT_EQ("vier uint8:unsigned char", help);
 }
 
+// https://stackoverflow.com/questions/45502322/default-template-specialization-with-multiple-conditions/45571010
+
+template<int N>
+struct Choice: Choice<N-1>
+{};
+
+template<> struct Choice<0>
+{};
+
+template<typename T>
+std::enable_if_t<std::is_integral<T>::value>
+bar(Choice<2>) {
+    std::cout << "integral" << std::endl;
+}
+
+template<typename T>
+std::enable_if_t<std::is_same<T, std::string>::value>
+bar(Choice<1>) {
+    std::cout << "string" << std::endl; 
+}
+
+template<typename T>
+void bar(Choice<0>) {
+    std::cout << "whatever" << std::endl; 
+}
+
+template<typename T, typename... Args>
+void foo(Args&&... args) { 
+    bar<T>(Choice<100>{}); 
+}
+
+TEST(SmackCliTest, TemplateTest) {
+    using smack::cli::Commands;
+
+    foo<bool>();
+    foo<std::string>();
+    foo<void>();
+}
+
 template <typename T>
 void testConversion()
 {
