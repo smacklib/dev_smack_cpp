@@ -192,6 +192,8 @@ TEST(SmackCliTest, PrimitiveNames) {
 
 // https://stackoverflow.com/questions/45502322/default-template-specialization-with-multiple-conditions/45571010
 
+using cstr = const char*;
+
 template<int N>
 struct Choice: Choice<N-1>
 {};
@@ -199,34 +201,37 @@ struct Choice: Choice<N-1>
 template<> struct Choice<0>
 {};
 
-template<typename T>
-std::enable_if_t<std::is_integral<T>::value>
-bar(Choice<2>) {
-    std::cout << "integral" << std::endl;
+template <typename T,
+            std::enable_if_t<std::is_integral<T>::value, bool> = true
+>
+// template<typename T>
+// std::enable_if_t<std::is_integral<T>::value>
+cstr bar(Choice<2>) {
+    return "integral";
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
+cstr bar(Choice<1>) {
+    return "string"; 
 }
 
 template<typename T>
-std::enable_if_t<std::is_same<T, std::string>::value>
-bar(Choice<1>) {
-    std::cout << "string" << std::endl; 
+cstr bar(Choice<0>) {
+    return "whatever"; 
 }
 
 template<typename T>
-void bar(Choice<0>) {
-    std::cout << "whatever" << std::endl; 
-}
-
-template<typename T, typename... Args>
-void foo(Args&&... args) { 
-    bar<T>(Choice<100>{}); 
+cstr foo() { 
+    return bar<T>(Choice<100>{}); 
 }
 
 TEST(SmackCliTest, TemplateTest) {
     using smack::cli::Commands;
 
-    foo<bool>();
-    foo<std::string>();
-    foo<void>();
+    EXPECT_EQ("integral", string{ foo<bool>() });
+    EXPECT_EQ("string", string{ foo<std::string>() });
+    EXPECT_EQ("whatever", string{ foo<void>() });   
 }
 
 template <typename T>
