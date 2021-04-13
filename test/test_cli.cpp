@@ -63,11 +63,34 @@ TEST(SmackCliTest, CommandHelpPartial) {
     EXPECT_EQ("drei p1:int, p2:double, string", help);
 }
 
-template <typename T,
-            std::enable_if_t<std::is_integral<T>::value, bool> = true
->
-const char* typename_b()
-{
+using cstr = const char*;
+
+template<int N>
+struct Choice: Choice<N-1>
+{};
+
+template<> struct Choice<0>
+{};
+
+template <typename T, std::enable_if_t<std::is_reference<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<6>) {
+    using i1 = typename std::remove_reference<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+
+    return get_typename_<i2>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<5>) {
+    using i1 = typename std::remove_pointer<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+    using i3 = typename std::add_pointer<i2>::type;
+
+    return get_typename_<i3>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<4>) {
     if ( std::numeric_limits<T>::digits == 1 )
         return "bool";
 
@@ -95,11 +118,8 @@ const char* typename_b()
     return "badint";
 }
 
-template <typename T,
-            std::enable_if_t<std::is_floating_point<T>::value, bool> = true
->
-const char* typename_b()
-{
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<3>) {
     switch (std::numeric_limits<T>::digits)
     {
     case std::numeric_limits<float>::digits:
@@ -113,152 +133,70 @@ const char* typename_b()
     return "badfloat";
 }
 
-template <typename T,
-            std::enable_if_t<std::is_same<T,char*>::value, bool> = true
->
-constexpr const char* typename_b()
-{
-    return "string";
-}
-
-template <typename T,
-            std::enable_if_t<std::is_same<T,std::string>::value, bool> = true
->
-const char* typename_b()
-{
-    return "string";
-}
-
-template <typename T,
-            std::enable_if_t<std::is_pointer<T>::value, bool> = true
->
-const char* typename_c()
-{
-    using i1 = typename std::remove_pointer<T>::type;
-    using i2 = typename std::remove_const<i1>::type;
-    using i3 = typename std::add_pointer<i2>::type;
-
-    return typename_b<i3>();
-}
-template <typename T,
-            std::enable_if_t<!std::is_pointer<T>::value, bool> = true
->
-const char* typename_c()
-{
-    return typename_b<T>();
-}
-
-TEST(SmackCliTest, PrimitiveNames) {
-    using smack::cli::Commands;
-
-    EXPECT_EQ("bool", string{ typename_c<bool>() });
-
-    EXPECT_EQ("ubyte", string{ typename_c<uint8_t>() });
-    EXPECT_EQ("byte", string{ typename_c<int8_t>() });
-    EXPECT_EQ("ubyte", string{ typename_c<unsigned char>() });
-    EXPECT_EQ("byte", string{ typename_c<char>() });
-
-    EXPECT_EQ("ushort", string{ typename_c<uint16_t>() });
-    EXPECT_EQ("short", string{ typename_c<int16_t>() });
-    EXPECT_EQ("ushort", string{ typename_c<unsigned short>() });
-    EXPECT_EQ("short", string{ typename_c<short>() });
-
-    EXPECT_EQ("uint", string{ typename_c<uint32_t>() });
-    EXPECT_EQ("int", string{ typename_c<int32_t>() });
-    EXPECT_EQ("uint", string{ typename_c<unsigned>() });
-    EXPECT_EQ("int", string{ typename_c<int>() });
-
-    EXPECT_EQ("ulong", string{ typename_c<uint64_t>() });
-    EXPECT_EQ("long", string{ typename_c<int64_t>() });
-    EXPECT_EQ("ulong", string{ typename_c<unsigned long>() });
-    EXPECT_EQ("long", string{ typename_c<long>() });
-
-    EXPECT_EQ("float", string{ typename_c<float>() });
-    EXPECT_EQ("double", string{ typename_c<double>() });
-    EXPECT_EQ("ldouble", string{ typename_c<long double>() });
-
-    EXPECT_EQ("string", string{ typename_c<std::string>() });
-    EXPECT_EQ("string", string{ typename_c<char*>() });
-    EXPECT_EQ("string", string{ typename_c<const char*>() });
-
-    // auto cmd = Commands::make<f4>(
-    //     "vier",
-    //     { "uint8" });
-
-    // auto help = cmd.to_string();
-
-    // EXPECT_EQ("vier uint8:unsigned char", help);
-}
-
-// https://stackoverflow.com/questions/45502322/default-template-specialization-with-multiple-conditions/45571010
-
-using cstr = const char*;
-
-template<int N>
-struct Choice: Choice<N-1>
-{};
-
-template<> struct Choice<0>
-{};
-
-template <typename T, std::enable_if_t<std::is_reference<T>::value, bool> = true>
-cstr bar(Choice<5>) {
-    using i1 = typename std::remove_reference<T>::type;
-    using i2 = typename std::remove_const<i1>::type;
-
-    return bar<i2>(Choice<4>{});
-}
-
-template <typename T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
-cstr bar(Choice<4>) {
-    using i1 = typename std::remove_pointer<T>::type;
-    using i2 = typename std::remove_const<i1>::type;
-    using i3 = typename std::add_pointer<i2>::type;
-
-    return bar<i3>(Choice<3>{});
-}
-
-template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
-cstr bar(Choice<3>) {
-    return "integral";
-}
-
 template<typename T,
 std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
-cstr bar(Choice<2>) {
+constexpr cstr get_typename_(Choice<2>) {
     return "string"; 
 }
 
 template<typename T,
 std::enable_if_t<std::is_same<T, char*>::value, bool> = true>
-cstr bar(Choice<1>) {
+constexpr cstr get_typename_(Choice<1>) {
     return "string"; 
 }
 
 template<typename T>
-cstr bar(Choice<0>) {
+constexpr cstr get_typename_(Choice<0>) {
     return "whatever"; 
 }
 
 template<typename T>
-cstr foo() { 
-    return bar<T>(Choice<100>{}); 
+constexpr cstr get_typename() { 
+    return get_typename_<T>(Choice<10>{}); 
 }
 
-TEST(SmackCliTest, TemplateTest) {
+TEST(SmackCliTest, TypenameTest) {
     using smack::cli::Commands;
 
-    EXPECT_EQ("integral", string{ foo<bool>() });
-    EXPECT_EQ("string", string{ foo<std::string>() });
-    EXPECT_EQ("string", string{ foo<std::string&>() });
-    EXPECT_EQ("string", string{ foo<const std::string&>() });
-    EXPECT_EQ("whatever", string{ foo<void>() });
+    EXPECT_EQ("bool", string{ get_typename<bool>() });
 
-    EXPECT_EQ("string", string{ foo<char*>() });
-    EXPECT_EQ("string", string{ foo<const char*>() });
+    EXPECT_EQ("ubyte", string{ get_typename<uint8_t>() });
+    EXPECT_EQ("byte", string{ get_typename<int8_t>() });
+    EXPECT_EQ("ubyte", string{ get_typename<unsigned char>() });
+    EXPECT_EQ("byte", string{ get_typename<char>() });
 
-    EXPECT_EQ("integral", string{ foo<int&>() });
-    EXPECT_EQ("integral", string{ foo<const int&>() });
+    EXPECT_EQ("ushort", string{ get_typename<uint16_t>() });
+    EXPECT_EQ("short", string{ get_typename<int16_t>() });
+    EXPECT_EQ("ushort", string{ get_typename<unsigned short>() });
+    EXPECT_EQ("short", string{ get_typename<short>() });
+
+    EXPECT_EQ("uint", string{ get_typename<uint32_t>() });
+    EXPECT_EQ("int", string{ get_typename<int32_t>() });
+    EXPECT_EQ("uint", string{ get_typename<unsigned>() });
+    EXPECT_EQ("int", string{ get_typename<int>() });
+
+    EXPECT_EQ("ulong", string{ get_typename<uint64_t>() });
+    EXPECT_EQ("long", string{ get_typename<int64_t>() });
+    EXPECT_EQ("ulong", string{ get_typename<unsigned long>() });
+    EXPECT_EQ("long", string{ get_typename<long>() });
+
+    EXPECT_EQ("float", string{ get_typename<float>() });
+    EXPECT_EQ("double", string{ get_typename<double>() });
+    EXPECT_EQ("ldouble", string{ get_typename<long double>() });
+
+    EXPECT_EQ("string", string{ get_typename<std::string>() });
+    EXPECT_EQ("string", string{ get_typename<char*>() });
+    EXPECT_EQ("string", string{ get_typename<const char*>() });
+    EXPECT_EQ("string", string{ get_typename<std::string&>() });
+    EXPECT_EQ("string", string{ get_typename<const std::string&>() });
+
+    EXPECT_EQ("whatever", string{ get_typename<void>() });
+
+    EXPECT_EQ("string", string{ get_typename<char*>() });
+    EXPECT_EQ("string", string{ get_typename<const char*>() });
+
+    EXPECT_EQ("int", string{ get_typename<int&>() });
+    EXPECT_EQ("int", string{ get_typename<const int&>() });
 }
 
 template <typename T>
