@@ -201,17 +201,36 @@ struct Choice: Choice<N-1>
 template<> struct Choice<0>
 {};
 
-template <typename T,
-            std::enable_if_t<std::is_integral<T>::value, bool> = true
->
-// template<typename T>
-// std::enable_if_t<std::is_integral<T>::value>
-cstr bar(Choice<2>) {
+template <typename T, std::enable_if_t<std::is_reference<T>::value, bool> = true>
+cstr bar(Choice<5>) {
+    using i1 = typename std::remove_reference<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+
+    return bar<i2>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+cstr bar(Choice<4>) {
+    using i1 = typename std::remove_pointer<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+    using i3 = typename std::add_pointer<i2>::type;
+
+    return bar<i3>(Choice<3>{});
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+cstr bar(Choice<3>) {
     return "integral";
 }
 
 template<typename T,
 std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
+cstr bar(Choice<2>) {
+    return "string"; 
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, char*>::value, bool> = true>
 cstr bar(Choice<1>) {
     return "string"; 
 }
@@ -231,7 +250,15 @@ TEST(SmackCliTest, TemplateTest) {
 
     EXPECT_EQ("integral", string{ foo<bool>() });
     EXPECT_EQ("string", string{ foo<std::string>() });
-    EXPECT_EQ("whatever", string{ foo<void>() });   
+    EXPECT_EQ("string", string{ foo<std::string&>() });
+    EXPECT_EQ("string", string{ foo<const std::string&>() });
+    EXPECT_EQ("whatever", string{ foo<void>() });
+
+    EXPECT_EQ("string", string{ foo<char*>() });
+    EXPECT_EQ("string", string{ foo<const char*>() });
+
+    EXPECT_EQ("integral", string{ foo<int&>() });
+    EXPECT_EQ("integral", string{ foo<const int&>() });
 }
 
 template <typename T>
