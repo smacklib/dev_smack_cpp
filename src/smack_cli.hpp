@@ -41,33 +41,99 @@ using std::size_t;
 template <typename T>
 void transform(const char* in, T& out);
 
+using cstr = const char*;
+
+template<int N>
+struct Choice: Choice<N-1>
+{};
+
+template<> struct Choice<0>
+{};
+
+template <typename T, std::enable_if_t<std::is_reference<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<6>) {
+    using i1 = typename std::remove_reference<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+
+    return get_typename_<i2>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<5>) {
+    using i1 = typename std::remove_pointer<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+    using i3 = typename std::add_pointer<i2>::type;
+
+    return get_typename_<i3>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<4>) {
+    if ( std::numeric_limits<T>::digits == 1 )
+        return "bool";
+
+    switch ( sizeof( T ) ) {
+        case 1: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ubyte" : "byte";
+        }
+        case 2: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ushort" : "short";
+        }
+        case 4: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "uint" : "int";
+        }
+        case 8: {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ulong" : "long";
+        }
+        default:
+            return "badInt";
+    }
+
+    return "badint";
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<3>) {
+    switch (std::numeric_limits<T>::digits)
+    {
+    case std::numeric_limits<float>::digits:
+        return "float";
+    case std::numeric_limits<double>::digits:
+        return "double";
+    case std::numeric_limits<long double>::digits:
+        return "ldouble";
+    }
+
+    return "badfloat";
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
+constexpr cstr get_typename_(Choice<2>) {
+    return "string"; 
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, char*>::value, bool> = true>
+constexpr cstr get_typename_(Choice<1>) {
+    return "string"; 
+}
+
+template<typename T>
+constexpr cstr get_typename_(Choice<0>) {
+    return "whatever"; 
+}
+
 /**
  * @return a string representation for the supported types.
  */
-template <typename T>
-constexpr const char* resolve_type() {
-    using C = char*;
-
-    if (typeid(bool) == typeid(T))
-        return "bool";
-    else if (typeid(short) == typeid(T))
-        return "short";
-    else if (typeid(int) == typeid(T))
-        return "int";
-    else if (typeid(long) == typeid(T))
-        return "long";
-    else if (typeid(double) == typeid(T))
-        return "double";
-    else if (typeid(float) == typeid(T))
-        return "float";
-    else if (typeid(C) == typeid(T))
-        return "string";
-    else if (typeid(const char*) == typeid(T))
-        return "string";
-    else if (typeid(string) == typeid(T))
-        return "string";
-
-    return typeid(T).name();
+template<typename T>
+constexpr cstr get_typename() { 
+    return get_typename_<T>(Choice<10>{}); 
 }
 
 template<typename R, size_t I = 0, typename Func, typename ...Ts>
@@ -266,7 +332,7 @@ private:
             s << 
                 std::quoted(str) <<
                 " -> " << 
-                resolve_type<decltype(
+                get_typename<decltype(
                     std::get<I>(params))>();
 
             throw std::invalid_argument(s.str());
@@ -289,7 +355,7 @@ private:
 
 public:
     Command(
-        string name,
+        const string& name,
         F f,
         initializer_list<const char*> parameterHelp = {})
         :
@@ -340,7 +406,7 @@ public:
     string to_string() const {
         // Get the raw type names of the parameters.
         std::array<string, kParameterCount>
-            expander{ (resolve_type<Args>()) ... };
+            expander{ (get_typename<Args>()) ... };
 
         // If help was passed prepend the raw types with the 
         // passed display names.
