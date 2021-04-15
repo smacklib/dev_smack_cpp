@@ -318,40 +318,39 @@ private:
     /**
      * Trigger mapping.
      */
-    template <typename ... TT>
-    void map(TT ...) const {
+    template <typename ... T>
+    void map(T ...) const {
     }
 
-    template <int I>
-    int tf(VT& params, const string& str) const {
+    template <typename T>
+    int tf(T param, const string& str) const {
         try {
-            transform(str.c_str(), std::get<I>(params));
+            transform(str.c_str(), param);
         }
         catch (std::invalid_argument&) {
             std::stringstream s;
             s << 
                 std::quoted(str) <<
                 " -> " << 
-                get_typename<decltype(
-                    std::get<I>(params))>();
+                get_typename<T>();
 
             throw std::invalid_argument(s.str());
         }
-        return I;
+        return 0;
     }
 
-    template <int ... S>
+    template <typename V, int ... S>
     void updateImpl(
         VT& params,
-        const std::vector<string>& v,
+        const V& v,
         const std::integer_sequence<int, S...>&) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Bad array size.");
         }
         map(
-            tf<S>(params, v[S]) ...
-        );
-    }
+            tf(std::get<S>(params), v[S]) ...
+        ); 
+   }
 
 public:
     Command(
@@ -386,7 +385,7 @@ public:
 
         VT params;
 
-        const auto integer_sequence = 
+        constexpr auto integer_sequence = 
             std::make_integer_sequence<int, kParameterCount>{};
 
         updateImpl(
