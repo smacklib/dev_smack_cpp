@@ -69,7 +69,9 @@ constexpr cstr get_typename_(Choice<5>) {
 
 template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
 constexpr cstr get_typename_(Choice<4>) {
-    if ( std::numeric_limits<T>::digits == 1 )
+    const auto digits = std::numeric_limits<T>::digits;
+
+    if ( digits == 1 )
         return "bool";
 
     switch ( sizeof( T ) ) {
@@ -85,30 +87,22 @@ constexpr cstr get_typename_(Choice<4>) {
             return std::numeric_limits<T>::min() == 0 ?
                 "uint" : "int";
         }
-        case 8: {
-            return std::numeric_limits<T>::min() == 0 ?
-                "ulong" : "long";
-        }
-        default:
-            return "badInt";
     }
 
-    return "badint";
+    return std::numeric_limits<T>::min() == 0 ?
+        "ulong" : "long";
 }
 
 template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
 constexpr cstr get_typename_(Choice<3>) {
-    switch (std::numeric_limits<T>::digits)
-    {
-    case std::numeric_limits<float>::digits:
-        return "float";
-    case std::numeric_limits<double>::digits:
-        return "double";
-    case std::numeric_limits<long double>::digits:
-        return "ldouble";
-    }
+    const auto digits = std::numeric_limits<T>::digits;
 
-    return "badfloat";
+    if ( digits <= std::numeric_limits<float>::digits )
+        return "float";
+    if ( digits <= std::numeric_limits<double>::digits )
+        return "double";
+
+    return "ldouble";
 }
 
 template<typename T,

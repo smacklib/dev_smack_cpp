@@ -66,31 +66,40 @@ TEST(SmackCliTest, CommandHelpPartial) {
 TEST(SmackCliTest, TypenameTest) {
     using smack::cli::get_typename;
 
-    EXPECT_EQ("bool", string{ get_typename<bool>() });
-
+    // Test the integer definitions with explit width.
     EXPECT_EQ("ubyte", string{ get_typename<uint8_t>() });
     EXPECT_EQ("byte", string{ get_typename<int8_t>() });
+    EXPECT_EQ("ushort", string{ get_typename<uint16_t>() });
+    EXPECT_EQ("short", string{ get_typename<int16_t>() });
+    EXPECT_EQ("uint", string{ get_typename<uint32_t>() });
+    EXPECT_EQ("int", string{ get_typename<int32_t>() });
+    EXPECT_EQ("ulong", string{ get_typename<uint64_t>() });
+    EXPECT_EQ("long", string{ get_typename<int64_t>() });
+
+    // Test the plain primitive types.
+    EXPECT_EQ("bool", string{ get_typename<bool>() });
+
     EXPECT_EQ("ubyte", string{ get_typename<unsigned char>() });
     EXPECT_EQ("byte", string{ get_typename<char>() });
 
-    EXPECT_EQ("ushort", string{ get_typename<uint16_t>() });
-    EXPECT_EQ("short", string{ get_typename<int16_t>() });
     EXPECT_EQ("ushort", string{ get_typename<unsigned short>() });
     EXPECT_EQ("short", string{ get_typename<short>() });
 
-    EXPECT_EQ("uint", string{ get_typename<uint32_t>() });
-    EXPECT_EQ("int", string{ get_typename<int32_t>() });
     EXPECT_EQ("uint", string{ get_typename<unsigned>() });
     EXPECT_EQ("int", string{ get_typename<int>() });
 
-    EXPECT_EQ("ulong", string{ get_typename<uint64_t>() });
-    EXPECT_EQ("long", string{ get_typename<int64_t>() });
+#ifndef _WIN32
+    // On Windows long is equivalent to int.
     EXPECT_EQ("ulong", string{ get_typename<unsigned long>() });
     EXPECT_EQ("long", string{ get_typename<long>() });
+#endif
 
     EXPECT_EQ("float", string{ get_typename<float>() });
     EXPECT_EQ("double", string{ get_typename<double>() });
+#ifndef _WIN32
+    // On Windows long double is equivalent to double.
     EXPECT_EQ("ldouble", string{ get_typename<long double>() });
+#endif
 
     EXPECT_EQ("string", string{ get_typename<std::string>() });
     EXPECT_EQ("string", string{ get_typename<char*>() });
