@@ -114,7 +114,7 @@ template <auto F, typename T>
 auto transformImpl( 
     const char* in, 
     T& out, 
-    const char* tname ) {
+    const char* tname = get_typename<T>()) {
     return ConvFu<F>::make(
         F,
         in,
@@ -136,7 +136,11 @@ constexpr auto stold_ =
 // Define the explict instantiations of the conversion functions.
 
 template<> void transform(const char* in, char& out) {
-    transformImpl<cvSigned>(in, out, "char");
+    transformImpl<cvSigned>(in, out);
+}
+
+template<> void transform(const char* in, short& out) {
+    transformImpl<cvSigned>(in, out);
 }
 
 template<> void transform(const char* in, int& out) {

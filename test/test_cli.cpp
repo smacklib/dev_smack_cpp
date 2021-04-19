@@ -183,8 +183,26 @@ void testConversion()
             FAIL();
         }
         catch (std::invalid_argument(in)) {
-            std::string exp{ "Cannot convert 'dreizehn' to char." };
-            EXPECT_EQ(exp, in.what());
+            string expected =
+                "Cannot convert 'dreizehn' to " +
+                string{ smack::cli::get_typename<T>() } +
+                ".";
+            EXPECT_EQ(expected, in.what());
+        }
+    }
+    // Number prefix.
+    {
+        try {
+            const char* in = "13x";
+            smack::cli::transform(in, out);
+            FAIL();
+        }
+        catch (std::invalid_argument(in)) {
+            string expected =
+                "Cannot convert '13x' to " +
+                string{ smack::cli::get_typename<T>() } +
+                ".";
+            EXPECT_EQ(expected, in.what());
         }
     }
 }
@@ -193,34 +211,12 @@ TEST(SmackCliTest, TransformChar) {
     testConversion<char>();
 }
 
-TEST(SmackCliTest, TransformCharFail) {
-    try {
-        const char* in = "dreizehn";
-        char out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (std::invalid_argument(in)) {
-        std::string exp{ "Cannot convert 'dreizehn' to char." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformShort) {
+    testConversion<short>();
 }
 
-TEST(SmackCliTest, TransformCharFail2) {
-    try {
-        const char* in = "13e";
-        char out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Cannot convert '13e' to char." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformLong) {
+    testConversion<long>();
 }
 
 TEST(SmackCliTest, TransformCharRangeOverflow) {
