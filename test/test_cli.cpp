@@ -138,8 +138,12 @@ void testConversion()
         EXPECT_EQ(max-1, out);
     }
     // Underflow.
+    if ( min < 0 && sizeof(T) > sizeof(long long) )
     {
-        long long belowMin = min-1;
+        long long belowMin = static_cast<long long>(min)-1;
+        std::cout << __LINE__ << " : " << min << " " << belowMin << std::endl;
+        std::cout << __LINE__ << " : " << sizeof(T) << " " << sizeof(long long) << std::endl;
+
         try {
             smack::cli::transform( to_string(belowMin).c_str(), out );
             FAIL();
@@ -157,6 +161,7 @@ void testConversion()
         }
     }
     // Overflow.
+    if ( sizeof(T) > sizeof(long long) )
     {
         long long overMax = max+1;
         try {
@@ -215,107 +220,38 @@ TEST(SmackCliTest, TransformShort) {
     testConversion<short>();
 }
 
+TEST(SmackCliTest, TransformInt) {
+    testConversion<int>();
+}
+
 TEST(SmackCliTest, TransformLong) {
     testConversion<long>();
 }
 
-TEST(SmackCliTest, TransformCharRangeOverflow) {
-    try {
-        const char* in = "128";
-        char out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Value 128 must be in range [-128..127]." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformLongLong) {
+    testConversion<long long>();
 }
 
-TEST(SmackCliTest, TransformCharRangeUnderflow) {
-    try {
-        const char* in = "-129";
-        char out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Value -129 must be in range [-128..127]." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformUnsignedChar) {
+    testConversion<unsigned char>();
 }
 
-TEST(SmackCliTest, TransformInt) {
-    int out;
-    smack::cli::transform("-2147483648", out);
-    
-    EXPECT_EQ(std::numeric_limits<int>::min(), out);
-    smack::cli::transform("2147483647", out);
-    EXPECT_EQ(2147483647, out);
-    smack::cli::transform("0x10", out);
-    EXPECT_EQ(0x10, out);
+TEST(SmackCliTest, TransformUnsignedShort) {
+    testConversion<unsigned short>();
 }
 
-TEST(SmackCliTest, TransformIntFail) {
-    try {
-        const char* in = "dreizehn";
-        int out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (std::invalid_argument(in)) {
-        std::string exp{ "Cannot convert 'dreizehn' to int." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformUnsignedInt) {
+    testConversion<unsigned int>();
 }
 
-TEST(SmackCliTest, TransformIntFail2) {
-    try {
-        const char* in = "13e";
-        int out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Cannot convert '13e' to int." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformUnsignedLong) {
+    testConversion<unsigned long>();
 }
 
-TEST(SmackCliTest, TransformIntRangeOverflow) {
-    try {
-        const char* in = "2147483648";
-        int out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Value 2147483648 must be in range [-2147483648..2147483647]." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformUnsignedLongLong) {
+    testConversion<unsigned long long>();
 }
 
-TEST(SmackCliTest, TransformIntRangeUnderflow) {
-    try {
-        const char* in = "-2147483649";
-        int out;
-
-        smack::cli::transform(in, out);
-
-        FAIL();
-    }
-    catch (const std::invalid_argument& in) {
-        std::string exp{ "Value -2147483649 must be in range [-2147483648..2147483647]." };
-        EXPECT_EQ(exp, in.what());
-    }
+TEST(SmackCliTest, TransformFloat) {
+    testConversion<float>();
 }

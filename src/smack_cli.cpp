@@ -78,7 +78,7 @@ struct ConvFu<F>
     {
         std::size_t pos = 0;
         try {
-            R result = function(in, &pos, 0);
+            R result = function(in, &pos);
             // If all input is processed ...
             if (!in[pos]) {
                 // ... and is in range ...
@@ -123,12 +123,19 @@ auto transformImpl(
     );
 }
 
+long long stoll_( const std::string& str, std::size_t* pos = 0 ) {
+    return std::stoll( str, pos );
+}
+unsigned long long stoull_( const std::string& str, std::size_t* pos = 0 ) {
+    return std::stoull( str, pos );
+}
+
 // Select the string overloads of the respective standard functions.
 constexpr auto cvSigned = 
-    static_cast<long long(*)(const string&, size_t*, int)>(std::stoll);
+    static_cast<long long(*)(const string&, size_t*)>(stoll_);
 constexpr auto cvUnsigned = 
-    static_cast<unsigned long long(*)(const string&, size_t*, int)>(std::stoull);
-constexpr auto stold_ = 
+    static_cast<unsigned long long(*)(const string&, size_t*)>(stoull_);
+constexpr auto cvFloat = 
     static_cast<long double(*)(const string&, size_t*)>(std::stold);
 
 } // namespace anonymous
@@ -144,31 +151,39 @@ template<> void transform(const char* in, short& out) {
 }
 
 template<> void transform(const char* in, int& out) {
-    transformImpl<cvSigned>(in, out, "int");
+    transformImpl<cvSigned>(in, out);
 }
 
 template<> void transform(const char* in, long& out) {
-    transformImpl<cvSigned>(in, out, "long");
+    transformImpl<cvSigned>(in, out);
+}
+
+template<> void transform(const char* in, long long& out) {
+    transformImpl<cvSigned>(in, out);
 }
 
 template<> void transform(const char* in, unsigned char& out) {
-    transformImpl<cvUnsigned>(in, out, "char");
+    transformImpl<cvUnsigned>(in, out);
+}
+
+template<> void transform(const char* in, unsigned short& out) {
+    transformImpl<cvUnsigned>(in, out);
 }
 
 template<> void transform(const char* in, unsigned int& out) {
-    transformImpl<cvUnsigned>(in, out, "int");
+    transformImpl<cvUnsigned>(in, out);
 }
 
 template<> void transform(const char* in, unsigned long& out) {
-    transformImpl<cvUnsigned>(in, out, "long");
+    transformImpl<cvUnsigned>(in, out);
+}
+
+template<> void transform(const char* in, unsigned long long& out) {
+    transformImpl<cvUnsigned>(in, out);
 }
 
 template<> void transform(const char* in, float& out) {
-    std::size_t pos;
-    out = std::stof(in, &pos);
-    if (in[pos]) {
-        throw std::invalid_argument(in);
-    }
+    transformImpl<cvFloat>(in, out);
 }
 
 template<> void transform(const char* in, double& out) {

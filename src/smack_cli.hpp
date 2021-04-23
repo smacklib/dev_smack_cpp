@@ -74,19 +74,17 @@ constexpr cstr get_typename_(Choice<4>) {
     if ( digits == 1 )
         return "bool";
 
-    switch ( sizeof( T ) ) {
-        case 1: {
+    if ( sizeof( T ) == 1 ) {
             return std::numeric_limits<T>::min() == 0 ?
                 "ubyte" : "byte";
-        }
-        case 2: {
+    }
+    if ( sizeof( T ) == 2 ) {
             return std::numeric_limits<T>::min() == 0 ?
                 "ushort" : "short";
-        }
-        case 4: {
+    }
+    if ( sizeof( T ) == 4 ) {
             return std::numeric_limits<T>::min() == 0 ?
                 "uint" : "int";
-        }
     }
 
     return std::numeric_limits<T>::min() == 0 ?
