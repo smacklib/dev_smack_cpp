@@ -3,6 +3,7 @@
 #include <string>
 #include <type_traits>
 #include <limits.h>
+#include <sstream>
 
 #include "test_common.hpp"
 #include "src/smack_cli.hpp"
@@ -11,6 +12,18 @@ using std::string;
 using std::to_string;
 
 namespace {
+
+template <typename T>
+std::string to_string_with_precision(const T a_value, const int n = std::numeric_limits<T>::digits())
+{
+    std::cout <<  "dig: " << n << std::endl;
+    std::ostringstream out;
+//    out.setf(std::ios_base::scientific);
+    out.precision(n);
+    out << std::scientific << a_value;
+    return out.str();
+}
+
     int f1(int p1) {
         return smack::test::common::f(__func__, p1);
     }
@@ -61,6 +74,25 @@ TEST(SmackCliTest, CommandHelpPartial) {
     auto help = cmd.to_string();
 
     EXPECT_EQ("drei p1:int, p2:double, string", help);
+}
+
+TEST(SmackCliTest, StdStof) {
+    auto min = std::numeric_limits<float>::min();
+    auto mins = to_string_with_precision(min,7);
+    std::cout << "mins: "  << mins << std::endl;
+    size_t pos = 0;
+
+    auto result = std::stof( mins, &pos );
+    EXPECT_EQ(min, result);
+
+    // T max = std::numeric_limits<T>::max();
+
+    //         smack::cli::transform( to_string(min).c_str(), out );
+    //     EXPECT_EQ(min, out);
+    //     smack::cli::transform( to_string(max).c_str(), out);
+    //     EXPECT_EQ(max, out);
+
+    // EXPECT_EQ("drei p1:int, p2:double, string", help);
 }
 
 TEST(SmackCliTest, TypenameTest) {
@@ -212,6 +244,62 @@ void testConversion()
     }
 }
 
+template <typename T>
+void testConversionFloat()
+{
+    static_assert(
+        std::is_floating_point<T>::value,
+        "T must be a floating point type." );
+
+    T min = std::numeric_limits<T>::min();
+    T max = std::numeric_limits<T>::max();
+
+    T out;
+
+    // Test conversion in the range of T.
+    {
+        // min border case for floating point values is pretty
+        // academic to test.  Skip.
+        smack::cli::transform( to_string(max).c_str(), out);
+        EXPECT_EQ(max, out);
+        // One inside range.
+        smack::cli::transform( to_string(min+1).c_str(), out );
+        EXPECT_EQ(min+1, out);
+        smack::cli::transform( to_string(max-1).c_str(), out);
+        EXPECT_EQ(max-1, out);
+    }
+    // Bogus.
+    {
+        try {
+            const char* in = "dreizehn";
+            smack::cli::transform(in, out);
+            FAIL();
+        }
+        catch (std::invalid_argument(in)) {
+            string expected =
+                "Cannot convert 'dreizehn' to " +
+                string{ smack::cli::get_typename<T>() } +
+                ".";
+            EXPECT_EQ(expected, in.what());
+        }
+    }
+    // Number prefix.
+    {
+        try {
+            const char* in = "13x";
+            smack::cli::transform(in, out);
+            FAIL();
+        }
+        catch (std::invalid_argument(in)) {
+            string expected =
+                "Cannot convert '13x' to " +
+                string{ smack::cli::get_typename<T>() } +
+                ".";
+            EXPECT_EQ(expected, in.what());
+        }
+    }
+}
+
 TEST(SmackCliTest, TransformChar) {
     testConversion<char>();
 }
@@ -253,5 +341,9 @@ TEST(SmackCliTest, TransformUnsignedLongLong) {
 }
 
 TEST(SmackCliTest, TransformFloat) {
-    testConversion<float>();
+    testConversionFloat<float>();
+}
+    
+TEST(SmackCliTest, TransformDouble) {
+    testConversionFloat<double>();
 }

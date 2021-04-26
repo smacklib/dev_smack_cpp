@@ -47,7 +47,8 @@ T validateRange(long long val) {
  */
 template <typename T, typename F>
 T validateRangeX(F val) {
-    if (val < std::numeric_limits<T>::min()) {
+    if (val < std::numeric_limits<T>::min()  && std::is_integral<T>::value) {
+        std::cout << "here ..."  << std::endl;
         throw std::out_of_range("");
     }
     if (val > std::numeric_limits<T>::max()) {
@@ -69,7 +70,7 @@ struct ConvFu {};
 template <typename R, typename... Args, auto (F)(Args...)->R>
 struct ConvFu<F> 
 {
-    template <typename T, typename Fu>
+    template <typename T, typename Fu, std::enable_if_t<std::is_fundamental<T>::value, bool> = true>
     static void make(
         Fu function,
         const char* in,
@@ -136,7 +137,9 @@ constexpr auto cvSigned =
 constexpr auto cvUnsigned = 
     static_cast<unsigned long long(*)(const string&, size_t*)>(stoull_);
 constexpr auto cvFloat = 
-    static_cast<long double(*)(const string&, size_t*)>(std::stold);
+    static_cast<float(*)(const string&, size_t*)>(std::stof);
+constexpr auto cvDouble = 
+    static_cast<double(*)(const string&, size_t*)>(std::stod);
 
 } // namespace anonymous
 
@@ -187,11 +190,7 @@ template<> void transform(const char* in, float& out) {
 }
 
 template<> void transform(const char* in, double& out) {
-    std::size_t pos;
-    out = std::stod(in, &pos);
-    if (in[pos]) {
-        throw std::invalid_argument(in);
-    }
+    transformImpl<cvDouble>(in, out);
 }
 
 template<> void transform(const char* in, bool& out) {
