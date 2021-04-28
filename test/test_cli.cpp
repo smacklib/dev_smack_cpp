@@ -12,18 +12,6 @@ using std::string;
 using std::to_string;
 
 namespace {
-
-template <typename T>
-std::string to_string_with_precision(const T a_value, const int n = std::numeric_limits<T>::digits())
-{
-    std::cout <<  "dig: " << n << std::endl;
-    std::ostringstream out;
-//    out.setf(std::ios_base::scientific);
-    out.precision(n);
-    out << std::scientific << a_value;
-    return out.str();
-}
-
     int f1(int p1) {
         return smack::test::common::f(__func__, p1);
     }
@@ -74,25 +62,6 @@ TEST(SmackCliTest, CommandHelpPartial) {
     auto help = cmd.to_string();
 
     EXPECT_EQ("drei p1:int, p2:double, string", help);
-}
-
-TEST(SmackCliTest, StdStof) {
-    auto min = std::numeric_limits<float>::min();
-    auto mins = to_string_with_precision(min,7);
-    std::cout << "mins: "  << mins << std::endl;
-    size_t pos = 0;
-
-    auto result = std::stof( mins, &pos );
-    EXPECT_EQ(min, result);
-
-    // T max = std::numeric_limits<T>::max();
-
-    //         smack::cli::transform( to_string(min).c_str(), out );
-    //     EXPECT_EQ(min, out);
-    //     smack::cli::transform( to_string(max).c_str(), out);
-    //     EXPECT_EQ(max, out);
-
-    // EXPECT_EQ("drei p1:int, p2:double, string", help);
 }
 
 TEST(SmackCliTest, TypenameTest) {
@@ -243,6 +212,13 @@ void testConversion()
                 ".";
             EXPECT_EQ(expected, in.what());
         }
+    }
+
+    // Hex notation.
+    {
+        const char* in = "0x13";
+        smack::cli::transform(in, out);
+        EXPECT_EQ(0x13, out);
     }
 }
 
