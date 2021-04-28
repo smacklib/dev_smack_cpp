@@ -148,7 +148,7 @@ TEST(SmackCliTest, TypenameTest) {
     EXPECT_EQ("int", string{ get_typename<const int&>() });
 }
 
-template <typename T>
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
 void testConversion()
 {
     T min = std::numeric_limits<T>::min();
@@ -170,20 +170,20 @@ void testConversion()
         EXPECT_EQ(max-1, out);
     }
     // Underflow.
-    if ( min < 0 && sizeof(T) > sizeof(long long) )
+    if ( min < 0 )
     {
-        long long belowMin = static_cast<long long>(min)-1;
-        std::cout << __LINE__ << " : " << min << " " << belowMin << std::endl;
-        std::cout << __LINE__ << " : " << sizeof(T) << " " << sizeof(long long) << std::endl;
+        string belowMin = to_string(min);
+        // Zero append is equivalent to multiply by ten.
+        belowMin.append( "0" );
 
         try {
-            smack::cli::transform( to_string(belowMin).c_str(), out );
+            smack::cli::transform( belowMin.c_str(), out );
             FAIL();
         }
         catch (const std::invalid_argument& e) {
             string expected = 
                 "Value " +
-                to_string( belowMin ) +
+                belowMin +
                 " must be in range [" +
                 to_string( min ) +
                 ".." +
@@ -193,17 +193,19 @@ void testConversion()
         }
     }
     // Overflow.
-    if ( sizeof(T) > sizeof(long long) )
     {
-        long long overMax = max+1;
+        string overMax = to_string( max );
+        // Zero append is equivalent to multiply by ten.
+        overMax.append( "0" );
+
         try {
-            smack::cli::transform( to_string(overMax).c_str(), out );
+            smack::cli::transform( overMax.c_str(), out );
             FAIL();
         }
         catch (const std::invalid_argument& e) {
             string expected = 
                 "Value " +
-                to_string( overMax ) +
+                overMax +
                 " must be in range [" +
                 to_string( min ) +
                 ".." +
@@ -244,22 +246,20 @@ void testConversion()
     }
 }
 
-template <typename T>
-void testConversionFloat()
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+void testConversion()
 {
     static_assert(
         std::is_floating_point<T>::value,
         "T must be a floating point type." );
 
-    T min = std::numeric_limits<T>::min();
-    T max = std::numeric_limits<T>::max();
-
     T out;
 
     // Test conversion in the range of T.
     {
-        // min border case for floating point values is pretty
-        // academic to test.  Skip.
+        T min = 1.0;
+        T max = std::numeric_limits<T>::max();
+
         smack::cli::transform( to_string(max).c_str(), out);
         EXPECT_EQ(max, out);
         // One inside range.
@@ -297,6 +297,28 @@ void testConversionFloat()
                 ".";
             EXPECT_EQ(expected, in.what());
         }
+    }
+}
+
+TEST(SmackCliTest, TransformBool) {
+    bool out;
+
+    smack::cli::transform("true", out);
+    EXPECT_TRUE( out );
+    smack::cli::transform("false", out);
+    EXPECT_FALSE( out );
+
+    try {
+        const char* in = "13x";
+        smack::cli::transform(in, out);
+        FAIL();
+    }
+    catch (std::invalid_argument(in)) {
+        string expected =
+            "Cannot convert '13x' to " +
+            string{ smack::cli::get_typename<bool>() } +
+            ".";
+        EXPECT_EQ(expected, in.what());
     }
 }
 
@@ -341,9 +363,41 @@ TEST(SmackCliTest, TransformUnsignedLongLong) {
 }
 
 TEST(SmackCliTest, TransformFloat) {
-    testConversionFloat<float>();
+    testConversion<float>();
 }
-    
+   
 TEST(SmackCliTest, TransformDouble) {
-    testConversionFloat<double>();
+    testConversion<double>();
+}
+
+TEST(SmackCliTest, TransformInt8) {
+    testConversion<int8_t>();
+}
+
+TEST(SmackCliTest, TransformUint8) {
+    testConversion<uint8_t>();
+}
+
+TEST(SmackCliTest, TransformInt16) {
+    testConversion<int16_t>();
+}
+
+TEST(SmackCliTest, TransformUint16) {
+    testConversion<uint16_t>();
+}
+
+TEST(SmackCliTest, TransformInt32) {
+    testConversion<int32_t>();
+}
+
+TEST(SmackCliTest, TransformUint32) {
+    testConversion<uint32_t>();
+}
+
+TEST(SmackCliTest, TransformInt64) {
+    testConversion<int64_t>();
+}
+
+TEST(SmackCliTest, TransformUint64) {
+    testConversion<uint64_t>();
 }
