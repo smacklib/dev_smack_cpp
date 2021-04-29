@@ -35,7 +35,7 @@ using std::initializer_list;
 using std::size_t;
 
 /**
- * Define the transformation function.  Implementations for primitves 
+ * Define the transformation function.  Implementations for primitives 
  * and string-like types are available in the implementation file.
  */
 template <typename T>
@@ -116,8 +116,13 @@ constexpr cstr get_typename_(Choice<1>) {
 }
 
 template<typename T>
-constexpr cstr get_typename_(Choice<0>) {
+constexpr cstr get_typename_() {
     return "whatever"; 
+}
+
+template<typename T>
+constexpr cstr get_typename_(Choice<0>) {
+    return get_typename_<T>(); 
 }
 
 /**
@@ -126,6 +131,14 @@ constexpr cstr get_typename_(Choice<0>) {
 template<typename T>
 constexpr cstr get_typename() { 
     return get_typename_<T>(Choice<10>{}); 
+}
+
+/**
+ * @return a string representation for the supported types.
+ */
+template<typename T>
+constexpr cstr get_typename( T type ) { 
+    return get_typename<decltype(type)>(); 
 }
 
 template<typename R, size_t I = 0, typename Func, typename ...Ts>
@@ -396,9 +409,19 @@ public:
      */
     string to_string() const {
         // Get the raw type names of the parameters.
+#if 0
         std::array<string, kParameterCount>
             expander{ (get_typename<Args>()) ... };
+#else
+        VT tup;
 
+        std::array<string, kParameterCount> expander = map_tuple<string>(
+            tup,
+            [](auto t) {
+                return get_typename( t );
+            }
+        );
+#endif
         // If help was passed prepend the raw types with the 
         // passed display names.
         size_t idx = 0;

@@ -1,9 +1,10 @@
 #include <gtest/gtest.h> // googletest header file
 
-#include <string>
-#include <type_traits>
 #include <limits.h>
 #include <sstream>
+#include <string>
+#include <type_traits>
+#include <typeinfo>
 
 #include "test_common.hpp"
 #include "src/smack_cli.hpp"
@@ -26,6 +27,10 @@ namespace {
 
     int f4(uint8_t p1) {
         return smack::test::common::f(__func__, p1);
+    }
+
+    int fPair(std::pair<int,int> p1) {
+        return smack::test::common::f(__func__, p1.first, p1.second);
     }
 }
 
@@ -213,7 +218,6 @@ void testConversion()
             EXPECT_EQ(expected, in.what());
         }
     }
-
     // Hex notation.
     {
         const char* in = "0x13";
@@ -376,4 +380,47 @@ TEST(SmackCliTest, TransformInt64) {
 
 TEST(SmackCliTest, TransformUint64) {
     testConversion<uint64_t>();
+}
+
+template<>
+constexpr const char* smack::cli::get_typename( std::pair<int,int> type ) { 
+    return "pair"; 
+}
+
+TEST(SmackCliTest, PairTypename) {
+    using smack::cli::get_typename;
+
+    std::pair<int,int> pair_;
+
+    EXPECT_EQ("pair", string{ get_typename(pair_) });
+}
+
+template<> void smack::cli::transform(const char* in, std::pair<int,int>& out) {
+    out.first = 1;
+    out.second = 2;
+}
+
+TEST(SmackCliTest, PairTransform) {
+    std::pair<int,int> pair;
+
+    smack::cli::transform( "3:4", pair );
+
+    EXPECT_EQ( 3, pair.first );
+    EXPECT_EQ( 4, pair.second );
+}
+
+TEST(SmackCliTest, CommandHelpPair) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    auto help = cmd.to_string();
+
+    EXPECT_EQ("fPair p1:pair", help);
+
+    std::vector<string> argv{"212:313"};
+
+    cmd( argv );
 }
