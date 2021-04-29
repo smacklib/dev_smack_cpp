@@ -328,7 +328,7 @@ private:
     }
 
     template <typename T>
-    int tf(T param, const string& str) const {
+    int tf(T& param, const string& str) const {
         try {
             transform(str.c_str(), param);
         }

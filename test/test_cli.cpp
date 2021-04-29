@@ -396,8 +396,25 @@ TEST(SmackCliTest, PairTypename) {
 }
 
 template<> void smack::cli::transform(const char* in, std::pair<int,int>& out) {
-    out.first = 1;
-    out.second = 2;
+    string input{ in };
+    string delimiter{ ":" };
+
+    auto pos = input.find( delimiter );
+
+    if ( pos == string::npos )
+        throw std::invalid_argument( in );
+
+    auto first = 
+        input.substr( 0, pos );
+    auto second = 
+        input.substr( pos + delimiter.length() );
+
+    smack::cli::transform(
+        first.c_str(),
+        out.first );
+    smack::cli::transform(
+        second.c_str(),
+        out.second );
 }
 
 TEST(SmackCliTest, PairTransform) {
