@@ -141,21 +141,21 @@ constexpr cstr get_typename( T type ) {
     return get_typename<decltype(type)>(); 
 }
 
-template<typename R, size_t I = 0, typename Func, typename ...Ts>
-typename std::enable_if<I == sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...>&, Func) {
-    std::array<R, sizeof...(Ts)> result;
+template<typename R, typename T, typename Func, size_t ... I>
+auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
+    std::array<R, sizeof ... (I)> result{
+        func(std::get<I>(tpl)) ... 
+    };
+
     return result;
 }
 
-template<typename R, size_t I = 0, typename Func, typename ...Ts>
-typename std::enable_if<I != sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...>& tpl, Func func) {
-    std::array<R, sizeof...(Ts)> result =
-        map_tuple<R, I + 1>(tpl, func);
-    result[I] =
-        func(std::get<I>(tpl));
-    return result;
+template<typename R, typename T, typename Func>
+auto map_tuple(T& tpl, Func func) {
+    constexpr auto i = 
+        std::make_index_sequence<std::tuple_size_v<T>>{};
+
+    return map_tuple_<R>( tpl, func, i );
 }
 
 /**
@@ -202,6 +202,8 @@ class CliApplication
     }
 
     void printHelp( const string& command = "" ) {
+        static_assert( sizeof ... (Cs) == std::tuple_size_v<decltype(commands_)> );
+
         std::array<string, sizeof ... (Cs)> x = map_tuple<string>(
             commands_,
             [](auto t) {
@@ -414,6 +416,8 @@ public:
             expander{ (get_typename<Args>()) ... };
 #else
         VT tup;
+
+        static_assert( kParameterCount == std::tuple_size_v<VT> );
 
         std::array<string, kParameterCount> expander = map_tuple<string>(
             tup,
