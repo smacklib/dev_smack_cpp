@@ -24,8 +24,7 @@
 #include <typeinfo>
 #include <vector>
 
-namespace smack {
-namespace cli {
+namespace smack::cli {
 
 using std::string;
 using std::cout;
@@ -141,7 +140,7 @@ constexpr cstr get_typename( T type ) {
     return get_typename<decltype(type)>(); 
 }
 
-template<typename R, typename T, typename Func, size_t ... I>
+template<typename R, typename T, typename Func, auto ... I>
 auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
     std::array<R, sizeof ... (I)> result{
         func(std::get<I>(tpl)) ... 
@@ -201,16 +200,15 @@ class CliApplication
         return find<I + 1>(name, argv);
     }
 
-    void printHelp( const string& command = "" ) {
-        static_assert( sizeof ... (Cs) == std::tuple_size_v<decltype(commands_)> );
-
-        std::array<string, sizeof ... (Cs)> x = map_tuple<string>(
+    void printHelp( const string& command = "" )
+    {
+        auto helpLines = map_tuple<string>(
             commands_,
             [](auto t) {
-            return t.to_string();
+                return t.to_string();
         });
 
-        for (const string& c : x) {
+        for ( const string& c : helpLines ) {
             // If the passed command is empty all lines are printed.
             // Otherwise prints only the lines that contain the passed command
             // name.
@@ -315,8 +313,8 @@ public:
     };
 
 private:
-    template<int ... S>
-    R callFunc(VT& params, std::integer_sequence<int, S...>) const {
+    template<auto ... S>
+    R callFunc(VT& params, std::index_sequence<S...>) const {
         return operator()(std::get<S>(params) ...);
     }
 
@@ -346,11 +344,12 @@ private:
         return 0;
     }
 
-    template <typename V, int ... S>
+    template <typename V, auto ... S>
     void updateImpl(
         VT& params,
         const V& v,
-        const std::integer_sequence<int, S...>&) const {
+        const std::index_sequence<S...>&) const 
+    {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Bad array size.");
         }
@@ -392,29 +391,26 @@ public:
 
         VT params;
 
-        constexpr auto integer_sequence = 
-            std::make_integer_sequence<int, kParameterCount>{};
+        constexpr auto idx = 
+            std::make_index_sequence<kParameterCount>{};
 
         updateImpl(
             params,
             v,
-            integer_sequence);
+            idx);
 
         return callFunc(
             params,
-            integer_sequence);
+            idx);
     }
 
     /**
      * Creates a single-line command description that is displayed
      * in the generated cli help.
      */
-    string to_string() const {
+    string to_string() const 
+    {
         // Get the raw type names of the parameters.
-#if 0
-        std::array<string, kParameterCount>
-            expander{ (get_typename<Args>()) ... };
-#else
         VT tup;
 
         static_assert( kParameterCount == std::tuple_size_v<VT> );
@@ -425,7 +421,7 @@ public:
                 return get_typename( t );
             }
         );
-#endif
+
         // If help was passed prepend the raw types with the 
         // passed display names.
         size_t idx = 0;
@@ -468,15 +464,14 @@ public:
  * a callable entity.
  */
 template <auto F>
-class PListDed {};
+struct PListDed {};
 
 /**
  * Specialisation for free functions. 
  */
 template <typename R, typename... Args, auto (F)(Args...)->R>
-class PListDed<F> {
-
-public:
+struct PListDed<F> 
+{
     template <typename Fu>
     static auto make(
         string name,
@@ -498,8 +493,8 @@ public:
  * Specialisation for instance operations.
  */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-class PListDed<F> {
-public:
+struct PListDed<F> 
+{
     template <typename Ty>
     static auto make(
         const Ty instance,
@@ -521,8 +516,8 @@ public:
  * Specialisation for const instance operations.
  */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-class PListDed<F> {
-public:
+struct PListDed<F> 
+{
     template <typename Ty>
     static auto make(
         const Ty instance,
@@ -562,8 +557,7 @@ struct Commands {
         return PListDed<F>::make(
             name,
             F,
-            parameterHelper
-        );
+            parameterHelper );
     }
 
     /**
@@ -588,10 +582,8 @@ struct Commands {
         return PListDed<F>::template make<T>(
             instance,
             name,
-            parameterHelper
-            );
+            parameterHelper );
     }
 };
 
-} // namespace cli
-} // namespace smack
+} // namespace smack::cli

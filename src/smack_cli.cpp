@@ -244,4 +244,4 @@ template<> void transform(const char* in, const char*& out) {
     out = in;
 }
 
-} // namespace smack::util
+} // namespace smack::cli
