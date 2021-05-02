@@ -24,8 +24,7 @@
 #include <typeinfo>
 #include <vector>
 
-namespace smack {
-namespace cli {
+namespace smack::cli {
 
 using std::string;
 using std::cout;
@@ -34,63 +33,128 @@ using std::endl;
 using std::initializer_list;
 using std::size_t;
 
-// Produces the necessary transformations for the char* types
-// as well as for std::string.
+/**
+ * Define the transformation function.  Implementations for primitives 
+ * and string-like types are available in the implementation file.
+ */
 template <typename T>
-void transform(const char* in, T& out) {
-    out = in;
+void transform(const char* in, T& out);
+
+using cstr = const char*;
+
+template<int N>
+struct Choice: Choice<N-1>
+{};
+
+template<> struct Choice<0>
+{};
+
+template <typename T, std::enable_if_t<std::is_reference<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<6>) {
+    using i1 = typename std::remove_reference<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+
+    return get_typename_<i2>(Choice<4>{});
 }
 
-void transform(const char* in, int& out);
-void transform(const char* in, long& out);
-void transform(const char* in, float& out);
-void transform(const char* in, double& out);
-void transform(const char* in, bool& out);
+template <typename T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<5>) {
+    using i1 = typename std::remove_pointer<T>::type;
+    using i2 = typename std::remove_const<i1>::type;
+    using i3 = typename std::add_pointer<i2>::type;
+
+    return get_typename_<i3>(Choice<4>{});
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<4>) {
+    const auto digits = std::numeric_limits<T>::digits;
+
+    if ( digits == 1 )
+        return "bool";
+
+    if ( sizeof( T ) == 1 ) {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ubyte" : "byte";
+    }
+    if ( sizeof( T ) == 2 ) {
+            return std::numeric_limits<T>::min() == 0 ?
+                "ushort" : "short";
+    }
+    if ( sizeof( T ) == 4 ) {
+            return std::numeric_limits<T>::min() == 0 ?
+                "uint" : "int";
+    }
+
+    return std::numeric_limits<T>::min() == 0 ?
+        "ulong" : "long";
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+constexpr cstr get_typename_(Choice<3>) {
+    const auto digits = std::numeric_limits<T>::digits;
+
+    if ( digits <= std::numeric_limits<float>::digits )
+        return "float";
+    if ( digits <= std::numeric_limits<double>::digits )
+        return "double";
+
+    return "ldouble";
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
+constexpr cstr get_typename_(Choice<2>) {
+    return "string"; 
+}
+
+template<typename T,
+std::enable_if_t<std::is_same<T, char*>::value, bool> = true>
+constexpr cstr get_typename_(Choice<1>) {
+    return "string"; 
+}
+
+template<typename T>
+constexpr cstr get_typename_() {
+    return "whatever"; 
+}
+
+template<typename T>
+constexpr cstr get_typename_(Choice<0>) {
+    return get_typename_<T>(); 
+}
 
 /**
  * @return a string representation for the supported types.
  */
-template <typename T>
-constexpr const char* resolve_type() {
-    using C = char*;
-
-    if (typeid(bool) == typeid(T))
-        return "bool";
-    else if (typeid(short) == typeid(T))
-        return "short";
-    else if (typeid(int) == typeid(T))
-        return "int";
-    else if (typeid(long) == typeid(T))
-        return "long";
-    else if (typeid(double) == typeid(T))
-        return "double";
-    else if (typeid(float) == typeid(T))
-        return "float";
-    else if (typeid(C) == typeid(T))
-        return "string";
-    else if (typeid(const char*) == typeid(T))
-        return "string";
-    else if (typeid(string) == typeid(T))
-        return "string";
-
-    return typeid(T).name();
+template<typename T>
+constexpr cstr get_typename() { 
+    return get_typename_<T>(Choice<10>{}); 
 }
 
-template<typename R, size_t I = 0, typename Func, typename ...Ts>
-typename std::enable_if<I == sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...>&, Func) {
-    std::array<R, sizeof...(Ts)> result;
+/**
+ * @return a string representation for the supported types.
+ */
+template<typename T>
+constexpr cstr get_typename( T type ) { 
+    return get_typename<decltype(type)>(); 
+}
+
+template<typename R, typename T, typename Func, auto ... I>
+auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
+    std::array<R, sizeof ... (I)> result{
+        func(std::get<I>(tpl)) ... 
+    };
+
     return result;
 }
 
-template<typename R, size_t I = 0, typename Func, typename ...Ts>
-typename std::enable_if<I != sizeof...(Ts), std::array<R, sizeof...(Ts)>>::type
-map_tuple(std::tuple<Ts...>& tpl, Func func) {
-    std::array<R, sizeof...(Ts)> result =
-        map_tuple<R, I + 1>(tpl, func);
-    result[I] =
-        func(std::get<I>(tpl));
-    return result;
+template<typename R, typename T, typename Func>
+auto map_tuple(T& tpl, Func func) {
+    constexpr auto i = 
+        std::make_index_sequence<std::tuple_size_v<T>>{};
+
+    return map_tuple_<R>( tpl, func, i );
 }
 
 /**
@@ -136,14 +200,15 @@ class CliApplication
         return find<I + 1>(name, argv);
     }
 
-    void printHelp( const string& command = "" ) {
-        std::array<string, sizeof ... (Cs)> x = map_tuple<string>(
+    void printHelp( const string& command = "" )
+    {
+        auto helpLines = map_tuple<string>(
             commands_,
             [](auto t) {
-            return t.to_string();
+                return t.to_string();
         });
 
-        for (const string& c : x) {
+        for ( const string& c : helpLines ) {
             // If the passed command is empty all lines are printed.
             // Otherwise prints only the lines that contain the passed command
             // name.
@@ -248,8 +313,8 @@ public:
     };
 
 private:
-    template<int ... S>
-    R callFunc(VT& params, std::integer_sequence<int, S...>) const {
+    template<auto ... S>
+    R callFunc(VT& params, std::index_sequence<S...>) const {
         return operator()(std::get<S>(params) ...);
     }
 
@@ -258,44 +323,44 @@ private:
     /**
      * Trigger mapping.
      */
-    template <typename ... TT>
-    void map(TT ...) const {
+    template <typename ... T>
+    void map(T ...) const {
     }
 
-    template <int I>
-    int tf(VT& params, const string& str) const {
+    template <typename T>
+    int tf(T& param, const string& str) const {
         try {
-            transform(str.c_str(), std::get<I>(params));
+            transform(str.c_str(), param);
         }
         catch (std::invalid_argument&) {
             std::stringstream s;
             s << 
                 std::quoted(str) <<
                 " -> " << 
-                resolve_type<decltype(
-                    std::get<I>(params))>();
+                get_typename<T>();
 
             throw std::invalid_argument(s.str());
         }
-        return I;
+        return 0;
     }
 
-    template <int ... S>
+    template <typename V, auto ... S>
     void updateImpl(
         VT& params,
-        const std::vector<string>& v,
-        const std::integer_sequence<int, S...>&) const {
+        const V& v,
+        const std::index_sequence<S...>&) const 
+    {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Bad array size.");
         }
         map(
-            tf<S>(params, v[S]) ...
-        );
-    }
+            tf(std::get<S>(params), v[S]) ...
+        ); 
+   }
 
 public:
     Command(
-        string name,
+        const string& name,
         F f,
         initializer_list<const char*> parameterHelp = {})
         :
@@ -326,27 +391,36 @@ public:
 
         VT params;
 
-        const auto integer_sequence = 
-            std::make_integer_sequence<int, kParameterCount>{};
+        constexpr auto idx = 
+            std::make_index_sequence<kParameterCount>{};
 
         updateImpl(
             params,
             v,
-            integer_sequence);
+            idx);
 
         return callFunc(
             params,
-            integer_sequence);
+            idx);
     }
 
     /**
      * Creates a single-line command description that is displayed
      * in the generated cli help.
      */
-    string to_string() const {
+    string to_string() const 
+    {
         // Get the raw type names of the parameters.
-        std::array<string, kParameterCount>
-            expander{ (resolve_type<Args>()) ... };
+        VT tup;
+
+        static_assert( kParameterCount == std::tuple_size_v<VT> );
+
+        std::array<string, kParameterCount> expander = map_tuple<string>(
+            tup,
+            [](auto t) {
+                return get_typename( t );
+            }
+        );
 
         // If help was passed prepend the raw types with the 
         // passed display names.
@@ -390,15 +464,14 @@ public:
  * a callable entity.
  */
 template <auto F>
-class PListDed {};
+struct PListDed {};
 
 /**
  * Specialisation for free functions. 
  */
 template <typename R, typename... Args, auto (F)(Args...)->R>
-class PListDed<F> {
-
-public:
+struct PListDed<F> 
+{
     template <typename Fu>
     static auto make(
         string name,
@@ -420,8 +493,8 @@ public:
  * Specialisation for instance operations.
  */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-class PListDed<F> {
-public:
+struct PListDed<F> 
+{
     template <typename Ty>
     static auto make(
         const Ty instance,
@@ -443,8 +516,8 @@ public:
  * Specialisation for const instance operations.
  */
 template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-class PListDed<F> {
-public:
+struct PListDed<F> 
+{
     template <typename Ty>
     static auto make(
         const Ty instance,
@@ -484,8 +557,7 @@ struct Commands {
         return PListDed<F>::make(
             name,
             F,
-            parameterHelper
-        );
+            parameterHelper );
     }
 
     /**
@@ -510,10 +582,8 @@ struct Commands {
         return PListDed<F>::template make<T>(
             instance,
             name,
-            parameterHelper
-            );
+            parameterHelper );
     }
 };
 
-} // namespace cli
-} // namespace smack
+} // namespace smack::cli
