@@ -439,5 +439,13 @@ TEST(SmackCliTest, CommandHelpPair) {
 
     std::vector<string> argv{"212:313"};
 
+    // Redirect stdout.
+    std::stringstream buffer;
+    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+
     cmd( argv );
+    // Get stout content.
+    std::string text = buffer.str();
+
+    std::cerr << text << '\n';
 }

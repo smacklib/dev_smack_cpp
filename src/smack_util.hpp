@@ -13,6 +13,37 @@
 
 namespace smack::util {
 
+using std::string;
+using std::vector;
+
+namespace strings {
+/**
+ * Split a string at delimiter positions.
+ * @param in The string to split. If this is empty then the result
+ * vector is empty.
+ * @param delimiter The delimiter. If this is empty then the input
+ * string is returned as single token in the result.
+ */
+vector<string> split(const string& in, const string& delimiter);
+
+string concat(const vector<string>& in, const string& delimiter);
+
+template <auto F = std::isspace>
+string trim(const string& in)
+{
+    size_t begin = 0;
+    while (begin < in.length() && F(in[begin]))
+        begin++;
+    size_t end = in.length();
+    while (end > 0 && F(in[end - 1]))
+        end--;
+    if (end <= begin)
+        return string{};
+    return in.substr(begin, end - begin);
+}
+
+}
+
 /**
  * Resource management with explict non-destructor-based release.
  * Used primarily in interfacing to c-based stateful libraries
