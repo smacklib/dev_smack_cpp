@@ -4,6 +4,7 @@
  * Copyright © 2019-2021 Michael Binz
  */
 
+#include <cctype>
 #include <iostream>
 
 #include "smack_util.hpp"
@@ -16,7 +17,13 @@ using std::vector;
 
 string strings::trim(const string& in)
 {
-    return strings::trim_(in, std::isspace);
+    auto pred = [](int c) {
+        // Note that isspace may be inlined, thus the wrapping into
+        // a lambda.
+        return std::isspace( c );
+    };
+
+    return strings::trim_(in, pred);
 }
 
 string strings::trim(const string& in, const string& toTrim)
