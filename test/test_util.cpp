@@ -103,11 +103,25 @@ TEST(SmackUtilTest, StringTrimBoth) {
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtilTest, StringTrimChars) {
+TEST(SmackUtilTest, StringTrimCharsSingle) {
     string trimMe{ "313" };
 
     auto r = smack::util::strings::trim(trimMe, "3");
     EXPECT_EQ("1", r);
+}
+
+TEST(SmackUtilTest, StringTrimCharsMultiple) {
+    string trimMe{ "121micbinz313" };
+
+    auto r = smack::util::strings::trim(trimMe, "123456789");
+    EXPECT_EQ("micbinz", r);
+}
+
+TEST(SmackUtilTest, StringTrimCharsAll) {
+    string trimMe{ "121658765576313" };
+
+    auto r = smack::util::strings::trim(trimMe, "123456789");
+    EXPECT_EQ("", r);
 }
 
 TEST(SmackUtilTest, StringConcat1) {
@@ -132,6 +146,14 @@ TEST(SmackUtilTest, StringConcat3) {
     string r = smack::util::strings::concat(sv, "++");
 
     EXPECT_EQ("a++b++c", r);
+}
+
+TEST(SmackUtilTest, StringConcatEmptyDelimiter) {
+    vector<string> sv = { "a", "b", "c" };
+
+    string r = smack::util::strings::concat(sv, "");
+
+    EXPECT_EQ("abc", r);
 }
 
 TEST(SmackUtilTest, StringSplitConcat3) {

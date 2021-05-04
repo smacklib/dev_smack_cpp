@@ -14,8 +14,6 @@ namespace util {
 using std::string;
 using std::vector;
 
-using opp_t = int (*)(int);
-
 string strings::trim(const string& in)
 {
     return strings::trim_(in, std::isspace);
@@ -23,20 +21,11 @@ string strings::trim(const string& in)
 
 string strings::trim(const string& in, const string& toTrim)
 {
-    auto pred = [&toTrim](int c) -> int {
+    auto pred = [&toTrim](int c) {
         return string::npos != toTrim.find_first_of(c);
     };
 
-    size_t begin = 0;
-    while (begin < in.length() && pred(in[begin]))
-        begin++;
-    size_t end = in.length();
-    while (end > 0 && pred(in[end - 1]))
-        end--;
-    if (end <= begin)
-        return string{};
-    return in.substr(begin, end - begin);
-
+    return strings::trim_(in, pred);
 }
 
 vector<string> strings::split(const string& in, const string& delimiter)
