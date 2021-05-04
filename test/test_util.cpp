@@ -103,6 +103,13 @@ TEST(SmackUtilTest, StringTrimBoth) {
     EXPECT_EQ("313", r);
 }
 
+TEST(SmackUtilTest, StringTrimChars) {
+    string trimMe{ "313" };
+
+    auto r = smack::util::strings::trim(trimMe, "3");
+    EXPECT_EQ("1", r);
+}
+
 TEST(SmackUtilTest, StringConcat1) {
     vector<string> sv = { "a" };
 

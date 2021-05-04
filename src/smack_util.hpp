@@ -28,19 +28,23 @@ vector<string> split(const string& in, const string& delimiter);
 
 string concat(const vector<string>& in, const string& delimiter);
 
-template <auto F = std::isspace>
-string trim(const string& in)
+template <typename T>
+string trim_(const string& in, T pred)
 {
     size_t begin = 0;
-    while (begin < in.length() && F(in[begin]))
+    while (begin < in.length() && pred(in[begin]))
         begin++;
     size_t end = in.length();
-    while (end > 0 && F(in[end - 1]))
+    while (end > 0 && pred(in[end - 1]))
         end--;
     if (end <= begin)
         return string{};
     return in.substr(begin, end - begin);
 }
+
+string trim(const string& in);
+
+string trim(const string& in, const string& toTrim);
 
 }
 
