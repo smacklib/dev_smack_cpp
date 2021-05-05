@@ -92,7 +92,7 @@ public:
 
     /**
      * Explicit release.  This is only needed if release is needed
-     * before the aoutomatic release from the destructor is called.
+     * before the automatic release from the destructor is called.
      * This can be called more than once, only a single release
      * is performed.
      */

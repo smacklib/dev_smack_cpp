@@ -171,25 +171,28 @@ TEST(SmackUtilTest, StringSplitConcat3) {
 }
 
 TEST(SmackUtilTest, StringStartsWith) {
+    using smack::util::strings::starts_with;
     string s = "prefixAndMore";
 
-    EXPECT_TRUE( smack::util::strings::starts_with( s, "prefix" ) );
-    EXPECT_FALSE(smack::util::strings::starts_with(s, "And"));
-    EXPECT_TRUE( smack::util::strings::starts_with( s, "" ) );
-    EXPECT_TRUE( smack::util::strings::starts_with( "", "" ) );
-    EXPECT_FALSE( smack::util::strings::starts_with( "", "x" ) );
-    EXPECT_FALSE( smack::util::strings::starts_with( s, "x" ) );
+    EXPECT_TRUE( starts_with( s, "prefix" ) );
+    EXPECT_FALSE( starts_with(s, "And") );
+    EXPECT_TRUE( starts_with( s, "" ) );
+    EXPECT_TRUE( starts_with( "", "" ) );
+    EXPECT_FALSE( starts_with( "", "x" ) );
+    EXPECT_FALSE( starts_with( s, "x" ) );
 }
 
 TEST(SmackUtilTest, StringEndsWith) {
+    using smack::util::strings::ends_with;
+
     string s = "prefixAndMore";
 
-    EXPECT_TRUE( smack::util::strings::ends_with( s, "More" ) );
-    EXPECT_FALSE(smack::util::strings::ends_with(s, "And"));
-    EXPECT_TRUE( smack::util::strings::ends_with( s, "" ) );
-    EXPECT_TRUE( smack::util::strings::ends_with( "", "" ) );
-    EXPECT_FALSE( smack::util::strings::ends_with( "", "x" ) );
-    EXPECT_FALSE( smack::util::strings::ends_with( s, "x" ) );
+    EXPECT_TRUE( ends_with( s, "More" ) );
+    EXPECT_FALSE(ends_with(s, "And"));
+    EXPECT_TRUE( ends_with( s, "" ) );
+    EXPECT_TRUE( ends_with( "", "" ) );
+    EXPECT_FALSE( ends_with( "", "x" ) );
+    EXPECT_FALSE( ends_with( s, "x" ) );
 }
 
 namespace {
