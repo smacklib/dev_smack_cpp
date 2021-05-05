@@ -447,5 +447,7 @@ TEST(SmackCliTest, CommandHelpPair) {
     // Get stout content.
     std::string text = buffer.str();
 
-    std::cerr << text << '\n';
+    EXPECT_EQ("fPair( 212, 313 )\n", text);
+
+    std::cout.rdbuf(old);
 }
