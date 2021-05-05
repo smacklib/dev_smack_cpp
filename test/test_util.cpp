@@ -170,6 +170,26 @@ TEST(SmackUtilTest, StringSplitConcat3) {
     EXPECT_EQ("c", v[2]);
 }
 
+TEST(SmackUtilTest, StringStartsWith) {
+    string s = "prefixAndMore";
+
+    EXPECT_TRUE( smack::util::strings::starts_with( s, "prefix" ) );
+    EXPECT_TRUE( smack::util::strings::starts_with( s, "" ) );
+    EXPECT_TRUE( smack::util::strings::starts_with( "", "" ) );
+    EXPECT_FALSE( smack::util::strings::starts_with( "", "x" ) );
+    EXPECT_FALSE( smack::util::strings::starts_with( s, "x" ) );
+}
+
+TEST(SmackUtilTest, StringEndsWith) {
+    string s = "prefixAndMore";
+
+    EXPECT_TRUE( smack::util::strings::ends_with( s, "More" ) );
+    EXPECT_TRUE( smack::util::strings::ends_with( s, "" ) );
+    EXPECT_TRUE( smack::util::strings::ends_with( "", "" ) );
+    EXPECT_FALSE( smack::util::strings::ends_with( "", "x" ) );
+    EXPECT_FALSE( smack::util::strings::ends_with( s, "x" ) );
+}
+
 namespace {
     using std::cout;
     using std::endl;

@@ -46,7 +46,17 @@ string trim(const string& in);
 
 string trim(const string& in, const string& toTrim);
 
+inline bool starts_with( const string& in, const string& prefix )
+{
+    return in.rfind( prefix, 0 ) != string::npos;
 }
+
+inline bool ends_with( const string& in, const string& suffix )
+{
+    return in.find( suffix, in.length() - suffix.length() ) != string::npos;
+}
+
+} // namespace strings
 
 /**
  * Resource management with explict non-destructor-based release.
