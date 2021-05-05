@@ -174,6 +174,7 @@ TEST(SmackUtilTest, StringStartsWith) {
     string s = "prefixAndMore";
 
     EXPECT_TRUE( smack::util::strings::starts_with( s, "prefix" ) );
+    EXPECT_FALSE(smack::util::strings::starts_with(s, "And"));
     EXPECT_TRUE( smack::util::strings::starts_with( s, "" ) );
     EXPECT_TRUE( smack::util::strings::starts_with( "", "" ) );
     EXPECT_FALSE( smack::util::strings::starts_with( "", "x" ) );
@@ -184,6 +185,7 @@ TEST(SmackUtilTest, StringEndsWith) {
     string s = "prefixAndMore";
 
     EXPECT_TRUE( smack::util::strings::ends_with( s, "More" ) );
+    EXPECT_FALSE(smack::util::strings::ends_with(s, "And"));
     EXPECT_TRUE( smack::util::strings::ends_with( s, "" ) );
     EXPECT_TRUE( smack::util::strings::ends_with( "", "" ) );
     EXPECT_FALSE( smack::util::strings::ends_with( "", "x" ) );
