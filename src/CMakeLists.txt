@@ -8,6 +8,7 @@ set(headers
 set(implementation
     smack_cli.cpp
     smack_util_time_probe.cpp
+    smack_util.cpp
 )
 
 add_library(smack_cpp STATIC

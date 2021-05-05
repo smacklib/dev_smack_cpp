@@ -1,13 +1,14 @@
 /*
  * Smack C++
  *
- * Copyright © 2019 Michael Binz
+ * Copyright © 2019-2021 Michael Binz
  */
 
 #pragma once
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 namespace smack {
 namespace test {
@@ -33,6 +34,40 @@ int f(const char* func, TT ... args) {
 
     return EXIT_SUCCESS;
 }
+
+/**
+ * Temporarily redirect a stream.
+ */
+class redir 
+{
+private:
+    std::ostream& ss_;
+    std::streambuf* original_;
+    std::stringstream buffer_;
+
+public:
+    /**
+     * Create an instance.
+     * @param ss The stream to redirect.
+     */
+    redir(std::ostream& ss) : ss_(ss)
+    {
+        original_ = ss_.rdbuf(
+            buffer_.rdbuf());
+    }
+    ~redir()
+    {
+        ss_.rdbuf(original_);
+    }
+
+    /**
+     * Get the content from the redirected stream. 
+     */
+    std::string str()
+    {
+        return buffer_.str();
+    }
+};
 
 } // namespace common
 } // namespace test

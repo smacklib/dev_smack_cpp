@@ -426,7 +426,7 @@ TEST(SmackCliTest, PairTransform) {
     EXPECT_EQ( 4, pair.second );
 }
 
-TEST(SmackCliTest, CommandHelpPair) {
+TEST(SmackCliTest, CommandPairHelp) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -439,5 +439,65 @@ TEST(SmackCliTest, CommandHelpPair) {
 
     std::vector<string> argv{"212:313"};
 
+    // Redirect stdout.
+    std::stringstream buffer;
+    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+
     cmd( argv );
+    // Get stout content.
+    std::string text = buffer.str();
+
+    EXPECT_EQ("fPair( 212, 313 )\n", text);
+
+    std::cout.rdbuf(old);
+}
+
+TEST(SmackCliTest, CommandPairExec) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    std::vector<string> argv{ "212:313" };
+
+    // Redirect stdout.
+    smack::test::common::redir r{ std::cout };
+
+    // Execute the command.
+    cmd(argv);
+
+    // Get stout content.
+    std::string text = r.str();
+
+    EXPECT_EQ("fPair( 212, 313 )\n", text);
+}
+
+TEST(SmackCliTest, CommandPairExecCli) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    std::vector<string> argv{
+        cmd.get_name(),
+        "212:313" };
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cout };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_SUCCESS, exitCode);
+
+    // Get stdout content.
+    std::string text = r.str();
+
+    EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
