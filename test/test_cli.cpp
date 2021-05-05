@@ -462,18 +462,15 @@ TEST(SmackCliTest, CommandPairExec) {
     std::vector<string> argv{ "212:313" };
 
     // Redirect stdout.
-    std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    smack::test::common::redir r{ std::cout };
 
     // Execute the command.
     cmd(argv);
 
     // Get stout content.
-    std::string text = buffer.str();
+    std::string text = r.str();
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
-
-    std::cout.rdbuf(old);
 }
 
 TEST(SmackCliTest, CommandPairExecCli) {
@@ -491,9 +488,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
         cmd
     );
 
-    // Redirect stdout.
-    std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    smack::test::common::redir r{ std::cout };
 
     // Execute the application.
     auto exitCode =
@@ -502,9 +497,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
     EXPECT_EQ(EXIT_SUCCESS, exitCode);
 
     // Get stdout content.
-    std::string text = buffer.str();
+    std::string text = r.str();
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
-
-    std::cout.rdbuf(old);
 }
