@@ -193,7 +193,7 @@ class CliApplication
     find(const string& name, const std::vector<string>& argv) {
         auto c = std::get<I>(commands_);
         if (name == c.get_name() && argv.size() == c.kParameterCount)
-            return c(argv);
+            return c.call(argv);
         else if (name == c.get_name()) {
             found_ = true;
         }
@@ -344,10 +344,10 @@ private:
         return 0;
     }
 
-    template <typename V, auto ... S>
+    template <typename T, auto ... S>
     void updateImpl(
+        const T& v,
         VT& params,
-        const V& v,
         const std::index_sequence<S...>&) const 
     {
         if (v.size() != kParameterCount) {
@@ -384,7 +384,8 @@ public:
      * the number of parameters represents the actual number of offered
      * command parameters, not including the command name or other stuff.
      */
-    R operator()(const std::vector<string>& v) const {
+    template <typename T = string>
+    R call(const std::vector<T>& v) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Wrong number of parameters.");
         }
@@ -395,13 +396,28 @@ public:
             std::make_index_sequence<kParameterCount>{};
 
         updateImpl(
-            params,
             v,
+            params,
             idx);
 
         return callFunc(
             params,
             idx);
+    }
+
+    template <typename T = string, typename ... V>
+    R callp(V const & ... argv) const 
+    {
+        static_assert(
+            sizeof ... (V) == kParameterCount,
+            "Wrong number of arguments." );
+        static_assert( 
+            std::is_convertible<std::common_type_t<V...>,T>(),
+            "Bad argument type." );
+
+        std::vector<T> v { { argv... } };
+
+        return call(v);
     }
 
     /**
