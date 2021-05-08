@@ -9,6 +9,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <vector>
+
+#include "src/smack_util.hpp"
 
 namespace smack {
 namespace test {
@@ -66,6 +70,16 @@ public:
     std::string str()
     {
         return buffer_.str();
+    }
+
+    /**
+     * Get the content from the redirected stream.
+     */
+    std::vector<std::string> strs()
+    {
+        return smack::util::strings::split(
+            buffer_.str(),
+            "\n");
     }
 };
 
