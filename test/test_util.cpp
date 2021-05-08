@@ -3,6 +3,7 @@
 #include <string>
 
 #include "src/smack_util.hpp"
+#include "test/test_common.hpp"
 
 using std::string;
 using std::vector;
@@ -193,6 +194,41 @@ TEST(SmackUtilTest, StringEndsWith) {
     EXPECT_TRUE( ends_with( "", "" ) );
     EXPECT_FALSE( ends_with( "", "x" ) );
     EXPECT_FALSE( ends_with( s, "x" ) );
+}
+
+TEST(SmackUtilTest, OutputRedirection) {
+
+    smack::test::common::redir out{ std::cout };
+
+    string test{ "redirected" };
+
+    std::cout << test;
+
+    EXPECT_EQ(test, out.str());
+}
+
+TEST(SmackUtilTest, OutputRedirectionMultiline) {
+
+    smack::test::common::redir out{ std::cout };
+
+    string eins{ "une" };
+    string zwei{ "deux" };
+    string drei{ "trois" };
+    string vier{ "quatre" };
+
+    std::cout << eins << std::endl;
+    std::cout << zwei << std::endl;
+    std::cout << drei << std::endl;
+    std::cout << vier << std::endl;
+
+    auto lines = out.strs();
+
+    EXPECT_EQ(5, lines.size());
+    EXPECT_EQ(eins, lines[0]);
+    EXPECT_EQ(zwei, lines[1]);
+    EXPECT_EQ(drei, lines[2]);
+    EXPECT_EQ(vier, lines[3]);
+    EXPECT_EQ("", lines[4]);
 }
 
 namespace {
