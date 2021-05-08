@@ -193,7 +193,7 @@ class CliApplication
     find(const string& name, const std::vector<string>& argv) {
         auto c = std::get<I>(commands_);
         if (name == c.get_name() && argv.size() == c.kParameterCount)
-            return c.call(argv);
+            return c.callv(argv);
         else if (name == c.get_name()) {
             found_ = true;
         }
@@ -385,9 +385,9 @@ public:
      * command parameters, not including the command name or other stuff.
      */
     template <typename T = string>
-    R call(const std::vector<T>& v) const {
+    R callv(const std::vector<T>& v) const {
         if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Wrong number of parameters.");
+            throw std::invalid_argument("Wrong number of arguments.");
         }
 
         VT params;
@@ -405,8 +405,13 @@ public:
             idx);
     }
 
+    /**
+     * Call the command with arguments to be converted.  Note that
+     * the number of parameters represents the actual number of offered
+     * command parameters, not including the command name or other stuff.
+     */
     template <typename T = string, typename ... V>
-    R callp(V const & ... argv) const 
+    R call(V const & ... argv) const 
     {
         static_assert(
             sizeof ... (V) == kParameterCount,
@@ -417,7 +422,7 @@ public:
 
         std::vector<T> v { { argv... } };
 
-        return call(v);
+        return callv(v);
     }
 
     /**

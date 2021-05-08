@@ -443,7 +443,7 @@ TEST(SmackCliTest, CommandPairHelp) {
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
-    cmd.call( argv );
+    cmd.callv( argv );
     // Get stout content.
     std::string text = buffer.str();
 
@@ -459,13 +459,11 @@ TEST(SmackCliTest, CommandPairExec) {
         "fPair",
         { "p1" });
 
-    std::vector<string> argv{ "212:313" };
-
     // Redirect stdout.
     smack::test::common::redir r{ std::cout };
 
     // Execute the command.
-    cmd.call(argv);
+    cmd.call("212:313");
 
     // Get stout content.
     std::string text = r.str();
@@ -515,7 +513,13 @@ TEST(SmackCliTest, CommandCall) {
     }
     {
         smack::test::common::redir out( std::cout );
-        cmd.callp( "313", "3.1415", "micbinz" );
+        cmd.call( "313", "3.1415", "micbinz" );
+        EXPECT_EQ(expected, out.str());
+    }
+    {
+        std::vector<string> argv{"313", "3.1415", "micbinz"};
+        smack::test::common::redir out( std::cout );
+        cmd.callv( argv );
         EXPECT_EQ(expected, out.str());
     }
 }
