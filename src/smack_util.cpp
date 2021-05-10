@@ -73,15 +73,10 @@ string strings::concat(const vector<string>& in, const string& delimiter)
     if (in.empty())
         return string{};
 
-    string result;
+    string result = in[0];
 
-    for (size_t i = 0; i < in.size(); ++i)
-    {
-        result += in[i];
-        // Not the last index.
-        if ( i < in.size()-1 )
-            result += delimiter;
-    }
+    for (size_t i = 1; i < in.size(); ++i)
+        result.append( delimiter ).append( in[i] );
 
     return result;
 }
