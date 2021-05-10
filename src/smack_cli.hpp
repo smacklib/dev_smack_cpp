@@ -411,7 +411,7 @@ public:
      * command parameters, not including the command name or other stuff.
      */
     template <typename T = string, typename ... V>
-    constexpr R call(V const & ... argv) const 
+    R call(V const & ... argv) const 
     {
         static_assert(
             sizeof ... (V) == kParameterCount,
