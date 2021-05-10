@@ -384,8 +384,8 @@ public:
      * the number of parameters represents the actual number of offered
      * command parameters, not including the command name or other stuff.
      */
-    template <typename T = string>
-    R callv(const std::vector<T>& v) const {
+    template <typename Container>
+    R callv(const Container& v) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Wrong number of arguments.");
         }
@@ -411,7 +411,7 @@ public:
      * command parameters, not including the command name or other stuff.
      */
     template <typename T = string, typename ... V>
-    R call(V const & ... argv) const 
+    constexpr R call(V const & ... argv) const 
     {
         static_assert(
             sizeof ... (V) == kParameterCount,
@@ -420,9 +420,11 @@ public:
             std::is_convertible<std::common_type_t<V...>,T>(),
             "Bad argument type." );
 
-        std::vector<T> v { { argv... } };
+        std::array<T, sizeof ... (V)> va {
+            argv ... 
+        };
 
-        return callv(v);
+        return callv(va);
     }
 
     /**
