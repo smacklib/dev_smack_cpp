@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
 
 # https://pabloariasal.github.io/2018/02/19/its-time-to-do-cmake-right/
 
@@ -11,6 +11,17 @@ set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Default.")
 set( CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 
 project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        release-1.8.1
+)
+
+# After the following call, the CMake targets defined by googletest
+# will be defined and available to the rest of the build
+FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
@@ -25,4 +36,3 @@ set(MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 add_subdirectory(src)
 add_subdirectory(test)
-add_subdirectory(lib/googletest-release-1.8.1)
