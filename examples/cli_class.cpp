@@ -16,7 +16,8 @@
 using std::cout;
 using std::endl;
 
-static int free_function(int p1) {
+namespace {
+int free_function(int p1) {
     std::cout <<
         __func__ <<
         " : " <<
@@ -24,6 +25,7 @@ static int free_function(int p1) {
         std::endl;
     return EXIT_SUCCESS;
 }
+};
 
 class TestApplication
 {
