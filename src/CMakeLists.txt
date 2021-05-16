@@ -16,7 +16,7 @@ add_library(smack_cpp STATIC
     ${headers}
 )
 
-target_include_directories(smack_cpp INTERFACE ..)
+target_include_directories(smack_cpp INTERFACE .)
 
 install(TARGETS
   smack_cpp

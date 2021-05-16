@@ -8,9 +8,9 @@
 #include <vector>
 #include <string>
 
-#include "test_common.hpp"
+#include "../test/test_common.hpp"
 
-#include "../src/smack_cli.hpp"
+#include <smack_cli.hpp>
 
 namespace {
 
@@ -43,6 +43,7 @@ int f6(bool p1) {
 int f7(int p1) {
     return smack::test::common::f(__func__, p1);
 }
+
 int f7(int p1, double p2) {
     return smack::test::common::f(__func__, p1, p2);
 }
@@ -94,8 +95,6 @@ int execute(const std::vector<std::string>& argv) {
 } // namespace anonymous
 
 int main(int argc, char**argv) {
-    std::cout << argv[0] << std::endl;
-
     std::vector<std::string> cmdArgv(
         argv + 1, 
         argv + argc);

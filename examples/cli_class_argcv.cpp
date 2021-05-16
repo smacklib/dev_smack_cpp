@@ -9,9 +9,9 @@
 #include <string>
 #include <cstdlib>
 
-#include "test_common.hpp"
+#include "../test/test_common.hpp"
 
-#include "../src/smack_cli.hpp"
+#include <smack_cli.hpp>
 
 using std::cout;
 using std::endl;
@@ -65,6 +65,7 @@ public:
     int f7(int p1) const {
         return smack::test::common::f(__func__, p1);
     }
+
     int f7_2(int p1, double p2) const {
         return smack::test::common::f(__func__, p1, p2);
     }
@@ -85,10 +86,14 @@ public:
                 "fuenf", this),
             Commands::make<&TestApplication::f6>(
                 "sechs", this),
+
+            // Register two commands with argument lists of different
+            // length for the same command name.
             Commands::make<&TestApplication::f7>(
                 "sieben", this),
             Commands::make<&TestApplication::f7_2>(
-                "sieben_2", this ),
+                "sieben", this ),
+
             Commands::make<free_function>(
                 "acht") );
 
@@ -101,10 +106,6 @@ int main(int argc, char**argv)
     TestApplication ta{ 
         argv[0] 
     };
-
-    std::vector<std::string> cmdArgv(
-        argv + 1, 
-        argv + argc);
 
     return ta.execute(argc, argv);
 }

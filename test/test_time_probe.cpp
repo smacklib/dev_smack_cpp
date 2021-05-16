@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "src/smack_util_time_probe.hpp"
+#include "smack_util_time_probe.hpp"
 
 using std::string;
 

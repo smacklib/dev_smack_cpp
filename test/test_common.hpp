@@ -1,7 +1,7 @@
 /*
  * Smack C++
  *
- * Copyright © 2019-2021 Michael Binz
+ * Copyright (c) 2019-2021 Michael Binz
  */
 
 #pragma once
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "src/smack_util.hpp"
+#include "smack_util.hpp"
 
 namespace smack {
 namespace test {

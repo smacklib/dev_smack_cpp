@@ -35,4 +35,5 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 add_subdirectory(src)
+add_subdirectory(examples)
 add_subdirectory(test)

@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "src/smack_util.hpp"
-#include "test/test_common.hpp"
+#include <smack_util.hpp>
+#include "test_common.hpp"
 
 using std::string;
 using std::vector;
