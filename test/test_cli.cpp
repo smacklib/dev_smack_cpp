@@ -7,7 +7,7 @@
 #include <typeinfo>
 
 #include "test_common.hpp"
-#include "src/smack_cli.hpp"
+#include "smack_cli.hpp"
 
 using std::string;
 using std::to_string;

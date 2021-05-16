@@ -4,14 +4,14 @@
  * Copyright © 2019 Michael Binz
  */
 
-#include <iostream>
-#include <vector>
-#include <string>
 #include <cstdlib>
+#include <iostream>
+#include <string>
+#include <vector>
 
-#include "test_common.hpp"
+#include "../test/test_common.hpp"
 
-#include "../src/smack_cli.hpp"
+#include <smack_cli.hpp>
 
 using std::cout;
 using std::endl;
@@ -69,7 +69,7 @@ public:
         return smack::test::common::f(__func__, p1, p2);
     }
 
-    int execute(int argc, char **argv) {
+    int execute(const std::vector<std::string>& argv) {
         using smack::cli::Commands;
 
         auto cli = smack::cli::makeCliApplication(
@@ -92,7 +92,7 @@ public:
             Commands::make<free_function>(
                 "acht") );
 
-        return cli.launch(argc,argv);
+        return cli.launch(argv);
     }
 };
 
@@ -106,5 +106,5 @@ int main(int argc, char**argv)
         argv + 1, 
         argv + argc);
 
-    return ta.execute(argc, argv);
+    return ta.execute(cmdArgv);
 }
