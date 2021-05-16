@@ -4,6 +4,15 @@ set(headers
   ../test/test_common.hpp
 )
 
+add_executable( cli_hello
+    cli_hello.cpp
+    ${headers}
+)
+
+target_link_libraries( cli_hello
+  smack_cpp
+)
+
 add_executable( cli_class
     cli_class.cpp
     ${headers}
