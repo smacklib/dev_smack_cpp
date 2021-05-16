@@ -87,10 +87,12 @@ public:
                 "fuenf", this),
             Commands::make<&TestApplication::f6>(
                 "sechs", this),
+            // Register two commands with argument lists of different
+            // length for the same command name.
             Commands::make<&TestApplication::f7>(
                 "sieben", this),
             Commands::make<&TestApplication::f7_2>(
-                "sieben_2", this ),
+                "sieben", this ),
             Commands::make<free_function>(
                 "acht") );
 
