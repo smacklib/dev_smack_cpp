@@ -169,7 +169,7 @@ class CliApplication
     bool found_{};
 
     template <size_t I>
-    typename std::enable_if<I == sizeof...(Cs), int>::type
+    typename std::enable_if_t<I == sizeof...(Cs), int>
     find(const string& name, const std::vector<string>& argv) {
         if (found_) {
             cerr << 
@@ -189,7 +189,7 @@ class CliApplication
         return EXIT_FAILURE;
     }
     template <size_t I>
-    typename std::enable_if<I != sizeof...(Cs), int>::type
+    typename std::enable_if_t<I != sizeof...(Cs), int>
     find(const string& name, const std::vector<string>& argv) {
         auto c = std::get<I>(commands_);
         if (name == c.get_name() && argv.size() == c.kParameterCount)
