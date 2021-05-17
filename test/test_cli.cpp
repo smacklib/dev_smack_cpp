@@ -113,7 +113,7 @@ TEST(SmackCliTest, TypenameTest) {
     EXPECT_EQ("string", string{ get_typename<std::string&>() });
     EXPECT_EQ("string", string{ get_typename<const std::string&>() });
 
-    EXPECT_EQ("whatever", string{ get_typename<void>() });
+    EXPECT_EQ("unknown", string{ get_typename<void>() });
 
     EXPECT_EQ("string", string{ get_typename<char*>() });
     EXPECT_EQ("string", string{ get_typename<const char*>() });

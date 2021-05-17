@@ -116,7 +116,7 @@ constexpr cstr get_typename_(Choice<1>) {
 
 template<typename T>
 constexpr cstr get_typename_() {
-    return "whatever"; 
+    return "unknown"; 
 }
 
 template<typename T>
@@ -192,11 +192,11 @@ class CliApplication
     typename std::enable_if_t<I != sizeof...(Cs), int>
     find(const string& name, const std::vector<string>& argv) {
         auto c = std::get<I>(commands_);
-        if (name == c.get_name() && argv.size() == c.kParameterCount)
+        found_ = name == c.get_name();
+
+        if (found_ && argv.size() == c.kParameterCount)
             return c.callv(argv);
-        else if (name == c.get_name()) {
-            found_ = true;
-        }
+
         return find<I + 1>(name, argv);
     }
 
