@@ -1,7 +1,6 @@
 #include <gtest/gtest.h> // googletest header file
 
 #include <limits.h>
-#include <sstream>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -440,16 +439,13 @@ TEST(SmackCliTest, CommandPairHelp) {
     std::vector<string> argv{"212:313"};
 
     // Redirect stdout.
-    std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    smack::test::common::redir r{ std::cout };
 
     cmd.callv( argv );
     // Get stout content.
-    std::string text = buffer.str();
+    std::string text = r.str();
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
-
-    std::cout.rdbuf(old);
 }
 
 TEST(SmackCliTest, CommandPairExec) {
