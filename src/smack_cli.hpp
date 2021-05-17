@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
+#include <exception>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -32,6 +33,13 @@ using std::cerr;
 using std::endl;
 using std::initializer_list;
 using std::size_t;
+
+class conversion_failure : public std::exception {
+public:
+    using base = std::exception;
+    explicit conversion_failure(const string& msg) : base(msg.c_str()) {}
+    explicit conversion_failure(const char* msg) : base(msg) {}
+};
 
 /**
  * Define the transformation function.  Implementations for primitives 
@@ -252,7 +260,7 @@ public:
                 cmd_name,
                 cmdArgv );
         }
-        catch (std::invalid_argument& e) {
+        catch (conversion_failure& e) {
             cout << "Conversion failed: " << e.what() << endl;
 
             return EXIT_FAILURE;

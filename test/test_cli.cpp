@@ -154,7 +154,7 @@ void testConversion()
             smack::cli::transform( belowMin.c_str(), out );
             FAIL();
         }
-        catch (const std::invalid_argument& e) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected = 
                 "Value " +
                 belowMin +
@@ -176,7 +176,7 @@ void testConversion()
             smack::cli::transform( overMax.c_str(), out );
             FAIL();
         }
-        catch (const std::invalid_argument& e) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected = 
                 "Value " +
                 overMax +
@@ -195,12 +195,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert 'dreizehn' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Number prefix.
@@ -210,12 +210,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert '13x' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Hex notation.
@@ -255,12 +255,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert 'dreizehn' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Number prefix.
@@ -270,12 +270,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert '13x' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
 }
@@ -293,12 +293,12 @@ TEST(SmackCliTest, TransformBool) {
         smack::cli::transform(in, out);
         FAIL();
     }
-    catch (std::invalid_argument(in)) {
+    catch (const smack::cli::conversion_failure& e) {
         string expected =
             "Cannot convert '13x' to " +
             string{ smack::cli::get_typename<bool>() } +
             ".";
-        EXPECT_EQ(expected, in.what());
+        EXPECT_EQ(expected, e.what());
     }
 }
 

@@ -29,7 +29,7 @@ void throwConversionFailure(const char* what, const char* type) {
         type <<
         ".";
 
-    throw std::invalid_argument(msg.str());
+    throw conversion_failure(msg.str());
 }
 
 /**
@@ -92,7 +92,7 @@ struct ConvFu<F>
                 to_string(std::numeric_limits<T>::max()) <<
                 "].";
 
-            throw std::invalid_argument(msg.str());
+            throw conversion_failure(msg.str());
         }
 
         throwConversionFailure(in, tname);
@@ -131,7 +131,7 @@ struct ConvFu<F>
                 to_string(std::numeric_limits<T>::max()) <<
                 "].";
 
-            throw std::invalid_argument(msg.str());
+            throw conversion_failure(msg.str());
         }
 
         throwConversionFailure(in, tname);
