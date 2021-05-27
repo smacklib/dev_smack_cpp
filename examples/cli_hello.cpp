@@ -44,6 +44,11 @@ int pi() {
     return EXIT_SUCCESS;
 }
 
+// Throws an error.  Demonstrates error handling.
+int error() {
+    throw std::runtime_error( "error() was called." );
+}
+
 } // namespace anonymous
 
 int main(int argc, char**argv) {
@@ -67,8 +72,10 @@ int main(int argc, char**argv) {
             "concat"),
 
         Commands::make<pi>(
-            "pi"
-        )
+            "pi" ),
+
+        Commands::make<error>(
+            "error" )
     );
 
     // Finally launch the application.

@@ -34,11 +34,23 @@ using std::endl;
 using std::initializer_list;
 using std::size_t;
 
-class conversion_failure : public std::exception {
+class conversion_failure : public std::runtime_error {
 public:
-    using base = std::exception;
+    using base = std::runtime_error;
     explicit conversion_failure(const string& msg) : base(msg.c_str()) {}
     explicit conversion_failure(const char* msg) : base(msg) {}
+};
+class command_not_found : public std::runtime_error {
+public:
+    using base = std::runtime_error;
+    explicit command_not_found(const string& msg) : base(msg.c_str()) {}
+    explicit command_not_found(const char* msg) : base(msg) {}
+};
+class command_args_incompatible : public std::runtime_error {
+public:
+    using base = std::runtime_error;
+    explicit command_args_incompatible(const string& msg) : base(msg.c_str()) {}
+    explicit command_args_incompatible(const char* msg) : base(msg) {}
 };
 
 /**
@@ -178,29 +190,19 @@ class CliApplication
 
     template <size_t I>
     typename std::enable_if_t<I == sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv) {
-        if (found_) {
-            cerr << 
-                "Command '" <<
-                name <<
-                "' does not support " <<
-                std::to_string( argv.size() ) <<
-                " parameters." <<
-                endl;
-            printHelp(name);
-        }
-        else
-        {
-            cerr << "Unknown command '" << name << "'." << endl;
-            printHelp();
-        }
-        return EXIT_FAILURE;
+    find(const string& name, const std::vector<string>& argv)
+    {
+        if (found_) 
+            throw command_args_incompatible( name );
+
+        throw command_not_found( name );
     }
     template <size_t I>
     typename std::enable_if_t<I != sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv) {
+    find(const string& name, const std::vector<string>& argv)
+    {
         auto c = std::get<I>(commands_);
-        found_ = name == c.get_name();
+        found_ = found_ ? found_ : name == c.get_name();
 
         if (found_ && argv.size() == c.kParameterCount)
             return c.callv(argv);
@@ -236,7 +238,7 @@ public:
      * not pass argv[0].  See and prefer launch( int, char** ) which directly
      * accepts the arguments received in a main()-function.
      */
-    int launch(const std::vector<string>& argv) {
+    int launch(const std::vector<string>& argv) noexcept {
         if (argv.empty()) {
             cerr << "No arguments. Available commands:" << endl;
             printHelp();
@@ -260,11 +262,34 @@ public:
                 cmd_name,
                 cmdArgv );
         }
-        catch (conversion_failure& e) {
+        catch (const conversion_failure& e) {
             cout << "Conversion failed: " << e.what() << endl;
-
-            return EXIT_FAILURE;
         }
+        catch (const command_not_found& e) {
+            cerr << "Unknown command '" << cmd_name << "'.\n";
+            cerr << "Supported commands are:\n";
+            printHelp();
+        }
+        catch (const command_args_incompatible& e) {
+            cerr << 
+                "The command '" <<
+                cmd_name <<
+                "' does not support " <<
+                std::to_string( cmdArgv.size() ) <<
+                " parameters.\n";
+            cerr << "Supported:\n";
+            printHelp( cmd_name );
+        }
+        catch (const std::exception &e)
+        {
+            cerr <<
+                cmd_name <<
+                " failed: " <<
+                e.what() <<
+                "\n";
+        }
+
+        return EXIT_FAILURE;
     }
 
     /**
@@ -274,7 +299,7 @@ public:
      * @param argc The argument count, as defined by the C/C++ main()-function.
      * @param argc The arguments, as defined by the C/C++ main()-function.
      */
-    int launch(int argc, char** argv) {
+    int launch(int argc, const char* const* argv) noexcept {
         // Skip the program name.
         std::vector<std::string> cmdArgv(
             argv + 1,

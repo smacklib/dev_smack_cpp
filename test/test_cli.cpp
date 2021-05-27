@@ -2,6 +2,7 @@
 
 #include <limits.h>
 #include <string>
+#include <stdexcept>
 #include <type_traits>
 #include <typeinfo>
 
@@ -30,6 +31,10 @@ namespace {
 
     int fPair(std::pair<int,int> p1) {
         return smack::test::common::f(__func__, p1.first, p1.second);
+    }
+
+    int fError(string p1) {
+        throw std::invalid_argument( p1 );
     }
 }
 
@@ -495,6 +500,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
+
 TEST(SmackCliTest, CommandCall) {
     using smack::cli::Commands;
 
@@ -518,4 +524,95 @@ TEST(SmackCliTest, CommandCall) {
         cmd.callv( argv );
         EXPECT_EQ(expected, out.str());
     }
+}
+
+TEST(SmackCliTest, CliErrorCommandNotFound) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        "bogus",
+        "hogus" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("Unknown command 'bogus'.", lines[0]);
+}
+
+TEST(SmackCliTest, CliErrorCommandArgMismatch) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        cmd.get_name(),
+        "212:313",
+        "donald" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("The command 'fPair' does not support 2 parameters.", lines[0]);
+}
+
+TEST(SmackCliTest, CliErrorCommandException) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fError>(
+        "xxx",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        cmd.get_name(),
+        "Groan!" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("xxx failed: Groan!", lines[0]);
 }
