@@ -1,8 +1,8 @@
 #include <gtest/gtest.h> // googletest header file
 
 #include <limits.h>
-#include <sstream>
 #include <string>
+#include <stdexcept>
 #include <type_traits>
 #include <typeinfo>
 
@@ -31,6 +31,10 @@ namespace {
 
     int fPair(std::pair<int,int> p1) {
         return smack::test::common::f(__func__, p1.first, p1.second);
+    }
+
+    int fError(string p1) {
+        throw std::invalid_argument( p1 );
     }
 }
 
@@ -154,7 +158,7 @@ void testConversion()
             smack::cli::transform( belowMin.c_str(), out );
             FAIL();
         }
-        catch (const std::invalid_argument& e) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected = 
                 "Value " +
                 belowMin +
@@ -176,7 +180,7 @@ void testConversion()
             smack::cli::transform( overMax.c_str(), out );
             FAIL();
         }
-        catch (const std::invalid_argument& e) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected = 
                 "Value " +
                 overMax +
@@ -195,12 +199,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert 'dreizehn' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Number prefix.
@@ -210,12 +214,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert '13x' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Hex notation.
@@ -255,12 +259,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert 'dreizehn' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
     // Number prefix.
@@ -270,12 +274,12 @@ void testConversion()
             smack::cli::transform(in, out);
             FAIL();
         }
-        catch (std::invalid_argument(in)) {
+        catch (const smack::cli::conversion_failure& e) {
             string expected =
                 "Cannot convert '13x' to " +
                 string{ smack::cli::get_typename<T>() } +
                 ".";
-            EXPECT_EQ(expected, in.what());
+            EXPECT_EQ(expected, e.what());
         }
     }
 }
@@ -293,12 +297,12 @@ TEST(SmackCliTest, TransformBool) {
         smack::cli::transform(in, out);
         FAIL();
     }
-    catch (std::invalid_argument(in)) {
+    catch (const smack::cli::conversion_failure& e) {
         string expected =
             "Cannot convert '13x' to " +
             string{ smack::cli::get_typename<bool>() } +
             ".";
-        EXPECT_EQ(expected, in.what());
+        EXPECT_EQ(expected, e.what());
     }
 }
 
@@ -440,16 +444,13 @@ TEST(SmackCliTest, CommandPairHelp) {
     std::vector<string> argv{"212:313"};
 
     // Redirect stdout.
-    std::stringstream buffer;
-    std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
+    smack::test::common::redir r{ std::cout };
 
     cmd.callv( argv );
     // Get stout content.
-    std::string text = buffer.str();
+    std::string text = r.str();
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
-
-    std::cout.rdbuf(old);
 }
 
 TEST(SmackCliTest, CommandPairExec) {
@@ -499,6 +500,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
 
     EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
+
 TEST(SmackCliTest, CommandCall) {
     using smack::cli::Commands;
 
@@ -522,4 +524,95 @@ TEST(SmackCliTest, CommandCall) {
         cmd.callv( argv );
         EXPECT_EQ(expected, out.str());
     }
+}
+
+TEST(SmackCliTest, CliErrorCommandNotFound) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        "bogus",
+        "hogus" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("Unknown command 'bogus'.", lines[0]);
+}
+
+TEST(SmackCliTest, CliErrorCommandArgMismatch) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fPair>(
+        "fPair",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        cmd.get_name(),
+        "212:313",
+        "donald" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("The command 'fPair' does not support 2 parameters.", lines[0]);
+}
+
+TEST(SmackCliTest, CliErrorCommandException) {
+    using smack::cli::Commands;
+
+    auto cmd = Commands::make<fError>(
+        "xxx",
+        { "p1" });
+
+    auto cli = smack::cli::makeCliApplication(
+        cmd
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{
+        cmd.get_name(),
+        "Groan!" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_LE(1, lines.size());
+    EXPECT_EQ("xxx failed: Groan!", lines[0]);
 }
