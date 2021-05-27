@@ -11,12 +11,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
-#include <exception>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <sstream>
 #include <string>
 #include <tuple>
