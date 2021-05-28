@@ -26,6 +26,16 @@ namespace strings {
  */
 vector<string> split(const string& in, const string& delimiter);
 
+/**
+ * Concatenate strings using a delimiter. The delimiter is inserted between
+ * the strings, not at the end or the beginning.  An example is 
+ * concat( {"a", "b", "c"}, "-" ) -> "a-b-c" ).
+ * 
+ * @param in The strings to concatenate.  If the container is empty the
+ * empty string is returned.  If only a single string is contained this
+ * is returned.
+ * @param delimiter The delimiter to use.  This may be the empty string.
+ */
 string concat(const vector<string>& in, const string& delimiter);
 
 template <typename T>
@@ -42,15 +52,48 @@ string trim_(const string& in, T pred)
     return in.substr(begin, end - begin);
 }
 
+/**
+ * Trims, i.e. removes, space characters at the beginning and the end
+ * of the passed string.  Formally characters where std::isspace() 
+ * returns true are removed.
+ * 
+ * @param in The string to trim.
+ * @returns The trimmed string.
+ */
 string trim(const string& in);
 
+/**
+ * Trims, i.e. removes, characters at the beginning and the end
+ * of the passed string.  The characters to be removed can be
+ * passed.
+ *
+ * @param in The string to trim.
+ * @param toTrim A string containing characters to be trimmed.
+ * @returns The trimmed string.
+ */
 string trim(const string& in, const string& toTrim);
 
+/**
+ * Checks if a string starts with a given prefix.
+ *
+ * @param in The string.
+ * @param prefix The prefix.
+ * @returns true if the passed string starts with the prefix,
+ * false otherwise.
+ */
 inline bool starts_with( const string& in, const string& prefix )
 {
     return in.rfind( prefix, 0 ) != string::npos;
 }
 
+/**
+ * Checks if a string ends with a given suffix.
+ *
+ * @param in The string.
+ * @param suffix The suffix.
+ * @returns true if the passed string ends with the suffix,
+ * false otherwise.
+ */
 inline bool ends_with( const string& in, const string& suffix )
 {
     return in.find( suffix, in.length() - suffix.length() ) != string::npos;
