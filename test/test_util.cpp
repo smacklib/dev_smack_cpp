@@ -261,3 +261,28 @@ TEST(SmackUtilTest, Disposer) {
     }
     EXPECT_EQ(1, closedCount);
 }
+
+namespace {
+
+void handleNonConst1(smack::test::common::Tracer t)
+{
+    EXPECT_EQ(1, t.copyCount());
+}
+void handleNonConst2(smack::test::common::Tracer& t)
+{
+    EXPECT_EQ(0, t.copyCount());
+}
+
+void handleConst(const smack::test::common::Tracer& t)
+{
+    EXPECT_EQ(0, t.copyCount() );
+}
+
+}
+
+TEST(SmackUtilTest, traced) {
+    smack::test::common::Tracer tracer("traced");
+    handleNonConst1(tracer);
+    handleNonConst2(tracer);
+    handleConst(tracer);
+}
