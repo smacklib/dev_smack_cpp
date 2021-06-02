@@ -18,6 +18,8 @@ namespace smack {
 namespace test {
 namespace common {
 
+using std::string;
+
 inline void pr() {
 }
 
@@ -80,6 +82,39 @@ public:
         return smack::util::strings::split(
             buffer_.str(),
             "\n");
+    }
+};
+
+/**
+ * Allow tracing of class copying.  Create a local instance
+ * in the class to be traced.
+ */
+class Tracer
+{
+private:
+    string name_;
+    size_t copy_count_;
+
+public:
+    Tracer(string name) :
+        name_(name),
+        copy_count_(0) {};
+
+    Tracer(Tracer const& other) {
+        name_ = other.name_;
+        copy_count_ = other.copy_count_ + 1;
+
+        std::cout << name_ << "(" << copy_count_ << ") copy\n";
+    }
+
+    ~Tracer() = default;
+
+    auto name() const {
+        return name_;
+    }
+
+    auto copyCount() const {
+        return copy_count_;
     }
 };
 
