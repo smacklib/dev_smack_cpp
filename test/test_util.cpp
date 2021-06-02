@@ -264,25 +264,39 @@ TEST(SmackUtilTest, Disposer) {
 
 namespace {
 
+std::string tracerName{ "KONG" };
+
 void handleNonConst1(smack::test::common::Tracer t)
 {
     EXPECT_EQ(1, t.copyCount());
+    EXPECT_EQ(tracerName, t.name());
 }
 void handleNonConst2(smack::test::common::Tracer& t)
 {
     EXPECT_EQ(0, t.copyCount());
+    EXPECT_EQ(tracerName, t.name());
 }
 
 void handleConst(const smack::test::common::Tracer& t)
 {
-    EXPECT_EQ(0, t.copyCount() );
+    EXPECT_EQ(0, t.copyCount());
+    EXPECT_EQ(tracerName, t.name());
 }
 
 }
 
-TEST(SmackUtilTest, traced) {
-    smack::test::common::Tracer tracer("traced");
+TEST(SmackUtilTest, CopyTracer) {
+
+    smack::test::common::redir out{ std::cout };
+
+    smack::test::common::Tracer tracer(tracerName);
     handleNonConst1(tracer);
     handleNonConst2(tracer);
     handleConst(tracer);
+
+    auto lines = out.strs();
+
+    EXPECT_EQ(2, lines.size());
+    EXPECT_EQ("KONG(1) copy", lines[0]);
+    EXPECT_TRUE( lines[1].empty() );
 }
