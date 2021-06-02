@@ -228,7 +228,7 @@ class CliApplication
     }
 
 public:
-    CliApplication(Cs ... commands) :
+    CliApplication(const Cs& ... commands) :
         commands_(commands...) {
     }
 
@@ -265,12 +265,12 @@ public:
         catch (const conversion_failure& e) {
             cout << "Conversion failed: " << e.what() << endl;
         }
-        catch (const command_not_found& e) {
+        catch (const command_not_found&) {
             cerr << "Unknown command '" << cmd_name << "'.\n";
             cerr << "Supported commands are:\n";
             printHelp();
         }
-        catch (const command_args_incompatible& e) {
+        catch (const command_args_incompatible&) {
             cerr << 
                 "The command '" <<
                 cmd_name <<
@@ -313,7 +313,7 @@ public:
  * Create a CliApplication instance.
  */
 template <typename... Cs>
-auto makeCliApplication(Cs ... commands) {
+auto makeCliApplication(const Cs& ... commands) {
     CliApplication < decltype(commands) ... > result(commands ...);
     return result;
 }
@@ -346,8 +346,12 @@ public:
     };
 
 private:
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
     template<auto ... S>
-    R callFunc(VT& params, std::index_sequence<S...>) const {
+    R callFunc(const VT& params, std::index_sequence<S...>) const {
         return operator()(std::get<S>(params) ...);
     }
 
