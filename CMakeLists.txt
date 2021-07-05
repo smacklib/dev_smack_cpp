@@ -15,17 +15,6 @@ project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
 option(ENABLE_TESTS "Enable testing" OFF)
 option(ENABLE_EXAMPLES "Enable building examples" OFF)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.10.0
-)
-
-# After the following call, the CMake targets defined by googletest
-# are available to the rest of the build.
-FetchContent_MakeAvailable(googletest)
-
 #
 # Common for all architectures..
 #
@@ -42,6 +31,18 @@ if (ENABLE_EXAMPLES)
 endif ()
 
 if (ENABLE_TESTS)
+    include(FetchContent)
+	
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG        release-1.10.0
+    )
+
+    # After the following call, the CMake targets defined by googletest
+    # are available to the rest of the build.
+    FetchContent_MakeAvailable(googletest)
+
     enable_testing()
     add_subdirectory(test)
 endif ()
