@@ -7,6 +7,8 @@ rem are not cool
 IF EXIST %buildDir% rm -rf %buildDir%
 md %buildDir%
 cd %buildDir%
-"%programfiles%"\CMake\bin\cmake.exe -DCMAKE_BUILD_TYPE:STRING=Release -G "Visual Studio 16 2019" ..
+
+rem Generation of tests and examples is enabled here.
+"%programfiles%"\CMake\bin\cmake.exe -DENABLE_TESTS=ON -DENABLE_EXAMPLES=ON -G "Visual Studio 16 2019" ..
 
 cd ..

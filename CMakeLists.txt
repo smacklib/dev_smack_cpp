@@ -12,18 +12,8 @@ set( CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 
 project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.10.0
-)
-
-# After the following call, the CMake targets defined by googletest
-# will be defined and available to the rest of the build
-FetchContent_MakeAvailable(googletest)
-
-enable_testing()
+option(ENABLE_TESTS "Enable testing" OFF)
+option(ENABLE_EXAMPLES "Enable building examples" OFF)
 
 #
 # Common for all architectures..
@@ -35,5 +25,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 add_subdirectory(src)
-add_subdirectory(examples)
-add_subdirectory(test)
+
+if (ENABLE_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
+
+if (ENABLE_TESTS)
+    include(FetchContent)
+	
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG        release-1.10.0
+    )
+
+    # After the following call, the CMake targets defined by googletest
+    # are available to the rest of the build.
+    FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+    add_subdirectory(test)
+endif ()
