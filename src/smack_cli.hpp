@@ -397,7 +397,7 @@ private:
 
 public:
     Command(
-        string& name,
+        const string& name,
         F f,
         initializer_list<const char*> parameterHelp = {})
         :
