@@ -616,3 +616,30 @@ TEST(SmackCliTest, CliErrorCommandException) {
     EXPECT_LE(1, lines.size());
     EXPECT_EQ("xxx failed: Groan!", lines[0]);
 }
+
+TEST(SmackCliTest, CliTestHelp) {
+    using smack::cli::Commands;
+
+    auto cli = smack::cli::makeCliApplication(
+        Commands::make<fError>(
+            "xxx",
+            { "p1" })
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv;
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_FAILURE, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_EQ(2, lines.size());
+    EXPECT_EQ("No arguments. Available commands:", lines[0]);
+    EXPECT_EQ("xxx p1:string", lines[1]);
+}
