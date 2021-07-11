@@ -639,7 +639,33 @@ TEST(SmackCliTest, CliTestHelp) {
     // Get err content.
     auto lines = r.strs();
 
-    EXPECT_EQ(2, lines.size());
+    EXPECT_EQ(3, lines.size());
     EXPECT_EQ("No arguments. Available commands:", lines[0]);
     EXPECT_EQ("xxx p1:string", lines[1]);
+}
+
+TEST(SmackCliTest, CliTestHelpExplicit) {
+    using smack::cli::Commands;
+
+    auto cli = smack::cli::makeCliApplication(
+        Commands::make<fError>(
+            "xxx",
+            { "p1" })
+    );
+
+    smack::test::common::redir r{ std::cerr };
+
+    std::vector<string> argv{ "?" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_SUCCESS, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    EXPECT_EQ(2, lines.size());
+    EXPECT_EQ("xxx p1:string", lines[0]);
 }

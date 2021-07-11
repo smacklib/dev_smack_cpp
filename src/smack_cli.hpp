@@ -313,7 +313,7 @@ public:
  * Create a CliApplication instance.
  */
 template <typename... Cs>
-auto makeCliApplication(const Cs& ... commands) {
+auto makeCliApplication(const Cs ... commands) {
     CliApplication < decltype(commands) ... > result(commands ...);
     return result;
 }
