@@ -313,7 +313,7 @@ public:
  * Create a CliApplication instance.
  */
 template <typename... Cs>
-auto makeCliApplication(const Cs& ... commands) {
+auto makeCliApplication(const Cs ... commands) {
     CliApplication < decltype(commands) ... > result(commands ...);
     return result;
 }
@@ -397,7 +397,7 @@ private:
 
 public:
     Command(
-        const string& name,
+        string& name,
         F f,
         initializer_list<const char*> parameterHelp = {})
         :
