@@ -313,8 +313,9 @@ public:
  * Create a CliApplication instance.
  */
 template <typename... Cs>
-auto makeCliApplication(const Cs ... commands) {
-    CliApplication < decltype(commands) ... > result(commands ...);
+[[deprecated("Directly construct an instance of smack::cli::CliApplication.")]]
+auto makeCliApplication(const Cs& ... commands) {
+    CliApplication result(commands ...);
     return result;
 }
 

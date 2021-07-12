@@ -74,7 +74,7 @@ public:
     int execute(const std::vector<std::string>& argv) {
         using smack::cli::Commands;
 
-        auto cli = smack::cli::makeCliApplication(
+        smack::cli::CliApplication cli(
             Commands::make<&TestApplication::f1>(
                 "eins", this),
             Commands::make<&TestApplication::f2>(

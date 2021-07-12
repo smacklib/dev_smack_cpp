@@ -53,7 +53,7 @@ int f7(int p1, double p2) {
 int main(int argc, char**argv) {
     std::cout << argv[0] << std::endl;
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         Commands::make<f1>(
             "eins",
             { "p1" }),

@@ -55,7 +55,7 @@ int main(int argc, char**argv) {
 
     // Create an application proxy and register the
     // commands with the proxy. 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli{
         Commands::make<add_int>(
             // The command name that is used to select the
             // command on the command line.  This can be freely
@@ -72,11 +72,11 @@ int main(int argc, char**argv) {
             "concat"),
 
         Commands::make<pi>(
-            "pi" ),
+            "pi"),
 
         Commands::make<error>(
-            "error" )
-    );
+            "error")
+    };
 
     // Finally launch the application.
     return cli.launch(argc, argv);
