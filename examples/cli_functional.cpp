@@ -78,7 +78,7 @@ int execute(const std::vector<std::string>& argv) {
     auto cmd7_2 = Commands::make<static_cast<int(*)(int, double)>(f7)>(
         "sieben_2");
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         cmd1,
         cmd2,
         cmd3,

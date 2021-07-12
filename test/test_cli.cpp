@@ -483,7 +483,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
         cmd.get_name(),
         "212:313" };
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         cmd
     );
 
@@ -533,7 +533,7 @@ TEST(SmackCliTest, CliErrorCommandNotFound) {
         "fPair",
         { "p1" });
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         cmd
     );
 
@@ -563,7 +563,7 @@ TEST(SmackCliTest, CliErrorCommandArgMismatch) {
         "fPair",
         { "p1" });
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         cmd
     );
 
@@ -594,7 +594,7 @@ TEST(SmackCliTest, CliErrorCommandException) {
         "xxx",
         { "p1" });
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         cmd
     );
 
@@ -620,7 +620,7 @@ TEST(SmackCliTest, CliErrorCommandException) {
 TEST(SmackCliTest, CliTestHelp) {
     using smack::cli::Commands;
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         Commands::make<fError>(
             "xxx",
             { "p1" })
@@ -647,7 +647,7 @@ TEST(SmackCliTest, CliTestHelp) {
 TEST(SmackCliTest, CliTestHelpExplicit) {
     using smack::cli::Commands;
 
-    auto cli = smack::cli::makeCliApplication(
+    smack::cli::CliApplication cli(
         Commands::make<fError>(
             "xxx",
             { "p1" })
