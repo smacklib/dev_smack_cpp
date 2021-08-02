@@ -414,7 +414,7 @@ private:
         constexpr auto sz = std::tuple_size_v<Tp>;
 
         if (argv.size() != sz)
-            throw std::invalid_argument("Bad array size.");
+            throw std::invalid_argument("Wrong number of arguments.");
         
         constexpr auto idx =
             std::make_index_sequence<sz>{};
@@ -449,10 +449,6 @@ public:
      * command parameters, not including the command name or other stuff.
      */
     R callv(const std::vector<std::string>& v) const {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Wrong number of arguments.");
-        }
-
         return func__( v );
     }
 
@@ -464,13 +460,6 @@ public:
     template <typename T = string, typename ... V>
     R call(V const & ... argv) const 
     {
-        static_assert(
-            sizeof ... (V) == kParameterCount,
-            "Wrong number of arguments." );
-        static_assert( 
-            std::is_convertible<std::common_type_t<V...>,T>(),
-            "Bad argument type." );
-
         std::vector<T> va {
             argv ... 
         };
