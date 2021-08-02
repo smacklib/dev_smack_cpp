@@ -339,9 +339,7 @@ class Command {
     /**
      * The function to be called.
      */
-    F func_;
-
-    std::function<int(std::vector<string>&)> func__;
+    std::function<int(const std::vector<string>&)> func__;
 
 public:
     static constexpr size_t kParameterCount{
@@ -349,15 +347,6 @@ public:
     };
 
 private:
-    // /**
-    //  * Make a parameter pack from the passed params tuple and
-    //  * call the functor.
-    //  */
-    // template<auto ... S>
-    // R callFunc(const VT& params, std::index_sequence<S...>) const {
-    //     return func_(std::get<S>(params) ...);
-    // }
-
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
@@ -407,20 +396,6 @@ private:
     }
 
     template <typename T, auto ... S>
-    void updateImpl(
-        const T& v,
-        VT& params,
-        const std::index_sequence<S...>&) const 
-    {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Bad array size.");
-        }
-        map(
-            tf(std::get<S>(params), v[S]) ...
-        ); 
-   }
-
-    template <typename T, auto ... S>
     static void convertImpl(
         const T& v,
         VT& params,
@@ -429,7 +404,7 @@ private:
         map(
             tf(std::get<S>(params), v[S]) ...
         ); 
-   }
+    }
 
     template <typename Tp>
     static void convertx(
@@ -454,7 +429,6 @@ public:
         initializer_list<const char*> parameterHelp = {})
         :
         name_(name),
-        func_(f),
         parameterHelp_(parameterHelp)
     {
         if ( parameterHelp.size() > parameterHelp_.size() )
@@ -470,34 +444,16 @@ public:
     }
 
     /**
-     * Supports a typesave call of the command.
-     */
-    R operator()(Args... a) const {
-        return func_(a...);
-    }
-
-    /**
      * Call the command with arguments to be converted.  Note that
      * the number of parameters represents the actual number of offered
      * command parameters, not including the command name or other stuff.
      */
-    template <typename Container>
-    R callv(const Container& v) const {
+    R callv(const std::vector<std::string>& v) const {
         if (v.size() != kParameterCount) {
             throw std::invalid_argument("Wrong number of arguments.");
         }
 
-        VT params;
-
-        constexpr auto idx = 
-            std::make_index_sequence<kParameterCount>{};
-
-        updateImpl(
-            v,
-            params,
-            idx);
-
-        return callFunc2(func_, params);
+        return func__( v );
     }
 
     /**
@@ -515,231 +471,11 @@ public:
             std::is_convertible<std::common_type_t<V...>,T>(),
             "Bad argument type." );
 
-        std::array<T, sizeof ... (V)> va {
+        std::vector<T> va {
             argv ... 
         };
 
-        return callv(va);
-    }
-
-    /**
-     * Creates a single-line command description that is displayed
-     * in the generated cli help.
-     */
-    string to_string() const 
-    {
-        // Get the raw type names of the parameters.
-        VT tup;
-
-        static_assert( kParameterCount == std::tuple_size_v<VT> );
-
-        std::array<string, kParameterCount> expander = map_tuple<string>(
-            tup,
-            [](auto t) {
-                return get_typename( t );
-            }
-        );
-
-        // If help was passed prepend the raw types with the 
-        // passed display names.
-        size_t idx = 0;
-        for (string c : parameterHelp_) {
-            if (c.empty())
-                continue;
-            expander[idx] = c + ":" + expander[idx];
-            ++idx;
-        }
-
-        // Line starts with the command name.
-        string result{ name_ };
-
-        if (!expander.size())
-            return result;
-
-        result.append(
-            " ");
-        // Add the first argument.
-        result.append(
-            expander[0]);
-        // For the remaining arguments.
-        for (size_t i = 1; i < expander.size(); i++) {
-            result.append(
-                ", ");
-            result.append(
-                expander[i]);
-        }
-
-        return result;
-    }
-
-    string get_name() const {
-        return name_;
-    }
-};
-
-/**
- * A single command.  This wraps a function and the necessary logic
- * to map from string-based command line arguments.
- */
-template <typename F, typename ... Args>
-class Command2 {
-    // Defines the return type.
-    using R = int;
-    // Intermediate storage for the converted arguments.
-    using VT =
-        std::tuple< typename std::decay<Args>::type ... >;
-
-    /**
-     * The command's name.
-     */
-    string name_;
-
-    /**
-     * The function to be called.
-     */
-    F func_;
-
-    std::function<int(std::vector<string>&)> func__;
-
-public:
-    static constexpr size_t kParameterCount{
-        sizeof ... (Args)
-    };
-
-private:
-    /**
-     * Make a parameter pack from the passed params tuple and
-     * call the functor.
-     */
-    template<typename Fu, auto ... S>
-    static R callFunc2Impl(Fu f, const VT& params, std::index_sequence<S...>) {
-        return f(std::get<S>(params) ...);
-    }
-    /**
-     * Make a parameter pack from the passed params tuple and
-     * call the functor.
-     */
-    template<typename Fu, typename Tp>
-    static R callFunc2(Fu f, const Tp& params) {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
-        constexpr auto idx = 
-            std::make_index_sequence<sz>{};
-
-        return callFunc2Impl( f, params, idx );
-    }
-
-    initializer_list<const char*> parameterHelp_;
-
-    /**
-     * Trigger mapping.
-     */
-    template <typename ... T>
-    static void map(T ...) {
-    }
-
-    template <typename T>
-    static int tf(T& param, const string& str) {
-        try {
-            transform(str.c_str(), param);
-        }
-        catch (std::invalid_argument&) {
-            std::stringstream s;
-            s << 
-                std::quoted(str) <<
-                " -> " << 
-                get_typename<T>();
-
-            throw std::invalid_argument(s.str());
-        }
-        return 0;
-    }
-
-    template <typename T, auto ... S>
-    void updateImpl(
-        const T& v,
-        VT& params,
-        const std::index_sequence<S...>&) const 
-    {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Bad array size.");
-        }
-        map(
-            tf(std::get<S>(params), v[S]) ...
-        ); 
-   }
-
-    template <typename T, auto ... S>
-    static void convertImpl(
-        const T& v,
-        VT& params,
-        const std::index_sequence<S...>&)
-    {
-        map(
-            tf(std::get<S>(params), v[S]) ...
-        ); 
-   }
-
-    template <typename Tp>
-    static void convert(
-        Tp& params,
-        const std::vector<std::string> argv) 
-    {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
-        if (argv.size() != sz)
-            throw std::invalid_argument("Bad array size.");
-        
-        constexpr auto idx =
-            std::make_index_sequence<sz>{};
-
-        convertImpl(argv,params,idx);
-   }
-
-public:
-    Command2(
-        const string& name,
-        F f,
-        initializer_list<const char*> parameterHelp = {})
-        :
-        name_(name),
-        func_(f),
-        parameterHelp_(parameterHelp)
-    {
-        if ( parameterHelp.size() > parameterHelp_.size() )
-            throw std::invalid_argument("Too many parameter help strings.");
-
-        func__ = [f](std::vector<std::string> v){
-            VT params;
-
-            convert( params, v );
-
-            return callFunc2(f, params);
-        };
-    }
-
-    /**
-     * Call the command with arguments to be converted.  Note that
-     * the number of parameters represents the actual number of offered
-     * command parameters, not including the command name or other stuff.
-     */
-    template <typename Container>
-    R callv(const Container& v) const {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Wrong number of arguments.");
-        }
-
-        VT params;
-
-        constexpr auto idx = 
-            std::make_index_sequence<kParameterCount>{};
-
-        updateImpl(
-            v,
-            params,
-            idx);
-
-        return callFunc2(func_, params);
+        return callv( va );
     }
 
     /**

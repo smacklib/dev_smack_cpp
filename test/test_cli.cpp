@@ -508,11 +508,11 @@ TEST(SmackCliTest, CommandCall) {
         "f3");
 
     string expected{"f3( 313, 3.1415, micbinz )\n"};
-    {
-        smack::test::common::redir out( std::cout );
-        cmd( 313, 3.1415, "micbinz" );
-        EXPECT_EQ(expected, out.str());
-    }
+    // {
+    //     smack::test::common::redir out( std::cout );
+    //     cmd( 313, 3.1415, "micbinz" );
+    //     EXPECT_EQ(expected, out.str());
+    // }
     {
         smack::test::common::redir out( std::cout );
         cmd.call( "313", "3.1415", "micbinz" );
