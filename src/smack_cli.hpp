@@ -190,7 +190,7 @@ class CliApplication
 
     template <size_t I>
     typename std::enable_if_t<I == sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv)
+    find(const string& name, const std::vector<string>&)
     {
         if (found_) 
             throw command_args_incompatible( name );
