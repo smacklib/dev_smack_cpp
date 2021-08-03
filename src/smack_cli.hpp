@@ -351,8 +351,8 @@ private:
      * Make a parameter pack from the passed params tuple and
      * call the functor.
      */
-    template<typename Fu, auto ... S>
-    static R callFunc2Impl(Fu f, const VT& params, std::index_sequence<S...>) {
+    template<typename Fu,typename Tp, auto ... S>
+    static R callFunc2Impl(Fu f, const Tp& params, std::index_sequence<S...>) {
         return f(std::get<S>(params) ...);
     }
     /**
@@ -395,10 +395,10 @@ private:
         return 0;
     }
 
-    template <typename T, auto ... S>
+    template <typename T, typename Tp, auto ... S>
     static void convertImpl(
         const T& v,
-        VT& params,
+        Tp& params,
         const std::index_sequence<S...>&)
     {
         map(
