@@ -336,10 +336,12 @@ class Command {
      */
     string name_;
 
+    string helpLine_;
+
     /**
      * The function to be called.
      */
-    std::function<int(const std::vector<string>&)> func__;
+    std::function<R(const std::vector<string>&)> func__;
 
 public:
     static constexpr size_t kParameterCount{
@@ -368,8 +370,6 @@ private:
 
         return callFunc2Impl( f, params, idx );
     }
-
-    initializer_list<const char*> parameterHelp_;
 
     /**
      * Trigger mapping.
@@ -429,11 +429,26 @@ public:
         initializer_list<const char*> parameterHelp = {})
         :
         name_(name),
-        parameterHelp_(parameterHelp)
+        helpLine_(to_string2<VT>(name,parameterHelp))
     {
-        if ( parameterHelp.size() > parameterHelp_.size() )
-            throw std::invalid_argument("Too many parameter help strings.");
+        func__ = [f](std::vector<std::string> v){
+            VT params;
 
+            convertx( params, v );
+
+            return callFunc2(f, params);
+        };
+    }
+
+    Command(
+        const string& name,
+        std::function<R(const std::vector<string>&)> f,
+        const string& helpLine)
+        :
+        name_(name),
+        func__(f),
+        helpLine_(helpLine)
+    {
         func__ = [f](std::vector<std::string> v){
             VT params;
 
@@ -471,24 +486,25 @@ public:
      * Creates a single-line command description that is displayed
      * in the generated cli help.
      */
-    string to_string() const 
+    template <typename Tp>
+    static string to_string2(
+        const std::string& name, 
+        initializer_list<const char*> parameterHelp)
     {
         // Get the raw type names of the parameters.
-        VT tup;
-
-        static_assert( kParameterCount == std::tuple_size_v<VT> );
+        Tp tup;
 
         std::array<string, kParameterCount> expander = map_tuple<string>(
             tup,
             [](auto t) {
-                return get_typename( t );
+                return get_typename(t);
             }
         );
 
-        // If help was passed prepend the raw types with the 
+        // If help was passed prepend the raw types with the
         // passed display names.
         size_t idx = 0;
-        for (string c : parameterHelp_) {
+        for (string c : parameterHelp) {
             if (c.empty())
                 continue;
             expander[idx] = c + ":" + expander[idx];
@@ -496,7 +512,7 @@ public:
         }
 
         // Line starts with the command name.
-        string result{ name_ };
+        string result{ name };
 
         if (!expander.size())
             return result;
@@ -517,8 +533,145 @@ public:
         return result;
     }
 
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    string to_string() const 
+    {
+        return helpLine_;
+    }
+
     string get_name() const {
         return name_;
+    }
+
+};
+
+struct internal {
+    using R = int;
+        /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu,typename Tp, auto ... S>
+    static R callFunc2Impl(Fu f, const Tp& params, std::index_sequence<S...>) {
+        return f(std::get<S>(params) ...);
+    }
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu, typename Tp>
+    static R callFunc2(Fu f, const Tp& params) {
+        constexpr auto sz = std::tuple_size_v<Tp>;
+
+        constexpr auto idx = 
+            std::make_index_sequence<sz>{};
+
+        return callFunc2Impl( f, params, idx );
+    }
+
+    /**
+     * Trigger mapping.
+     */
+    template <typename ... T>
+    static void map(T ...) {
+    }
+
+    template <typename T>
+    static int tf(T& param, const string& str) {
+        try {
+            transform(str.c_str(), param);
+        }
+        catch (std::invalid_argument&) {
+            std::stringstream s;
+            s << 
+                std::quoted(str) <<
+                " -> " << 
+                get_typename<T>();
+
+            throw std::invalid_argument(s.str());
+        }
+        return 0;
+    }
+
+    template <typename T, typename Tp, auto ... S>
+    static void convertImpl(
+        const T& v,
+        Tp& params,
+        const std::index_sequence<S...>&)
+    {
+        map(
+            tf(std::get<S>(params), v[S]) ...
+        ); 
+    }
+
+    template <typename Tp>
+    static void convertx(
+        Tp& params,
+        const std::vector<std::string> argv) 
+    {
+        constexpr auto sz = std::tuple_size_v<Tp>;
+
+        if (argv.size() != sz)
+            throw std::invalid_argument("Wrong number of arguments.");
+        
+        constexpr auto idx =
+            std::make_index_sequence<sz>{};
+
+        convertImpl(argv,params,idx);
+   }
+
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    template <typename Tp>
+    static string to_string2(
+        const std::string& name, 
+        initializer_list<const char*> parameterHelp)
+    {
+        // Get the raw type names of the parameters.
+        Tp tup;
+
+        std::array<string, std::tuple_size_v<Tp>> expander = map_tuple<string>(
+            tup,
+            [](auto t) {
+                return get_typename(t);
+            }
+        );
+
+        // If help was passed prepend the raw types with the
+        // passed display names.
+        size_t idx = 0;
+        for (string c : parameterHelp) {
+            if (c.empty())
+                continue;
+            expander[idx] = c + ":" + expander[idx];
+            ++idx;
+        }
+
+        // Line starts with the command name.
+        string result{ name };
+
+        if (!expander.size())
+            return result;
+
+        result.append(
+            " ");
+        // Add the first argument.
+        result.append(
+            expander[0]);
+        // For the remaining arguments.
+        for (size_t i = 1; i < expander.size(); i++) {
+            result.append(
+                ", ");
+            result.append(
+                expander[i]);
+        }
+
+        return result;
     }
 };
 
@@ -546,8 +699,23 @@ struct PListDed<F>
             return function(a...);
         };
 
+    using VT_ =
+        std::tuple< typename std::decay<Args>::type ... >;
+
+        auto cvf = [functor](std::vector<std::string> v){
+            VT_ params;
+
+            internal::convertx( params, v );
+
+            return internal::callFunc2(functor, params);
+        };
+
+        auto help = internal::to_string2<VT_>(name,parameterHelper);
+
         Command<decltype(functor), Args ...>
             result(name, functor, parameterHelper);
+        // Command<decltype(functor), Args ...>
+        //     result(name, cvf, help);
         return result;
     }
 };
