@@ -190,7 +190,6 @@ class Command {
      */
     string name_;
 
-
     /**
      * The function to be called.
      */
@@ -198,8 +197,7 @@ class Command {
 
     string helpLine_;
 
-public:
-    const size_t argumentCount_;
+    size_t argumentCount_;
 
 public:
     Command(
@@ -209,9 +207,9 @@ public:
         const string& helpLine)
         :
         name_(name),
-        argumentCount_(argumentCount),
         func__(f),
-        helpLine_(helpLine)
+        helpLine_(helpLine),
+        argumentCount_(argumentCount)
     {
     }
 
@@ -252,10 +250,15 @@ public:
         return name_;
     }
 
+    constexpr size_t get_argument_count() const {
+        return argumentCount_;
+    }
 };
 
 struct internal {
     using R = int;
+    using IT = const std::vector<string>&;
+
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
@@ -314,9 +317,9 @@ struct internal {
     }
 
     template <typename Tp>
-    static void convertx(
+    static void convert(
         Tp& params,
-        const std::vector<std::string> argv) 
+        const std::vector<std::string>& argv) 
     {
         constexpr auto sz = std::tuple_size_v<Tp>;
 
@@ -334,7 +337,7 @@ struct internal {
      * in the generated cli help.
      */
     template <typename Tp>
-    static string to_string2(
+    static string make_help_string(
         const std::string& name, 
         initializer_list<const char*> parameterHelp)
     {
@@ -408,15 +411,15 @@ struct PListDed<F>
     using VT_ =
         std::tuple< typename std::decay<Args>::type ... >;
 
-        auto cvf = [functor](std::vector<std::string> v){
+        auto cvf = [functor](internal::IT v){
             VT_ params;
 
-            internal::convertx( params, v );
+            internal::convert( params, v );
 
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::to_string2<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<VT_>(name,parameterHelper);
 
         Command
             result(name, std::tuple_size_v<VT_>, cvf, help);
@@ -445,15 +448,15 @@ struct PListDed<F>
     using VT_ =
         std::tuple< typename std::decay<Args>::type ... >;
 
-        auto cvf = [functor](std::vector<std::string> v){
+        auto cvf = [functor](internal::IT v){
             VT_ params;
 
-            internal::convertx( params, v );
+            internal::convert( params, v );
 
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::to_string2<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<VT_>(name,parameterHelper);
 
         Command
             result(name, std::tuple_size_v<VT_>, cvf, help);
@@ -482,15 +485,15 @@ struct PListDed<F>
     using VT_ =
         std::tuple< typename std::decay<Args>::type ... >;
 
-        auto cvf = [functor](std::vector<std::string> v){
+        auto cvf = [functor](internal::IT v){
             VT_ params;
 
-            internal::convertx( params, v );
+            internal::convert( params, v );
 
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::to_string2<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<VT_>(name,parameterHelper);
 
         Command
             result(name, std::tuple_size_v<VT_>, cvf, help);
@@ -577,7 +580,7 @@ class CliApplication
         auto c = std::get<I>(commands_);
         found_ = found_ ? found_ : name == c.get_name();
 
-        if (found_ && argv.size() == c.argumentCount_)
+        if (found_ && argv.size() == c.get_argument_count())
             return c.callv(argv);
 
         return find<I + 1>(name, argv);
@@ -600,9 +603,23 @@ class CliApplication
         }
     }
 
+    std::map<string, std::map<size_t, Command>> commandMap_;
+
 public:
     CliApplication(const Cs& ... commands) :
         commands_(commands...) {
+
+        std::vector<Command> va{
+            commands ...
+        };
+
+        std::map<string, Command> testMap;
+
+        for (Command c : va) {
+            std::cout << c.get_name() << " -- \n";
+            testMap.insert( {c.get_name(), c} );
+            commandMap_[c.get_name()].insert({ c.get_argument_count(), c });
+        }
     }
 
     /**
@@ -630,10 +647,23 @@ public:
             argv.begin() + 1,
             argv.end());
 
+        if (commandMap_.count(cmd_name) == 0) {
+            cerr << "xxxUnknown command '" << cmd_name << "'.\n";
+            return -1;
+        }
+        auto commands = commandMap_[cmd_name];
+        if (commands.count(cmdArgv.size()) == 0) {
+            cerr << "yyyUnknown command size '" << cmd_name << "'.\n";
+            return -1;
+        }
+
+        auto x = commands.at(cmdArgv.size());
+
         try {
-            return find<0>(
-                cmd_name,
-                cmdArgv );
+            return x.callv(cmdArgv);
+            //return find<0>(
+            //    cmd_name,
+            //    cmdArgv );
         }
         catch (const conversion_failure& e) {
             cout << "Conversion failed: " << e.what() << endl;
