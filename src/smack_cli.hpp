@@ -178,148 +178,6 @@ auto map_tuple(T& tpl, Func func) {
 }
 
 /**
- * Represents the Cli.
- * Use makeCliApplication(...) to create an instance.
- */
-template <typename... Cs>
-class CliApplication
-{
-    std::tuple<Cs...> commands_;
-
-    bool found_{};
-
-    template <size_t I>
-    typename std::enable_if_t<I == sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>&)
-    {
-        if (found_) 
-            throw command_args_incompatible( name );
-
-        throw command_not_found( name );
-    }
-    template <size_t I>
-    typename std::enable_if_t<I != sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv)
-    {
-        auto c = std::get<I>(commands_);
-        found_ = found_ ? found_ : name == c.get_name();
-
-        if (found_ && argv.size() == c.argumentCount_)
-            return c.callv(argv);
-
-        return find<I + 1>(name, argv);
-    }
-
-    void printHelp( const string& command = "" )
-    {
-        auto helpLines = map_tuple<string>(
-            commands_,
-            [](auto t) {
-                return t.to_string();
-        });
-
-        for ( const string& c : helpLines ) {
-            // If the passed command is empty all lines are printed.
-            // Otherwise prints only the lines that contain the passed command
-            // name.
-            if (c.empty() || c.find( command ) == 0)
-                cerr << c << endl;
-        }
-    }
-
-public:
-    CliApplication(const Cs& ... commands) :
-        commands_(commands...) {
-    }
-
-    /**
-     * Launch the application using the passed arguments.  Note that the 
-     * passed arguments must not include the name of the application. Do
-     * not pass argv[0].  See and prefer launch( int, char** ) which directly
-     * accepts the arguments received in a main()-function.
-     */
-    int launch(const std::vector<string>& argv) noexcept {
-        if (argv.empty()) {
-            cerr << "No arguments. Available commands:" << endl;
-            printHelp();
-            return EXIT_FAILURE;
-        }
-        else if (argv.size() == 1 && argv[0] == "?") {
-            printHelp();
-            return EXIT_SUCCESS;
-        }
-
-        // Take the command name.
-        const string& cmd_name =
-            argv[0];
-        // And the parameter names, excluding the command name.
-        std::vector<string> cmdArgv(
-            argv.begin() + 1,
-            argv.end());
-
-        try {
-            return find<0>(
-                cmd_name,
-                cmdArgv );
-        }
-        catch (const conversion_failure& e) {
-            cout << "Conversion failed: " << e.what() << endl;
-        }
-        catch (const command_not_found&) {
-            cerr << "Unknown command '" << cmd_name << "'.\n";
-            cerr << "Supported commands are:\n";
-            printHelp();
-        }
-        catch (const command_args_incompatible&) {
-            cerr << 
-                "The command '" <<
-                cmd_name <<
-                "' does not support " <<
-                std::to_string( cmdArgv.size() ) <<
-                " parameters.\n";
-            cerr << "Supported:\n";
-            printHelp( cmd_name );
-        }
-        catch (const std::exception &e)
-        {
-            cerr <<
-                cmd_name <<
-                " failed: " <<
-                e.what() <<
-                "\n";
-        }
-
-        return EXIT_FAILURE;
-    }
-
-    /**
-     * Launch the application using the passed arguments.  Just forward the arguments
-     * that were passed to main().
-     * 
-     * @param argc The argument count, as defined by the C/C++ main()-function.
-     * @param argc The arguments, as defined by the C/C++ main()-function.
-     */
-    int launch(int argc, const char* const* argv) noexcept {
-        // Skip the program name.
-        std::vector<std::string> cmdArgv(
-            argv + 1,
-            argv + argc);
-
-        return launch(cmdArgv);
-    }
-};
-
-/**
- * Create a CliApplication instance.
- */
-template <typename... Cs>
-[[deprecated("Directly construct an instance of smack::cli::CliApplication.")]]
-auto makeCliApplication(const Cs& ... commands) {
-    CliApplication result(commands ...);
-    return result;
-}
-
-/**
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
  */
@@ -691,5 +549,147 @@ struct Commands {
             parameterHelper );
     }
 };
+
+/**
+ * Represents the Cli.
+ * Use makeCliApplication(...) to create an instance.
+ */
+template <typename... Cs>
+class CliApplication
+{
+    std::tuple<Cs...> commands_;
+
+    bool found_{};
+
+    template <size_t I>
+    typename std::enable_if_t<I == sizeof...(Cs), int>
+    find(const string& name, const std::vector<string>&)
+    {
+        if (found_) 
+            throw command_args_incompatible( name );
+
+        throw command_not_found( name );
+    }
+    template <size_t I>
+    typename std::enable_if_t<I != sizeof...(Cs), int>
+    find(const string& name, const std::vector<string>& argv)
+    {
+        auto c = std::get<I>(commands_);
+        found_ = found_ ? found_ : name == c.get_name();
+
+        if (found_ && argv.size() == c.argumentCount_)
+            return c.callv(argv);
+
+        return find<I + 1>(name, argv);
+    }
+
+    void printHelp( const string& command = "" )
+    {
+        auto helpLines = map_tuple<string>(
+            commands_,
+            [](auto t) {
+                return t.to_string();
+        });
+
+        for ( const string& c : helpLines ) {
+            // If the passed command is empty all lines are printed.
+            // Otherwise prints only the lines that contain the passed command
+            // name.
+            if (c.empty() || c.find( command ) == 0)
+                cerr << c << endl;
+        }
+    }
+
+public:
+    CliApplication(const Cs& ... commands) :
+        commands_(commands...) {
+    }
+
+    /**
+     * Launch the application using the passed arguments.  Note that the 
+     * passed arguments must not include the name of the application. Do
+     * not pass argv[0].  See and prefer launch( int, char** ) which directly
+     * accepts the arguments received in a main()-function.
+     */
+    int launch(const std::vector<string>& argv) noexcept {
+        if (argv.empty()) {
+            cerr << "No arguments. Available commands:" << endl;
+            printHelp();
+            return EXIT_FAILURE;
+        }
+        else if (argv.size() == 1 && argv[0] == "?") {
+            printHelp();
+            return EXIT_SUCCESS;
+        }
+
+        // Take the command name.
+        const string& cmd_name =
+            argv[0];
+        // And the parameter names, excluding the command name.
+        std::vector<string> cmdArgv(
+            argv.begin() + 1,
+            argv.end());
+
+        try {
+            return find<0>(
+                cmd_name,
+                cmdArgv );
+        }
+        catch (const conversion_failure& e) {
+            cout << "Conversion failed: " << e.what() << endl;
+        }
+        catch (const command_not_found&) {
+            cerr << "Unknown command '" << cmd_name << "'.\n";
+            cerr << "Supported commands are:\n";
+            printHelp();
+        }
+        catch (const command_args_incompatible&) {
+            cerr << 
+                "The command '" <<
+                cmd_name <<
+                "' does not support " <<
+                std::to_string( cmdArgv.size() ) <<
+                " parameters.\n";
+            cerr << "Supported:\n";
+            printHelp( cmd_name );
+        }
+        catch (const std::exception &e)
+        {
+            cerr <<
+                cmd_name <<
+                " failed: " <<
+                e.what() <<
+                "\n";
+        }
+
+        return EXIT_FAILURE;
+    }
+
+    /**
+     * Launch the application using the passed arguments.  Just forward the arguments
+     * that were passed to main().
+     * 
+     * @param argc The argument count, as defined by the C/C++ main()-function.
+     * @param argc The arguments, as defined by the C/C++ main()-function.
+     */
+    int launch(int argc, const char* const* argv) noexcept {
+        // Skip the program name.
+        std::vector<std::string> cmdArgv(
+            argv + 1,
+            argv + argc);
+
+        return launch(cmdArgv);
+    }
+};
+
+/**
+ * Create a CliApplication instance.
+ */
+template <typename... Cs>
+[[deprecated("Directly construct an instance of smack::cli::CliApplication.")]]
+auto makeCliApplication(const Cs& ... commands) {
+    CliApplication result(commands ...);
+    return result;
+}
 
 } // namespace smack::cli
