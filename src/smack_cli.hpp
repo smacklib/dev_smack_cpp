@@ -195,8 +195,14 @@ class Command {
      */
     std::function<R(const std::vector<string>&)> func__;
 
+    /**
+     * A help line describing the command.
+     */
     string helpLine_;
 
+    /**
+     * The number of arguments the command accepts.
+     */
     size_t argumentCount_;
 
 public:
@@ -219,6 +225,9 @@ public:
      * command parameters, not including the command name or other stuff.
      */
     R callv(const std::vector<std::string>& v) const {
+        if (v.size() != argumentCount_)
+            throw std::invalid_argument("Wrong number of arguments.");
+
         return func__( v );
     }
 
@@ -330,7 +339,7 @@ struct internal {
             std::make_index_sequence<sz>{};
 
         convertImpl(argv,params,idx);
-   }
+    }
 
     /**
      * Creates a single-line command description that is displayed
@@ -560,64 +569,85 @@ struct Commands {
 template <typename... Cs>
 class CliApplication
 {
-    std::tuple<Cs...> commands_;
+    std::map<string, std::map<size_t, Command>> commandMap_;
 
-    bool found_{};
+    //template<typename TK, typename TV>
+    //std::vector<TK> extract_keys(std::map<TK, TV> const& input_map) {
+    //    std::vector<TK> retval;
+    //    for (auto const& element : input_map) {
+    //        retval.push_back(element.first);
+    //    }
+    //    return retval;
+    //}
 
-    template <size_t I>
-    typename std::enable_if_t<I == sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>&)
-    {
-        if (found_) 
-            throw command_args_incompatible( name );
-
-        throw command_not_found( name );
-    }
-    template <size_t I>
-    typename std::enable_if_t<I != sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv)
-    {
-        auto c = std::get<I>(commands_);
-        found_ = found_ ? found_ : name == c.get_name();
-
-        if (found_ && argv.size() == c.get_argument_count())
-            return c.callv(argv);
-
-        return find<I + 1>(name, argv);
-    }
+    //template<typename TK, typename TV>
+    //std::vector<TV> extract_values(std::map<TK, TV> const& input_map) {
+    //    std::vector<TV> retval;
+    //    for (auto const& element : input_map) {
+    //        retval.push_back(element.second);
+    //    }
+    //    return retval;
+    //}
 
     void printHelp( const string& command = "" )
     {
-        auto helpLines = map_tuple<string>(
-            commands_,
-            [](auto t) {
-                return t.to_string();
-        });
+        if (command.empty()) {
 
-        for ( const string& c : helpLines ) {
-            // If the passed command is empty all lines are printed.
-            // Otherwise prints only the lines that contain the passed command
-            // name.
-            if (c.empty() || c.find( command ) == 0)
-                cerr << c << endl;
+            for ( auto names : commandMap_ )
+                for (auto argcounts : names.second ) {
+                    cout << argcounts.second.to_string() << "\n";
+                }
+
+            return;
+        }
+
+        if (! command.empty() &&  commandMap_.count(command) == 0) {
+            cerr << "Implementation error. Unknown command: " << command << "\n";
+            return;
+        }
+
+        auto names = commandMap_.at(command);
+
+        for (auto argcounts : names) {
+            cout << argcounts.second.to_string() << "\n";
         }
     }
-
-    std::map<string, std::map<size_t, Command>> commandMap_;
+    int cmdHelp()
+    {
+        printHelp();
+        return EXIT_SUCCESS;
+    }
 
 public:
-    CliApplication(const Cs& ... commands) :
-        commands_(commands...) {
+    CliApplication(const Cs& ... commands) {
 
         std::vector<Command> va{
             commands ...
         };
 
-        std::map<string, Command> testMap;
+        auto helpCmd = Commands::make<&CliApplication::cmdHelp>(
+           "--honk", this);
+        va.push_back(helpCmd);
 
         for (Command c : va) {
-            std::cout << c.get_name() << " -- \n";
-            testMap.insert( {c.get_name(), c} );
+            auto cname = 
+                c.get_name();
+            auto ccount = 
+                c.get_argument_count();
+
+            // Ensure that no duplicate commands are added.
+            if ( commandMap_.count( cname ) == 1 && 
+                commandMap_.at(cname).count(ccount) == 1 )
+            {
+                cerr <<
+                    "Implementation error: Duplicate definition of command " <<
+                    std::quoted(cname) <<
+                    " with argument count: " <<
+                    ccount;
+
+                std::exit(EXIT_FAILURE);
+            }
+
             commandMap_[c.get_name()].insert({ c.get_argument_count(), c });
         }
     }
@@ -648,40 +678,32 @@ public:
             argv.end());
 
         if (commandMap_.count(cmd_name) == 0) {
-            cerr << "xxxUnknown command '" << cmd_name << "'.\n";
-            return -1;
+            cerr << "Unknown command '" << cmd_name << "'.\n";
+            cerr << "Supported commands are:\n";
+            printHelp();
+            return EXIT_FAILURE;
         }
+
         auto commands = commandMap_[cmd_name];
         if (commands.count(cmdArgv.size()) == 0) {
-            cerr << "yyyUnknown command size '" << cmd_name << "'.\n";
-            return -1;
+            cerr <<
+                "The command '" <<
+                cmd_name <<
+                "' does not support " <<
+                std::to_string(cmdArgv.size()) <<
+                " parameters.\n";
+            cerr << "Supported:\n";
+            printHelp(cmd_name);
+            return EXIT_FAILURE;
         }
 
         auto x = commands.at(cmdArgv.size());
 
         try {
             return x.callv(cmdArgv);
-            //return find<0>(
-            //    cmd_name,
-            //    cmdArgv );
         }
         catch (const conversion_failure& e) {
             cout << "Conversion failed: " << e.what() << endl;
-        }
-        catch (const command_not_found&) {
-            cerr << "Unknown command '" << cmd_name << "'.\n";
-            cerr << "Supported commands are:\n";
-            printHelp();
-        }
-        catch (const command_args_incompatible&) {
-            cerr << 
-                "The command '" <<
-                cmd_name <<
-                "' does not support " <<
-                std::to_string( cmdArgv.size() ) <<
-                " parameters.\n";
-            cerr << "Supported:\n";
-            printHelp( cmd_name );
         }
         catch (const std::exception &e)
         {
