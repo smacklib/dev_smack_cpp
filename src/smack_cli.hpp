@@ -266,7 +266,8 @@ public:
 
 struct internal {
     using R = int;
-    using IT = const std::vector<string>&;
+    using I = string;
+    using IT = const std::vector<I>&;
 
     /**
      * Make a parameter pack from the passed params tuple and
