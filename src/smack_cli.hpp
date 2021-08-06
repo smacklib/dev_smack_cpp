@@ -191,6 +191,11 @@ class Command {
     string name_;
 
     /**
+     * The number of arguments the command accepts.
+     */
+    size_t argumentCount_;
+
+    /**
      * The function to be called.
      */
     std::function<R(const std::vector<string>&)> func__;
@@ -200,11 +205,6 @@ class Command {
      */
     string helpLine_;
 
-    /**
-     * The number of arguments the command accepts.
-     */
-    size_t argumentCount_;
-
 public:
     Command(
         const string& name,
@@ -213,9 +213,9 @@ public:
         const string& helpLine)
         :
         name_(name),
+        argumentCount_(argumentCount),
         func__(f),
-        helpLine_(helpLine),
-        argumentCount_(argumentCount)
+        helpLine_(helpLine)
     {
     }
 
@@ -417,21 +417,19 @@ struct PListDed<F>
             return function(a...);
         };
 
-    using VT_ =
-        std::tuple< typename std::decay<Args>::type ... >;
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
 
         auto cvf = [functor](internal::IT v){
-            VT_ params;
-
+            Tp params;
             internal::convert( params, v );
-
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::make_help_string<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<Tp>(name,parameterHelper);
 
         Command
-            result(name, std::tuple_size_v<VT_>, cvf, help);
+            result(name, std::tuple_size_v<Tp>, cvf, help);
 
         return result;
     }
@@ -454,21 +452,19 @@ struct PListDed<F>
             return (instance->*F)(a...);
         };
 
-    using VT_ =
-        std::tuple< typename std::decay<Args>::type ... >;
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
 
         auto cvf = [functor](internal::IT v){
-            VT_ params;
-
-            internal::convert( params, v );
-
+            Tp params;
+            internal::convert(params, v);
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::make_help_string<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<Tp>(name,parameterHelper);
 
         Command
-            result(name, std::tuple_size_v<VT_>, cvf, help);
+            result(name, std::tuple_size_v<Tp>, cvf, help);
 
         return result;
     }
@@ -491,21 +487,21 @@ struct PListDed<F>
             return (instance->*F)(a...);
         };
 
-    using VT_ =
-        std::tuple< typename std::decay<Args>::type ... >;
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
 
         auto cvf = [functor](internal::IT v){
-            VT_ params;
+            Tp params;
 
             internal::convert( params, v );
 
             return internal::callFunc(functor, params);
         };
 
-        string help = internal::make_help_string<VT_>(name,parameterHelper);
+        string help = internal::make_help_string<Tp>(name,parameterHelper);
 
         Command
-            result(name, std::tuple_size_v<VT_>, cvf, help);
+            result(name, std::tuple_size_v<Tp>, cvf, help);
 
         return result;
     }
@@ -564,70 +560,55 @@ struct Commands {
 
 /**
  * Represents the Cli.
- * Use makeCliApplication(...) to create an instance.
  */
 template <typename... Cs>
 class CliApplication
 {
+    /**
+     * Maps a command name to a map of n-argument alternatives. 
+     */
     std::map<string, std::map<size_t, Command>> commandMap_;
 
-    //template<typename TK, typename TV>
-    //std::vector<TK> extract_keys(std::map<TK, TV> const& input_map) {
-    //    std::vector<TK> retval;
-    //    for (auto const& element : input_map) {
-    //        retval.push_back(element.first);
-    //    }
-    //    return retval;
-    //}
-
-    //template<typename TK, typename TV>
-    //std::vector<TV> extract_values(std::map<TK, TV> const& input_map) {
-    //    std::vector<TV> retval;
-    //    for (auto const& element : input_map) {
-    //        retval.push_back(element.second);
-    //    }
-    //    return retval;
-    //}
-
-    void printHelp( const string& command = "" )
+    /**
+     * Print the help page for the application.
+     * @param stream The target stream help is written to.
+     * @param command A command name used to print only
+     * the command's alternatives.
+     */
+    void printHelp(
+        std::ostream& stream,
+        const string& command = "" )
     {
         if (command.empty()) {
 
-            for ( auto names : commandMap_ )
-                for (auto argcounts : names.second ) {
-                    cout << argcounts.second.to_string() << "\n";
+            for (auto names : commandMap_)
+                for (auto argcounts : names.second) {
+                    stream << argcounts.second.to_string() << "\n";
                 }
 
             return;
         }
 
         if (! command.empty() &&  commandMap_.count(command) == 0) {
-            cerr << "Implementation error. Unknown command: " << command << "\n";
+            stream << "Implementation error. Unknown command: " << command << "\n";
             return;
         }
 
         auto names = commandMap_.at(command);
 
-        for (auto argcounts : names) {
-            cout << argcounts.second.to_string() << "\n";
-        }
-    }
-    int cmdHelp()
-    {
-        printHelp();
-        return EXIT_SUCCESS;
+        for (auto argcounts : names)
+            stream << argcounts.second.to_string() << "\n";
     }
 
 public:
+    /**
+     * Create an instance the offers the passed commands.
+     */
     CliApplication(const Cs& ... commands) {
 
         std::vector<Command> va{
             commands ...
         };
-
-        auto helpCmd = Commands::make<&CliApplication::cmdHelp>(
-           "--honk", this);
-        va.push_back(helpCmd);
 
         for (Command c : va) {
             auto cname = 
@@ -661,11 +642,11 @@ public:
     int launch(const std::vector<string>& argv) noexcept {
         if (argv.empty()) {
             cerr << "No arguments. Available commands:" << endl;
-            printHelp();
+            printHelp(cerr);
             return EXIT_FAILURE;
         }
         else if (argv.size() == 1 && argv[0] == "?") {
-            printHelp();
+            printHelp(cout);
             return EXIT_SUCCESS;
         }
 
@@ -680,7 +661,7 @@ public:
         if (commandMap_.count(cmd_name) == 0) {
             cerr << "Unknown command '" << cmd_name << "'.\n";
             cerr << "Supported commands are:\n";
-            printHelp();
+            printHelp(cerr);
             return EXIT_FAILURE;
         }
 
@@ -693,25 +674,25 @@ public:
                 std::to_string(cmdArgv.size()) <<
                 " parameters.\n";
             cerr << "Supported:\n";
-            printHelp(cmd_name);
+            printHelp(cerr, cmd_name);
             return EXIT_FAILURE;
         }
 
-        auto x = commands.at(cmdArgv.size());
-
         try {
-            return x.callv(cmdArgv);
+            return commands.at(cmdArgv.size()).callv(cmdArgv);
         }
         catch (const conversion_failure& e) {
-            cout << "Conversion failed: " << e.what() << endl;
+            cerr << 
+                "Conversion failed: " << 
+                e.what() <<
+                endl;
         }
-        catch (const std::exception &e)
-        {
+        catch (const std::exception &e) {
             cerr <<
                 cmd_name <<
                 " failed: " <<
                 e.what() <<
-                "\n";
+                endl;
         }
 
         return EXIT_FAILURE;

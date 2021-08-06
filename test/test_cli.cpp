@@ -653,7 +653,7 @@ TEST(SmackCliTest, CliTestHelpExplicit) {
             { "p1" })
     );
 
-    smack::test::common::redir r{ std::cerr };
+    smack::test::common::redir r{ std::cout };
 
     std::vector<string> argv{ "?" };
 
@@ -666,6 +666,34 @@ TEST(SmackCliTest, CliTestHelpExplicit) {
     // Get err content.
     auto lines = r.strs();
 
-    EXPECT_EQ(2, lines.size());
-    EXPECT_EQ("xxx p1:string", lines[0]);
+    ASSERT_EQ(2, lines.size());
+    ASSERT_EQ("xxx p1:string", lines[0]);
+}
+
+TEST(SmackCliTest, CliTestHelpSorted) {
+    using smack::cli::Commands;
+
+    smack::cli::CliApplication cli(
+        Commands::make<fError>("zzz"),
+        Commands::make<fError>("xxx"),
+        Commands::make<fError>("aaa")
+    );
+
+    smack::test::common::redir r{ std::cout };
+
+    std::vector<string> argv{ "?" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_SUCCESS, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    ASSERT_EQ(4, lines.size());
+    ASSERT_EQ("aaa string", lines[0]);
+    ASSERT_EQ("xxx string", lines[1]);
+    ASSERT_EQ("zzz string", lines[2]);
 }
