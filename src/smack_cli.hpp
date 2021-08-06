@@ -407,24 +407,17 @@ struct PListDed {};
 template <typename R, typename... Args, auto (F)(Args...)->R>
 struct PListDed<F> 
 {
-    template <typename Fu>
     static auto make(
         string name,
-        Fu function,
         initializer_list<const char*> parameterHelper)
     {
-        auto functor =
-            [function](Args ... a) {
-            return function(a...);
-        };
-
         using Tp =
             std::tuple< typename std::decay<Args>::type ... >;
 
-        auto cvf = [functor](internal::IT v){
+        auto cvf = [](internal::IT v){
             Tp params;
             internal::convert( params, v );
-            return internal::callFunc(functor, params);
+            return internal::callFunc(F, params);
         };
 
         string help = internal::make_help_string<Tp>(name,parameterHelper);
@@ -529,7 +522,6 @@ struct Commands {
     {
         return PListDed<F>::make(
             name,
-            F,
             parameterHelper );
     }
 
