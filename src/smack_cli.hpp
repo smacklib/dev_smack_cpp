@@ -198,7 +198,7 @@ class Command {
     /**
      * The function to be called.
      */
-    std::function<R(const std::vector<string>&)> func__;
+    std::function<R(const std::vector<string>&)> func_;
 
     /**
      * A help line describing the command.
@@ -214,7 +214,7 @@ public:
         :
         name_(name),
         argumentCount_(argumentCount),
-        func__(f),
+        func_(f),
         helpLine_(helpLine)
     {
     }
@@ -228,7 +228,7 @@ public:
         if (v.size() != argumentCount_)
             throw std::invalid_argument("Wrong number of arguments.");
 
-        return func__( v );
+        return func_( v );
     }
 
     /**
@@ -408,7 +408,7 @@ template <typename R, typename... Args, auto (F)(Args...)->R>
 struct PListDed<F> 
 {
     static auto make(
-        string name,
+        const string& name,
         initializer_list<const char*> parameterHelper)
     {
         using Tp =
@@ -438,7 +438,7 @@ struct PListDed<F>
     template <typename Ty>
     static auto make(
         const Ty instance,
-        string name,
+        const string& name,
         initializer_list<const char*> parameterHelper = {})
     {
         auto functor =
@@ -473,7 +473,7 @@ struct PListDed<F>
     template <typename Ty>
     static auto make(
         const Ty instance,
-        string name,
+        const string& name,
         initializer_list<const char*> parameterHelper = {})
     {
         auto functor =
@@ -517,7 +517,7 @@ struct Commands {
      */
     template <auto F>
     static auto make(
-        string name,
+        const string& name,
         initializer_list<const char*> parameterHelper = {})
     {
         return PListDed<F>::make(
@@ -540,7 +540,7 @@ struct Commands {
      */
     template <auto const F, typename T>
     static auto make(
-        string name,
+        const string& name,
         const T instance,
         initializer_list<const char*> parameterHelper = {})
     {
@@ -595,7 +595,7 @@ class CliApplication
 
 public:
     /**
-     * Create an instance the offers the passed commands.
+     * Create an instance that offers the passed commands.
      */
     CliApplication(const Cs& ... commands) {
 
