@@ -184,6 +184,8 @@ auto map_tuple(T& tpl, Func func) {
 class Command {
     // Defines the return type.
     using R = int;
+    using I = string;
+    using IT = const std::vector<I>&;
 
     /**
      * The command's name.
@@ -220,11 +222,9 @@ public:
     }
 
     /**
-     * Call the command with arguments to be converted.  Note that
-     * the number of parameters represents the actual number of offered
-     * command parameters, not including the command name or other stuff.
+     * Call the command with arguments to be converted.
      */
-    R callv(const std::vector<std::string>& v) const {
+    R callv(const std::vector<I>& v) const {
         if (v.size() != argumentCount_)
             throw std::invalid_argument("Wrong number of arguments.");
 
@@ -232,9 +232,7 @@ public:
     }
 
     /**
-     * Call the command with arguments to be converted.  Note that
-     * the number of parameters represents the actual number of offered
-     * command parameters, not including the command name or other stuff.
+     * Call the command with arguments to be converted.
      */
     template <typename T = string, typename ... V>
     R call(V const & ... argv) const 
@@ -422,10 +420,7 @@ struct PListDed<F>
 
         string help = internal::make_help_string<Tp>(name,parameterHelper);
 
-        Command
-            result(name, std::tuple_size_v<Tp>, cvf, help);
-
-        return result;
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
 };
 
@@ -457,10 +452,7 @@ struct PListDed<F>
 
         string help = internal::make_help_string<Tp>(name,parameterHelper);
 
-        Command
-            result(name, std::tuple_size_v<Tp>, cvf, help);
-
-        return result;
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
 };
 
@@ -494,10 +486,7 @@ struct PListDed<F>
 
         string help = internal::make_help_string<Tp>(name,parameterHelper);
 
-        Command
-            result(name, std::tuple_size_v<Tp>, cvf, help);
-
-        return result;
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
 };
 
