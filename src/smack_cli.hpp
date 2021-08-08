@@ -262,7 +262,7 @@ public:
     }
 };
 
-struct internal {
+namespace internal {
     using R = int;
     using I = string;
     using IT = const std::vector<I>&;
@@ -280,12 +280,12 @@ struct internal {
      * call the functor.
      */
     template<typename Fu, typename Tp>
-    static R callFunc(Fu f, const Tp& params) {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
+    static R callFunc(Fu f, const Tp& params)
+    {
+        constexpr auto sz =
+            std::tuple_size_v<Tp>;
         constexpr auto idx = 
             std::make_index_sequence<sz>{};
-
         return callFuncImpl( f, params, idx );
     }
 
@@ -293,11 +293,13 @@ struct internal {
      * Trigger mapping.
      */
     template <typename ... T>
-    static void map(T ...) {
+    static void map(T ...) 
+    {
     }
 
     template <typename T>
-    static int tf(T& param, const string& str) {
+    static int tf(T& param, const string& str) 
+    {
         try {
             transform(str.c_str(), param);
         }
@@ -390,6 +392,16 @@ struct internal {
 
         return result;
     }
+
+    template <typename Tp, typename T>
+    static auto wrap ( T functor )
+    {
+        return [functor](internal::IT v){
+            Tp params;
+            internal::convert( params, v );
+            return internal::callFunc(functor, params);
+        };
+    }
 };
 
 /**
@@ -411,14 +423,10 @@ struct PListDed<F>
     {
         using Tp =
             std::tuple< typename std::decay<Args>::type ... >;
-
-        auto cvf = [](internal::IT v){
-            Tp params;
-            internal::convert( params, v );
-            return internal::callFunc(F, params);
-        };
-
-        string help = internal::make_help_string<Tp>(name,parameterHelper);
+        auto cvf =
+            internal::wrap<Tp>(F);
+        string help = 
+            internal::make_help_string<Tp>(name,parameterHelper);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
@@ -443,14 +451,10 @@ struct PListDed<F>
 
         using Tp =
             std::tuple< typename std::decay<Args>::type ... >;
-
-        auto cvf = [functor](internal::IT v){
-            Tp params;
-            internal::convert(params, v);
-            return internal::callFunc(functor, params);
-        };
-
-        string help = internal::make_help_string<Tp>(name,parameterHelper);
+        auto cvf =
+            internal::wrap<Tp>(functor);
+        string help =
+            internal::make_help_string<Tp>(name,parameterHelper);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
@@ -475,16 +479,10 @@ struct PListDed<F>
 
         using Tp =
             std::tuple< typename std::decay<Args>::type ... >;
-
-        auto cvf = [functor](internal::IT v){
-            Tp params;
-
-            internal::convert( params, v );
-
-            return internal::callFunc(functor, params);
-        };
-
-        string help = internal::make_help_string<Tp>(name,parameterHelper);
+        auto cvf = 
+            internal::wrap<Tp>(functor);
+        string help = 
+            internal::make_help_string<Tp>(name,parameterHelper);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
