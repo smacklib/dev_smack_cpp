@@ -576,10 +576,9 @@ class CliApplication
             return;
         }
 
-        auto names = commandMap_.at(command);
-
-        for (auto argcounts : names)
-            stream << argcounts.second.to_string() << "\n";
+        auto variants = commandMap_.at(command);
+        for (auto variant : variants)
+            stream << variant.second.to_string() << "\n";
     }
 
 public:
