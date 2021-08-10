@@ -267,6 +267,8 @@ namespace internal {
     using I = string;
     using IT = const std::vector<I>&;
 
+    constexpr char kDelim_ {'\''};
+
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
@@ -306,7 +308,7 @@ namespace internal {
         catch (std::invalid_argument&) {
             std::stringstream s;
             s << 
-                std::quoted(str) <<
+                std::quoted(str, kDelim_) <<
                 " -> " << 
                 get_typename<T>();
 
@@ -544,16 +546,23 @@ struct Commands {
 template <typename... Cs>
 class CliApplication
 {
+    using CsTy_ = std::common_type_t<Cs...>;
+    static_assert(std::is_same<Command, CsTy_>());
+
     /**
      * The registered commands. 
      */
-    std::array<std::common_type_t<Cs...>, sizeof ... (Cs)> commands_;
+    std::array<CsTy_, sizeof ... (Cs)> commands_;
 
     /**
      * Maps a command name to a map of n-argument alternatives.  The command entries
      * point to the entries in the commands_ array.
      */
-    std::map<string, std::map<size_t, const Command*>> commandMap_;
+    std::map<
+        string,
+        std::map<
+            size_t,
+            typename decltype(commands_)::const_pointer>> commandMap_;
 
     /**
      * Print the help page for the application.
@@ -604,7 +613,7 @@ public:
             {
                 cerr <<
                     "Implementation error: Duplicate definition of command " <<
-                    std::quoted(cname) <<
+                    std::quoted(cname, internal::kDelim_) <<
                     " with argument count: " <<
                     ccount;
 
@@ -643,37 +652,43 @@ public:
         if (commandMap_.count(cmd_name) == 0) {
             cerr << "Unknown command '" << cmd_name << "'.\n";
             cerr << "Supported commands are:\n";
-            printHelp(cerr);
+            printHelp( cerr );
             return EXIT_FAILURE;
         }
 
         auto commands = commandMap_[cmd_name];
-        if (commands.count(cmdArgv.size()) == 0) {
+        if ( commands.count( cmdArgv.size() ) == 0 ) {
             cerr <<
                 "The command '" <<
                 cmd_name <<
                 "' does not support " <<
-                std::to_string(cmdArgv.size()) <<
+                std::to_string( cmdArgv.size() ) <<
                 " parameters.\n";
             cerr << "Supported:\n";
-            printHelp(cerr, cmd_name);
+            printHelp( cerr, cmd_name );
             return EXIT_FAILURE;
         }
 
         try {
-            return commands.at(cmdArgv.size())->callv(cmdArgv);
+            return commands.at( cmdArgv.size() )->callv( cmdArgv );
         }
-        catch (const conversion_failure& e) {
+        catch ( const conversion_failure& e ) {
             cerr << 
                 "Conversion failed: " << 
                 e.what() <<
                 endl;
         }
-        catch (const std::exception &e) {
+        catch ( const std::exception &e ) {
             cerr <<
-                cmd_name <<
+                std::quoted( cmd_name, internal::kDelim_ ) <<
                 " failed: " <<
                 e.what() <<
+                endl;
+        }
+        catch ( ... ) {
+            cerr <<
+                std::quoted( cmd_name, internal::kDelim_ ) <<
+                " failed unexpectedly." <<
                 endl;
         }
 
