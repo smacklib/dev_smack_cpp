@@ -545,9 +545,15 @@ template <typename... Cs>
 class CliApplication
 {
     /**
-     * Maps a command name to a map of n-argument alternatives. 
+     * The registered commands. 
      */
-    std::map<string, std::map<size_t, Command>> commandMap_;
+    std::array<std::common_type_t<Cs...>, sizeof ... (Cs)> commands_;
+
+    /**
+     * Maps a command name to a map of n-argument alternatives.  The command entries
+     * point to the entries in the commands_ array.
+     */
+    std::map<string, std::map<size_t, const Command*>> commandMap_;
 
     /**
      * Print the help page for the application.
@@ -563,7 +569,7 @@ class CliApplication
 
             for (auto names : commandMap_)
                 for (auto argcounts : names.second) {
-                    stream << argcounts.second.to_string() << "\n";
+                    stream << argcounts.second->to_string() << "\n";
                 }
 
             return;
@@ -576,27 +582,24 @@ class CliApplication
 
         auto variants = commandMap_.at(command);
         for (auto variant : variants)
-            stream << variant.second.to_string() << "\n";
+            stream << variant.second->to_string() << "\n";
     }
 
 public:
     /**
      * Create an instance that offers the passed commands.
      */
-    CliApplication(const Cs& ... commands) {
-
-        std::vector<Command> va{
-            commands ...
-        };
-
-        for (Command c : va) {
-            auto cname = 
+    CliApplication(const Cs& ... commands) :
+        commands_{ commands ... }   
+    {
+        for (Command& c : commands_) {
+            const auto& cname = 
                 c.get_name();
-            auto ccount = 
+            const auto& ccount = 
                 c.get_argument_count();
 
             // Ensure that no duplicate commands are added.
-            if ( commandMap_.count( cname ) == 1 && 
+            if ( commandMap_.count(cname) == 1 && 
                 commandMap_.at(cname).count(ccount) == 1 )
             {
                 cerr <<
@@ -608,7 +611,7 @@ public:
                 std::exit(EXIT_FAILURE);
             }
 
-            commandMap_[c.get_name()].insert({ c.get_argument_count(), c });
+            commandMap_[cname][ccount] = &c;
         }
     }
 
@@ -658,7 +661,7 @@ public:
         }
 
         try {
-            return commands.at(cmdArgv.size()).callv(cmdArgv);
+            return commands.at(cmdArgv.size())->callv(cmdArgv);
         }
         catch (const conversion_failure& e) {
             cerr << 
