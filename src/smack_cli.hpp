@@ -178,58 +178,450 @@ auto map_tuple(T& tpl, Func func) {
 }
 
 /**
+ * A single command.  This wraps a function and the necessary logic
+ * to map from string-based command line arguments.
+ */
+class Command {
+    // Defines the return type.
+    using R = int;
+    using I = string;
+    using IT = const std::vector<I>&;
+
+    /**
+     * The command's name.
+     */
+    string name_;
+
+    /**
+     * The number of arguments the command accepts.
+     */
+    size_t argumentCount_;
+
+    /**
+     * The function to be called.
+     */
+    std::function<R(const std::vector<string>&)> func_;
+
+    /**
+     * A help line describing the command.
+     */
+    string helpLine_;
+
+public:
+    Command(
+        const string& name,
+        size_t argumentCount,
+        std::function<R(const std::vector<string>&)> f,
+        const string& helpLine)
+        :
+        name_(name),
+        argumentCount_(argumentCount),
+        func_(f),
+        helpLine_(helpLine)
+    {
+    }
+
+    /**
+     * Call the command with arguments to be converted.
+     */
+    R callv(const std::vector<I>& v) const {
+        if (v.size() != argumentCount_)
+            throw std::invalid_argument("Wrong number of arguments.");
+
+        return func_( v );
+    }
+
+    /**
+     * Call the command with arguments to be converted.
+     */
+    template <typename T = string, typename ... V>
+    R call(V const & ... argv) const 
+    {
+        std::vector<T> va {
+            argv ... 
+        };
+
+        return callv( va );
+    }
+
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    string to_string() const 
+    {
+        return helpLine_;
+    }
+
+    string get_name() const {
+        return name_;
+    }
+
+    constexpr size_t get_argument_count() const {
+        return argumentCount_;
+    }
+};
+
+namespace internal {
+    using R = int;
+    using I = string;
+    using IT = const std::vector<I>&;
+
+    constexpr char kDelim_ {'\''};
+
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu,typename Tp, auto ... S>
+    static R callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>) {
+        return f(std::get<S>(params) ...);
+    }
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu, typename Tp>
+    static R callFunc(Fu f, const Tp& params)
+    {
+        constexpr auto sz =
+            std::tuple_size_v<Tp>;
+        constexpr auto idx = 
+            std::make_index_sequence<sz>{};
+        return callFuncImpl( f, params, idx );
+    }
+
+    /**
+     * Trigger mapping.
+     */
+    template <typename ... T>
+    static void map(T ...) 
+    {
+    }
+
+    template <typename T>
+    static int tf(T& param, const string& str) 
+    {
+        try {
+            transform(str.c_str(), param);
+        }
+        catch (std::invalid_argument&) {
+            std::stringstream s;
+            s << 
+                std::quoted(str, kDelim_) <<
+                " -> " << 
+                get_typename<T>();
+
+            throw std::invalid_argument(s.str());
+        }
+        return 0;
+    }
+
+    template <typename T, typename Tp, auto ... S>
+    static void convertImpl(
+        const T& v,
+        Tp& params,
+        const std::index_sequence<S...>&)
+    {
+        map(
+            tf(std::get<S>(params), v[S]) ...
+        ); 
+    }
+
+    template <typename Tp>
+    static void convert(
+        Tp& params,
+        const std::vector<std::string>& argv) 
+    {
+        constexpr auto sz = std::tuple_size_v<Tp>;
+
+        if (argv.size() != sz)
+            throw std::invalid_argument("Wrong number of arguments.");
+        
+        constexpr auto idx =
+            std::make_index_sequence<sz>{};
+
+        convertImpl(argv,params,idx);
+    }
+
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    template <typename Tp>
+    static string make_help_string(
+        const std::string& name, 
+        initializer_list<const char*> parameterHelp)
+    {
+        // Get the raw type names of the parameters.
+        Tp tup;
+
+        std::array<string, std::tuple_size_v<Tp>> expander = map_tuple<string>(
+            tup,
+            [](auto t) {
+                return get_typename(t);
+            }
+        );
+
+        // If help was passed prepend the raw types with the
+        // passed display names.
+        size_t idx = 0;
+        for (string c : parameterHelp) {
+            if (c.empty())
+                continue;
+            expander[idx] = c + ":" + expander[idx];
+            ++idx;
+        }
+
+        // Line starts with the command name.
+        string result{ name };
+
+        if (!expander.size())
+            return result;
+
+        result.append(
+            " ");
+        // Add the first argument.
+        result.append(
+            expander[0]);
+        // For the remaining arguments.
+        for (size_t i = 1; i < expander.size(); i++) {
+            result.append(
+                ", ");
+            result.append(
+                expander[i]);
+        }
+
+        return result;
+    }
+
+    template <typename Tp, typename T>
+    static auto wrap ( T functor )
+    {
+        return [functor](internal::IT v){
+            Tp params;
+            internal::convert( params, v );
+            return internal::callFunc(functor, params);
+        };
+    }
+};
+
+/**
+ * The required template specialisations used to create a functor for
+ * a callable entity.
+ */
+template <auto F>
+struct PListDed {};
+
+/**
+ * Specialisation for free functions. 
+ */
+template <typename R, typename... Args, auto (F)(Args...)->R>
+struct PListDed<F> 
+{
+    static auto make(
+        const string& name,
+        initializer_list<const char*> parameterHelper)
+    {
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
+        auto cvf =
+            internal::wrap<Tp>(F);
+        string help = 
+            internal::make_help_string<Tp>(name,parameterHelper);
+
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
+    }
+};
+
+/**
+ * Specialisation for instance operations.
+ */
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+struct PListDed<F> 
+{
+    template <typename Ty>
+    static auto make(
+        const Ty instance,
+        const string& name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
+
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
+        auto cvf =
+            internal::wrap<Tp>(functor);
+        string help =
+            internal::make_help_string<Tp>(name,parameterHelper);
+
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
+    }
+};
+
+/**
+ * Specialisation for const instance operations.
+ */
+template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+struct PListDed<F> 
+{
+    template <typename Ty>
+    static auto make(
+        const Ty instance,
+        const string& name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        auto functor =
+            [instance](Args ... a) {
+            return (instance->*F)(a...);
+        };
+
+        using Tp =
+            std::tuple< typename std::decay<Args>::type ... >;
+        auto cvf = 
+            internal::wrap<Tp>(functor);
+        string help = 
+            internal::make_help_string<Tp>(name,parameterHelper);
+
+        return Command{name, std::tuple_size_v<Tp>, cvf, help};
+    }
+};
+
+/**
+ * Offers the external interface.
+ */
+struct Commands {
+    /**
+     * Create a command for a free function.
+     * 
+     * @param F The function reference.
+     * @param name The name of the resulting command.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
+     */
+    template <auto F>
+    static auto make(
+        const string& name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::make(
+            name,
+            parameterHelper );
+    }
+
+    /**
+     * Create a command for a member function.
+     *
+     * @param F The operation reference.
+     * @param T The type of the class implementing F.  This is deduced from the
+     * \p instance parameter.
+     * @param name The name of the resulting command.
+     * @param instance The instance to use when calling the operation.
+     * @param parameterHelper An alternative name for each parameter.  This is optional,
+     * if it is not passed, then the raw typename is displayed in the generated help
+     * page.  If it is passed its length has to correspond to the number of parameters
+     * of the referenced operation.
+     */
+    template <auto const F, typename T>
+    static auto make(
+        const string& name,
+        const T instance,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::template make<T>(
+            instance,
+            name,
+            parameterHelper );
+    }
+};
+
+/**
  * Represents the Cli.
- * Use makeCliApplication(...) to create an instance.
  */
 template <typename... Cs>
 class CliApplication
 {
-    std::tuple<Cs...> commands_;
+    using CsTy_ = std::common_type_t<Cs...>;
+    static_assert(std::is_same<Command, CsTy_>());
 
-    bool found_{};
+    /**
+     * The registered commands. 
+     */
+    std::array<CsTy_, sizeof ... (Cs)> commands_;
 
-    template <size_t I>
-    typename std::enable_if_t<I == sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>&)
+    /**
+     * Maps a command name to a map of n-argument alternatives.  The command entries
+     * point to the entries in the commands_ array.
+     */
+    std::map<
+        string,
+        std::map<
+            size_t,
+            typename decltype(commands_)::const_pointer>> commandMap_;
+
+    /**
+     * Print the help page for the application.
+     * @param stream The target stream help is written to.
+     * @param command A command name used to print only
+     * the command's alternatives.
+     */
+    void printHelp(
+        std::ostream& stream,
+        const string& command = "" )
     {
-        if (found_) 
-            throw command_args_incompatible( name );
+        if (command.empty()) {
 
-        throw command_not_found( name );
-    }
-    template <size_t I>
-    typename std::enable_if_t<I != sizeof...(Cs), int>
-    find(const string& name, const std::vector<string>& argv)
-    {
-        auto c = std::get<I>(commands_);
-        found_ = found_ ? found_ : name == c.get_name();
+            for (auto names : commandMap_)
+                for (auto argcounts : names.second) {
+                    stream << argcounts.second->to_string() << "\n";
+                }
 
-        if (found_ && argv.size() == c.kParameterCount)
-            return c.callv(argv);
-
-        return find<I + 1>(name, argv);
-    }
-
-    void printHelp( const string& command = "" )
-    {
-        auto helpLines = map_tuple<string>(
-            commands_,
-            [](auto t) {
-                return t.to_string();
-        });
-
-        for ( const string& c : helpLines ) {
-            // If the passed command is empty all lines are printed.
-            // Otherwise prints only the lines that contain the passed command
-            // name.
-            if (c.empty() || c.find( command ) == 0)
-                cerr << c << endl;
+            return;
         }
+
+        if (! command.empty() &&  commandMap_.count(command) == 0) {
+            stream << "Implementation error. Unknown command: " << command << "\n";
+            return;
+        }
+
+        auto variants = commandMap_.at(command);
+        for (auto variant : variants)
+            stream << variant.second->to_string() << "\n";
     }
 
 public:
+    /**
+     * Create an instance that offers the passed commands.
+     */
     CliApplication(const Cs& ... commands) :
-        commands_(commands...) {
+        commands_{ commands ... }   
+    {
+        for (Command& c : commands_) {
+            const auto& cname = 
+                c.get_name();
+            const auto& ccount = 
+                c.get_argument_count();
+
+            // Ensure that no duplicate commands are added.
+            if ( commandMap_.count(cname) == 1 && 
+                commandMap_.at(cname).count(ccount) == 1 )
+            {
+                cerr <<
+                    "Implementation error: Duplicate definition of command " <<
+                    std::quoted(cname, internal::kDelim_) <<
+                    " with argument count: " <<
+                    ccount;
+
+                std::exit(EXIT_FAILURE);
+            }
+
+            commandMap_[cname][ccount] = &c;
+        }
     }
 
     /**
@@ -241,11 +633,11 @@ public:
     int launch(const std::vector<string>& argv) noexcept {
         if (argv.empty()) {
             cerr << "No arguments. Available commands:" << endl;
-            printHelp();
+            printHelp(cerr);
             return EXIT_FAILURE;
         }
         else if (argv.size() == 1 && argv[0] == "?") {
-            printHelp();
+            printHelp(cout);
             return EXIT_SUCCESS;
         }
 
@@ -257,36 +649,47 @@ public:
             argv.begin() + 1,
             argv.end());
 
-        try {
-            return find<0>(
-                cmd_name,
-                cmdArgv );
-        }
-        catch (const conversion_failure& e) {
-            cout << "Conversion failed: " << e.what() << endl;
-        }
-        catch (const command_not_found&) {
+        if (commandMap_.count(cmd_name) == 0) {
             cerr << "Unknown command '" << cmd_name << "'.\n";
             cerr << "Supported commands are:\n";
-            printHelp();
+            printHelp( cerr );
+            return EXIT_FAILURE;
         }
-        catch (const command_args_incompatible&) {
-            cerr << 
+
+        auto commands = commandMap_[cmd_name];
+        if ( commands.count( cmdArgv.size() ) == 0 ) {
+            cerr <<
                 "The command '" <<
                 cmd_name <<
                 "' does not support " <<
                 std::to_string( cmdArgv.size() ) <<
                 " parameters.\n";
             cerr << "Supported:\n";
-            printHelp( cmd_name );
+            printHelp( cerr, cmd_name );
+            return EXIT_FAILURE;
         }
-        catch (const std::exception &e)
-        {
+
+        try {
+            return commands.at( cmdArgv.size() )->callv( cmdArgv );
+        }
+        catch ( const conversion_failure& e ) {
+            cerr << 
+                "Conversion failed: " << 
+                e.what() <<
+                endl;
+        }
+        catch ( const std::exception &e ) {
             cerr <<
-                cmd_name <<
+                std::quoted( cmd_name, internal::kDelim_ ) <<
                 " failed: " <<
                 e.what() <<
-                "\n";
+                endl;
+        }
+        catch ( ... ) {
+            cerr <<
+                std::quoted( cmd_name, internal::kDelim_ ) <<
+                " failed unexpectedly." <<
+                endl;
         }
 
         return EXIT_FAILURE;
@@ -318,333 +721,5 @@ auto makeCliApplication(const Cs& ... commands) {
     CliApplication result(commands ...);
     return result;
 }
-
-/**
- * A single command.  This wraps a function and the necessary logic
- * to map from string-based command line arguments.
- */
-template <typename F, typename ... Args>
-class Command {
-    // Defines the return type.
-    using R = int;
-    // Intermediate storage for the converted arguments.
-    using VT =
-        std::tuple< typename std::decay<Args>::type ... >;
-
-    /**
-     * The command's name.
-     */
-    string name_;
-
-    /**
-     * The function to be called.
-     */
-    F func_;
-
-public:
-    static constexpr size_t kParameterCount{
-        sizeof ... (Args)
-    };
-
-private:
-    /**
-     * Make a parameter pack from the passed params tuple and
-     * call the functor.
-     */
-    template<auto ... S>
-    R callFunc(const VT& params, std::index_sequence<S...>) const {
-        return operator()(std::get<S>(params) ...);
-    }
-
-    initializer_list<const char*> parameterHelp_;
-
-    /**
-     * Trigger mapping.
-     */
-    template <typename ... T>
-    void map(T ...) const {
-    }
-
-    template <typename T>
-    int tf(T& param, const string& str) const {
-        try {
-            transform(str.c_str(), param);
-        }
-        catch (std::invalid_argument&) {
-            std::stringstream s;
-            s << 
-                std::quoted(str) <<
-                " -> " << 
-                get_typename<T>();
-
-            throw std::invalid_argument(s.str());
-        }
-        return 0;
-    }
-
-    template <typename T, auto ... S>
-    void updateImpl(
-        const T& v,
-        VT& params,
-        const std::index_sequence<S...>&) const 
-    {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Bad array size.");
-        }
-        map(
-            tf(std::get<S>(params), v[S]) ...
-        ); 
-   }
-
-public:
-    Command(
-        const string& name,
-        F f,
-        initializer_list<const char*> parameterHelp = {})
-        :
-        name_(name),
-        func_(f),
-        parameterHelp_(parameterHelp)
-    {
-        if ( parameterHelp.size() > parameterHelp_.size() )
-            throw std::invalid_argument("Too many parameter help strings.");
-    }
-
-    /**
-     * Supports a typesave call of the command.
-     */
-    R operator()(Args... a) const {
-        return func_(a...);
-    }
-
-    /**
-     * Call the command with arguments to be converted.  Note that
-     * the number of parameters represents the actual number of offered
-     * command parameters, not including the command name or other stuff.
-     */
-    template <typename Container>
-    R callv(const Container& v) const {
-        if (v.size() != kParameterCount) {
-            throw std::invalid_argument("Wrong number of arguments.");
-        }
-
-        VT params;
-
-        constexpr auto idx = 
-            std::make_index_sequence<kParameterCount>{};
-
-        updateImpl(
-            v,
-            params,
-            idx);
-
-        return callFunc(
-            params,
-            idx);
-    }
-
-    /**
-     * Call the command with arguments to be converted.  Note that
-     * the number of parameters represents the actual number of offered
-     * command parameters, not including the command name or other stuff.
-     */
-    template <typename T = string, typename ... V>
-    R call(V const & ... argv) const 
-    {
-        static_assert(
-            sizeof ... (V) == kParameterCount,
-            "Wrong number of arguments." );
-        static_assert( 
-            std::is_convertible<std::common_type_t<V...>,T>(),
-            "Bad argument type." );
-
-        std::array<T, sizeof ... (V)> va {
-            argv ... 
-        };
-
-        return callv(va);
-    }
-
-    /**
-     * Creates a single-line command description that is displayed
-     * in the generated cli help.
-     */
-    string to_string() const 
-    {
-        // Get the raw type names of the parameters.
-        VT tup;
-
-        static_assert( kParameterCount == std::tuple_size_v<VT> );
-
-        std::array<string, kParameterCount> expander = map_tuple<string>(
-            tup,
-            [](auto t) {
-                return get_typename( t );
-            }
-        );
-
-        // If help was passed prepend the raw types with the 
-        // passed display names.
-        size_t idx = 0;
-        for (string c : parameterHelp_) {
-            if (c.empty())
-                continue;
-            expander[idx] = c + ":" + expander[idx];
-            ++idx;
-        }
-
-        // Line starts with the command name.
-        string result{ name_ };
-
-        if (!expander.size())
-            return result;
-
-        result.append(
-            " ");
-        // Add the first argument.
-        result.append(
-            expander[0]);
-        // For the remaining arguments.
-        for (size_t i = 1; i < expander.size(); i++) {
-            result.append(
-                ", ");
-            result.append(
-                expander[i]);
-        }
-
-        return result;
-    }
-
-    string get_name() const {
-        return name_;
-    }
-};
-
-/**
- * The required template specialisations used to create a functor for
- * a callable entity.
- */
-template <auto F>
-struct PListDed {};
-
-/**
- * Specialisation for free functions. 
- */
-template <typename R, typename... Args, auto (F)(Args...)->R>
-struct PListDed<F> 
-{
-    template <typename Fu>
-    static auto make(
-        string name,
-        Fu function,
-        initializer_list<const char*> parameterHelper)
-    {
-        auto functor =
-            [function](Args ... a) {
-            return function(a...);
-        };
-
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-};
-
-/**
- * Specialisation for instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        string name,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
-        };
-
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-};
-
-/**
- * Specialisation for const instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        string name,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
-        };
-
-        Command<decltype(functor), Args ...>
-            result(name, functor, parameterHelper);
-        return result;
-    }
-};
-
-/**
- * Offers the external interface.
- */
-struct Commands {
-    /**
-     * Create a command for a free function.
-     * 
-     * @param F The function reference.
-     * @param name The name of the resulting command.
-     * @param parameterHelper An alternative name for each parameter.  This is optional,
-     * if it is not passed, then the raw typename is displayed in the generated help
-     * page.  If it is passed its length has to correspond to the number of parameters
-     * of the referenced operation.
-     */
-    template <auto F>
-    static auto make(
-        string name,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        return PListDed<F>::make(
-            name,
-            F,
-            parameterHelper );
-    }
-
-    /**
-     * Create a command for a member function.
-     *
-     * @param F The operation reference.
-     * @param T The type of the class implementing F.  This is deduced from the
-     * \p instance parameter.
-     * @param name The name of the resulting command.
-     * @param instance The instance to use when calling the operation.
-     * @param parameterHelper An alternative name for each parameter.  This is optional,
-     * if it is not passed, then the raw typename is displayed in the generated help
-     * page.  If it is passed its length has to correspond to the number of parameters
-     * of the referenced operation.
-     */
-    template <auto const F, typename T>
-    static auto make(
-        string name,
-        const T instance,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        return PListDed<F>::template make<T>(
-            instance,
-            name,
-            parameterHelper );
-    }
-};
 
 } // namespace smack::cli
