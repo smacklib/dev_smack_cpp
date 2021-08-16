@@ -14,11 +14,14 @@
 
 #include "smack_util.hpp"
 
-namespace smack {
-namespace test {
-namespace common {
+namespace smack::test::common {
 
 using std::string;
+
+/**
+ * The test executable name.
+ */
+extern string g_gtestExecutableName;
 
 inline void pr() {
 }
@@ -67,7 +70,7 @@ public:
     }
 
     /**
-     * Get the content from the redirected stream. 
+     * Get the full content of the redirected stream. 
      */
     std::string str()
     {
@@ -75,7 +78,7 @@ public:
     }
 
     /**
-     * Get the content from the redirected stream.
+     * Get the content of the redirected stream as lines.
      */
     std::vector<std::string> strs()
     {
@@ -118,6 +121,4 @@ public:
     }
 };
 
-} // namespace common
-} // namespace test
-} // namespace smack
+} // namespace smack::test::common
