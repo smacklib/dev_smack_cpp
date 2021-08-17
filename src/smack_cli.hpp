@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdlib>
+#include <filesystem>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -123,7 +124,7 @@ constexpr cstr get_typename_(Choice<3>) {
 }
 
 template<typename T,
-std::enable_if_t<std::is_same<T, std::string>::value, bool> = true>
+std::enable_if_t<std::is_same<T, string>::value, bool> = true>
 constexpr cstr get_typename_(Choice<2>) {
     return "string"; 
 }
@@ -267,6 +268,9 @@ namespace internal {
     using I = string;
     using IT = const std::vector<I>&;
 
+    /**
+     * The quote character to be used in error messages.
+     */
     constexpr char kDelim_ {'\''};
 
     /**
@@ -331,7 +335,7 @@ namespace internal {
     template <typename Tp>
     static void convert(
         Tp& params,
-        const std::vector<std::string>& argv) 
+        const std::vector<string>& argv) 
     {
         constexpr auto sz = std::tuple_size_v<Tp>;
 
@@ -350,7 +354,7 @@ namespace internal {
      */
     template <typename Tp>
     static string make_help_string(
-        const std::string& name, 
+        const string& name, 
         initializer_list<const char*> parameterHelp)
     {
         // Get the raw type names of the parameters.
@@ -565,6 +569,17 @@ class CliApplication
             typename decltype(commands_)::const_pointer>> commandMap_;
 
     /**
+     * The cli name.  This can be explicitly set using the operation set_name() or
+     * is set implicitly if launch( argc, argv ) is used.
+     */
+    string name_;
+
+    /**
+     * A desription for this cli.
+     */
+    string description_;
+
+    /**
      * Print the help page for the application.
      * @param stream The target stream help is written to.
      * @param command A command name used to print only
@@ -575,6 +590,22 @@ class CliApplication
         const string& command = "" )
     {
         if (command.empty()) {
+            if (!name_.empty()) {
+                // Show only the executable's file name, no
+                // path, no extension.
+                std::filesystem::path path{ name_ };
+                path.replace_extension();
+
+                stream << 
+                    "Usage: " << 
+                    path.filename().string() << 
+                    " COMMAND arguments\n";
+            }
+
+            if (!description_.empty())
+                cout << description_ << "\n";
+
+            stream << "\nCommands:\n";
 
             for (auto names : commandMap_)
                 for (auto argcounts : names.second) {
@@ -597,19 +628,23 @@ class CliApplication
 public:
     /**
      * Create an instance that offers the passed commands.
+     * @param description The cli description that is displayed in the
+     * help page.
+     * @param commands The commands that are to be supported.
      */
-    CliApplication(const Cs& ... commands) :
-        commands_{ commands ... }   
+    CliApplication(const char* description, const Cs& ... commands) :
+        commands_{ commands ... },
+        description_(description)
     {
         for (Command& c : commands_) {
-            const auto& cname = 
+            const auto& cname =
                 c.get_name();
-            const auto& ccount = 
+            const auto& ccount =
                 c.get_argument_count();
 
             // Ensure that no duplicate commands are added.
-            if ( commandMap_.count(cname) == 1 && 
-                commandMap_.at(cname).count(ccount) == 1 )
+            if (commandMap_.count(cname) == 1 &&
+                commandMap_.at(cname).count(ccount) == 1)
             {
                 cerr <<
                     "Implementation error: Duplicate definition of command " <<
@@ -625,14 +660,22 @@ public:
     }
 
     /**
+     * Create an instance that offers the passed commands.
+     * @param commands The commands that are to be supported.
+     */
+    CliApplication(const Cs& ... commands) : CliApplication("", commands ...)
+    {
+    }
+
+    /**
      * Launch the application using the passed arguments.  Note that the 
      * passed arguments must not include the name of the application. Do
      * not pass argv[0].  See and prefer launch( int, char** ) which directly
      * accepts the arguments received in a main()-function.
      */
-    int launch(const std::vector<string>& argv) noexcept {
+    int launch(const std::vector<string>& argv) noexcept
+    {
         if (argv.empty()) {
-            cerr << "No arguments. Available commands:" << endl;
             printHelp(cerr);
             return EXIT_FAILURE;
         }
@@ -650,8 +693,7 @@ public:
             argv.end());
 
         if (commandMap_.count(cmd_name) == 0) {
-            cerr << "Unknown command '" << cmd_name << "'.\n";
-            cerr << "Supported commands are:\n";
+            cerr << "Unknown command '" << cmd_name << "'.\n\n";
             printHelp( cerr );
             return EXIT_FAILURE;
         }
@@ -697,18 +739,37 @@ public:
 
     /**
      * Launch the application using the passed arguments.  Just forward the arguments
-     * that were passed to main().
+     * that were passed to main().  If the application name was not explicitly set
+     * then argv[0] is used as application name.
      * 
      * @param argc The argument count, as defined by the C/C++ main()-function.
      * @param argc The arguments, as defined by the C/C++ main()-function.
      */
     int launch(int argc, const char* const* argv) noexcept {
+        if (name_.empty() && argc > 0)
+            name_ = argv[0];
+
         // Skip the program name.
-        std::vector<std::string> cmdArgv(
+        std::vector<string> cmdArgv(
             argv + 1,
             argv + argc);
 
         return launch(cmdArgv);
+    }
+
+    /**
+     * Get the name of the application.  This can be explicitly set to an
+     * arbitrary value using the {@code set_name()}-operation.
+     */
+    string name() {
+        return name_;
+    }
+
+    /**
+     * Explicitly set the name of the application.
+     */
+    void set_name( const string& name ) {
+        name_ = name;
     }
 };
 

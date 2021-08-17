@@ -56,6 +56,8 @@ int main(int argc, char**argv) {
     // Create an application proxy and register the
     // commands with the proxy. 
     smack::cli::CliApplication cli{
+        "Demonstrates smack::cli.  Enjoy...",
+
         Commands::make<add_int>(
             // The command name that is used to select the
             // command on the command line.  This can be freely

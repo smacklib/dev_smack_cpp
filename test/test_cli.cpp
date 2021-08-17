@@ -621,6 +621,9 @@ TEST(SmackCliTest, CliTestHelp) {
             { "p1" })
     );
 
+    cli.set_name(
+        smack::test::common::g_gtestExecutableName);
+
     smack::test::common::redir r{ std::cerr };
 
     std::vector<string> argv;
@@ -634,19 +637,28 @@ TEST(SmackCliTest, CliTestHelp) {
     // Get err content.
     auto lines = r.strs();
 
-    EXPECT_EQ(3, lines.size());
-    EXPECT_EQ("No arguments. Available commands:", lines[0]);
-    EXPECT_EQ("xxx p1:string", lines[1]);
+    ASSERT_EQ(5, lines.size());
+    ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
+    ASSERT_EQ("", lines[1]);
+    ASSERT_EQ("Commands:", lines[2]);
+    ASSERT_EQ("xxx p1:string", lines[3]);
+    ASSERT_EQ("", lines[4]);
 }
 
 TEST(SmackCliTest, CliTestHelpExplicit) {
     using smack::cli::Commands;
 
+    string applicationHelpString{ "application help string." };
+
     smack::cli::CliApplication cli(
+        applicationHelpString.c_str(),
         Commands::make<fError>(
             "xxx",
             { "p1" })
     );
+
+    cli.set_name(
+        smack::test::common::g_gtestExecutableName);
 
     smack::test::common::redir r{ std::cout };
 
@@ -661,8 +673,13 @@ TEST(SmackCliTest, CliTestHelpExplicit) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(2, lines.size());
-    ASSERT_EQ("xxx p1:string", lines[0]);
+    ASSERT_EQ(6, lines.size());
+    ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
+    ASSERT_EQ(applicationHelpString, lines[1]);
+    ASSERT_EQ("", lines[2]);
+    ASSERT_EQ("Commands:", lines[3]);
+    ASSERT_EQ("xxx p1:string", lines[4]);
+    ASSERT_EQ("", lines[5]);
 }
 
 TEST(SmackCliTest, CliTestHelpSorted) {
@@ -674,6 +691,9 @@ TEST(SmackCliTest, CliTestHelpSorted) {
         Commands::make<fError>("aaa")
     );
 
+    cli.set_name(
+        smack::test::common::g_gtestExecutableName);
+
     smack::test::common::redir r{ std::cout };
 
     std::vector<string> argv{ "?" };
@@ -687,8 +707,10 @@ TEST(SmackCliTest, CliTestHelpSorted) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(4, lines.size());
-    ASSERT_EQ("aaa string", lines[0]);
-    ASSERT_EQ("xxx string", lines[1]);
-    ASSERT_EQ("zzz string", lines[2]);
+    ASSERT_EQ(7, lines.size());
+    ASSERT_EQ("Commands:", lines[2]);
+    ASSERT_EQ("aaa string", lines[3]);
+    ASSERT_EQ("xxx string", lines[4]);
+    ASSERT_EQ("zzz string", lines[5]);
+    ASSERT_EQ("", lines[6]);
 }
