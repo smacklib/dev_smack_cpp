@@ -75,7 +75,7 @@ public:
 
         smack::cli::CliApplication cli(
             Commands::make<&TestApplication::f1>(
-                "eins", this),
+                "eins", "description:eins", this),
             Commands::make<&TestApplication::f2>(
                 "zwei", this),
             Commands::make<&TestApplication::f3>(

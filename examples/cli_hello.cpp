@@ -62,22 +62,22 @@ int main(int argc, char**argv) {
             // The command name that is used to select the
             // command on the command line.  This can be freely
             // selected.
-            "add_int",
+            "add_int", "Adds two integers.",
             // An optional list of symbolic argument names.  This
             // is printed in the cli help page.
             { "first", "second" }),
 
         Commands::make<add_float>(
-            "add_float"),
+            "add_float", "Adds two floating point numbers."),
 
         Commands::make<concat>(
-            "concat"),
+            "concat", "Concatenates strings." ),
 
         Commands::make<pi>(
-            "pi"),
+            "pi", "Returns PI."),
 
         Commands::make<error>(
-            "error")
+            "error", "Prints an error.")
     };
 
     // Finally launch the application.
