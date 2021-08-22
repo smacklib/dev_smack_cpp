@@ -306,8 +306,8 @@ namespace internal {
     {
     }
 
-    template <typename Tto, typename Tfrom>
-    static int tf(Tto& param, const Tfrom& str)
+    template <typename To, typename From>
+    static int tf(To& param, const From& str)
     {
         try {
             transform(str.c_str(), param);
@@ -317,7 +317,7 @@ namespace internal {
             s << 
                 std::quoted(str, kDelim_) <<
                 " -> " << 
-                get_typename<Tto>();
+                get_typename<To>();
 
             throw std::invalid_argument(s.str());
         }
