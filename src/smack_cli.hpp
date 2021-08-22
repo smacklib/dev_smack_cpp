@@ -268,6 +268,8 @@ namespace internal {
     using I = string;
     using IT = const std::vector<I>&;
 
+    static string EMPTY_STRING;
+
     /**
      * The quote character to be used in error messages.
      */
@@ -354,8 +356,9 @@ namespace internal {
      */
     template <typename Tp>
     static string make_help_string(
-        const string& name, 
-        initializer_list<const char*> parameterHelp)
+        const string& name,
+        initializer_list<const char*> parameterHelp,
+        const string& description = {} )
     {
         // Get the raw type names of the parameters.
         Tp tup;
@@ -380,20 +383,26 @@ namespace internal {
         // Line starts with the command name.
         string result{ name };
 
-        if (!expander.size())
-            return result;
+        // Append the command arguments.
+        if (expander.size() > 0) {
+            result.append(
+                " ");
+            // Add the first argument.
+            result.append(
+                expander[0]);
+            // For the remaining arguments.
+            for (size_t i = 1; i < expander.size(); i++) {
+                result.append(
+                    ", ");
+                result.append(
+                    expander[i]);
+            }
+        }
 
-        result.append(
-            " ");
-        // Add the first argument.
-        result.append(
-            expander[0]);
-        // For the remaining arguments.
-        for (size_t i = 1; i < expander.size(); i++) {
-            result.append(
-                ", ");
-            result.append(
-                expander[i]);
+        // Add the description in the second line.
+        if (!description.empty()) {
+            result.append("\n    ");
+            result.append(description);
         }
 
         return result;
@@ -425,6 +434,7 @@ struct PListDed<F>
 {
     static auto make(
         const string& name,
+        const string& description,
         initializer_list<const char*> parameterHelper)
     {
         using Tp =
@@ -432,7 +442,7 @@ struct PListDed<F>
         auto cvf =
             internal::wrap<Tp>(F);
         string help = 
-            internal::make_help_string<Tp>(name,parameterHelper);
+            internal::make_help_string<Tp>(name,parameterHelper,description);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
@@ -448,6 +458,7 @@ struct PListDed<F>
     static auto make(
         const Ty instance,
         const string& name,
+        const string& description,
         initializer_list<const char*> parameterHelper = {})
     {
         auto functor =
@@ -460,7 +471,7 @@ struct PListDed<F>
         auto cvf =
             internal::wrap<Tp>(functor);
         string help =
-            internal::make_help_string<Tp>(name,parameterHelper);
+            internal::make_help_string<Tp>(name,parameterHelper,description);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
@@ -476,6 +487,7 @@ struct PListDed<F>
     static auto make(
         const Ty instance,
         const string& name,
+        const string& description,
         initializer_list<const char*> parameterHelper = {})
     {
         auto functor =
@@ -488,7 +500,7 @@ struct PListDed<F>
         auto cvf = 
             internal::wrap<Tp>(functor);
         string help = 
-            internal::make_help_string<Tp>(name,parameterHelper);
+            internal::make_help_string<Tp>(name, parameterHelper, description);
 
         return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
@@ -500,9 +512,32 @@ struct PListDed<F>
 struct Commands {
     /**
      * Create a command for a free function.
+     *
+     * @param F The function reference.
+     * @param name The name of the resulting command.
+     * @param parameterHelper An alternative name for each parameter.  This is
+     * optional, if it is not passed, then the raw typename is displayed in the
+     * generated help page.  If it is passed its length has to correspond to
+     * the number of parameters of the referenced operation.
+     */
+    template <auto F>
+    static auto make(
+        const char* name,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::make(
+            name,
+            internal::EMPTY_STRING,
+            parameterHelper);
+    }
+
+    /**
+     * Create a command for a free function.
      * 
      * @param F The function reference.
      * @param name The name of the resulting command.
+     * @param description A textual description of the command printed in the
+     * help page.
      * @param parameterHelper An alternative name for each parameter.  This is optional,
      * if it is not passed, then the raw typename is displayed in the generated help
      * page.  If it is passed its length has to correspond to the number of parameters
@@ -510,12 +545,14 @@ struct Commands {
      */
     template <auto F>
     static auto make(
-        const string& name,
+        const char* name,
+        const char* description,
         initializer_list<const char*> parameterHelper = {})
     {
         return PListDed<F>::make(
             name,
-            parameterHelper );
+            description,
+            parameterHelper);
     }
 
     /**
@@ -526,21 +563,51 @@ struct Commands {
      * \p instance parameter.
      * @param name The name of the resulting command.
      * @param instance The instance to use when calling the operation.
-     * @param parameterHelper An alternative name for each parameter.  This is optional,
-     * if it is not passed, then the raw typename is displayed in the generated help
-     * page.  If it is passed its length has to correspond to the number of parameters
-     * of the referenced operation.
+     * @param parameterHelper An alternative name for each parameter.  This is
+     * optional, if it is not passed, then the raw typename is displayed in the
+     * generated help page.  If it is passed its length has to correspond to
+     * the number of parameters of the referenced operation.
      */
     template <auto const F, typename T>
     static auto make(
-        const string& name,
+        const char* name,
         const T instance,
         initializer_list<const char*> parameterHelper = {})
     {
         return PListDed<F>::template make<T>(
             instance,
             name,
-            parameterHelper );
+            internal::EMPTY_STRING,
+            parameterHelper);
+    }
+
+    /**
+     * Create a command for a member function.
+     *
+     * @param F The operation reference.
+     * @param T The type of the class implementing F.  This is deduced from the
+     * \p instance parameter.
+     * @param name The name of the resulting command.
+     * @param description A textual description of the command printed in the
+     * help page.
+     * @param instance The instance to use when calling the operation.
+     * @param parameterHelper An alternative name for each parameter.  This is
+     * optional, if it is not passed, then the raw typename is displayed in the
+     * generated help page.  If it is passed its length has to correspond to
+     * the number of parameters of the referenced operation.
+     */
+    template <auto const F, typename T>
+    static auto make(
+        const char* name,
+        const char* description,
+        const T instance,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::template make<T>(
+            instance,
+            name,
+            description,
+            parameterHelper);
     }
 };
 

@@ -714,3 +714,42 @@ TEST(SmackCliTest, CliTestHelpSorted) {
     ASSERT_EQ("zzz string", lines[5]);
     ASSERT_EQ("", lines[6]);
 }
+
+TEST(SmackCliTest, CliTestCommandDescription) {
+    using smack::cli::Commands;
+
+    string applicationHelpString{ "application help string." };
+
+    smack::cli::CliApplication cli(
+        applicationHelpString.c_str(),
+        Commands::make<fError>(
+            "xxx", 
+            "description:xxx",
+            { "p1" })
+    );
+
+    cli.set_name(
+        smack::test::common::g_gtestExecutableName);
+
+    smack::test::common::redir r{ std::cout };
+
+    std::vector<string> argv{ "?" };
+
+    // Execute the application.
+    auto exitCode =
+        cli.launch(argv);
+
+    EXPECT_EQ(EXIT_SUCCESS, exitCode);
+
+    // Get err content.
+    auto lines = r.strs();
+
+    ASSERT_EQ(7, lines.size());
+    ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
+    ASSERT_EQ(applicationHelpString, lines[1]);
+    ASSERT_EQ("", lines[2]);
+    ASSERT_EQ("Commands:", lines[3]);
+    ASSERT_EQ("xxx p1:string", lines[4]);
+    ASSERT_EQ("    description:xxx", lines[5]);
+    ASSERT_EQ("", lines[6]);
+}
