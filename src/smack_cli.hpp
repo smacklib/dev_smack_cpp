@@ -16,6 +16,7 @@
 #include <initializer_list>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <sstream>
@@ -58,8 +59,8 @@ public:
  * Define the transformation function.  Implementations for primitives 
  * and string-like types are available in the implementation file.
  */
-template <typename T>
-void transform(const char* in, T& out);
+template <typename To, typename From>
+void transform(From in, To& out);
 
 using cstr = const char*;
 
@@ -201,7 +202,7 @@ class Command {
     /**
      * The function to be called.
      */
-    std::function<R(const std::vector<string>&)> func_;
+    std::function<R(IT)> func_;
 
     /**
      * A help line describing the command.
@@ -212,7 +213,7 @@ public:
     Command(
         const string& name,
         size_t argumentCount,
-        std::function<R(const std::vector<string>&)> f,
+        std::function<R(IT)> f,
         const string& helpLine)
         :
         name_(name),
@@ -225,7 +226,7 @@ public:
     /**
      * Call the command with arguments to be converted.
      */
-    R callv(const std::vector<I>& v) const {
+    R callv(IT v) const {
         if (v.size() != argumentCount_)
             throw std::invalid_argument("Wrong number of arguments.");
 
@@ -305,8 +306,8 @@ namespace internal {
     {
     }
 
-    template <typename T>
-    static int tf(T& param, const string& str) 
+    template <typename Tto, typename Tfrom>
+    static int tf(Tto& param, const Tfrom& str)
     {
         try {
             transform(str.c_str(), param);
@@ -316,7 +317,7 @@ namespace internal {
             s << 
                 std::quoted(str, kDelim_) <<
                 " -> " << 
-                get_typename<T>();
+                get_typename<Tto>();
 
             throw std::invalid_argument(s.str());
         }
@@ -393,7 +394,7 @@ namespace internal {
             // For the remaining arguments.
             for (size_t i = 1; i < expander.size(); i++) {
                 result.append(
-                    ", ");
+                    " ");
                 result.append(
                     expander[i]);
             }

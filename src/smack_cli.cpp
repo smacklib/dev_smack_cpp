@@ -77,7 +77,7 @@ struct ConvFu<F>
             }
         }
         catch (const std::invalid_argument&) {
-            // Ignore this expection.  A corresponding exception
+            // Ignore this exception.  A corresponding exception
             // with a better message is thrown below. 
         }
         catch (const std::out_of_range&) {
