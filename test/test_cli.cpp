@@ -58,7 +58,7 @@ TEST(SmackCliTest, CommandHelpNone) {
 
     auto help = cmd.to_string();
 
-    EXPECT_EQ("zwei int, string", help);
+    EXPECT_EQ("zwei int string", help);
 }
 
 TEST(SmackCliTest, CommandHelpPartial) {
@@ -70,7 +70,7 @@ TEST(SmackCliTest, CommandHelpPartial) {
 
     auto help = cmd.to_string();
 
-    EXPECT_EQ("drei p1:int, p2:double, string", help);
+    EXPECT_EQ("drei p1:int p2:double string", help);
 }
 
 TEST(SmackCliTest, TypenameTest) {
