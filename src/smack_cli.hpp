@@ -59,8 +59,13 @@ public:
  * Define the transformation function.  Implementations for primitives 
  * and string-like types are available in the implementation file.
  */
-template <typename To, typename From>
+template <typename From, typename To>
 void transform(From in, To& out);
+
+template <typename To>
+void transform(const std::string& in, To& out) {
+    transform(in.c_str(), out);
+}
 
 using cstr = const char*;
 
@@ -224,7 +229,7 @@ namespace internal {
     static int tf(To& param, const From& str)
     {
         try {
-            transform(str.c_str(), param);
+            transform(str, param);
         }
         catch (std::invalid_argument&) {
             std::stringstream s;
@@ -378,13 +383,18 @@ public:
     {
     }
 
-    template <typename Tp>
+    template <typename Tp, typename F>
     Command(
         const string& name,
-        const Tp& arguments)
+        const string& description,
+        initializer_list<const char*> parameterHelper,
+        Tp& arguments,
+        F f)
         :
         name_(name)
         , argumentCount_(std::tuple_size_v<Tp>)
+        , func_( internal::wrap<Tp>(f) )
+        , helpLine_( smack::cli::internal::make_help_string<Tp>(name,parameterHelper,description) )
     {
         std::cout << "Bah!\n";
     }
@@ -454,12 +464,8 @@ class Commands {
         {
             using Tp =
                 std::tuple< typename std::decay<Args>::type ... >;
-            auto cvf =
-                internal::wrap<Tp>(F);
-            string help = 
-                internal::make_help_string<Tp>(name,parameterHelper,description);
-
-            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+            Tp t;
+            return Command{name, description, parameterHelper, t, F};
         }
     };
 
