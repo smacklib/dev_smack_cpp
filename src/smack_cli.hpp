@@ -179,6 +179,161 @@ auto map_tuple(T& tpl, Func func) {
     return map_tuple_<R>( tpl, func, i );
 }
 
+namespace internal {
+    using I = string;
+    using IT = const std::vector<I>&;
+
+    static string EMPTY_STRING;
+
+    /**
+     * The quote character to be used in error messages.
+     */
+    constexpr char kDelim_ {'\''};
+
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu,typename Tp, auto ... S>
+    static auto callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>) {
+        return f(std::get<S>(params) ...);
+    }
+    /**
+     * Make a parameter pack from the passed params tuple and
+     * call the functor.
+     */
+    template<typename Fu, typename Tp>
+    static auto callFunc(Fu f, const Tp& params)
+    {
+        constexpr auto sz =
+            std::tuple_size_v<Tp>;
+        constexpr auto idx = 
+            std::make_index_sequence<sz>{};
+        return callFuncImpl( f, params, idx );
+    }
+
+    /**
+     * Trigger mapping.
+     */
+    template <typename ... T>
+    static void map(T ...) 
+    {
+    }
+
+    template <typename To, typename From>
+    static int tf(To& param, const From& str)
+    {
+        try {
+            transform(str.c_str(), param);
+        }
+        catch (std::invalid_argument&) {
+            std::stringstream s;
+            s << 
+                std::quoted(str, kDelim_) <<
+                " -> " << 
+                get_typename<To>();
+
+            throw std::invalid_argument(s.str());
+        }
+        return 0;
+    }
+
+    template <typename T, typename Tp, auto ... S>
+    static void convertImpl(
+        const T& v,
+        Tp& params,
+        const std::index_sequence<S...>&)
+    {
+        map(
+            tf(std::get<S>(params), v[S]) ...
+        ); 
+    }
+
+    template <typename Tp>
+    static void convert(
+        Tp& params,
+        const std::vector<string>& argv) 
+    {
+        constexpr auto sz = std::tuple_size_v<Tp>;
+
+        if (argv.size() != sz)
+            throw std::invalid_argument("Wrong number of arguments.");
+        
+        constexpr auto idx =
+            std::make_index_sequence<sz>{};
+
+        convertImpl(argv,params,idx);
+    }
+
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    template <typename Tp>
+    static string make_help_string(
+        const string& name,
+        initializer_list<const char*> parameterHelp,
+        const string& description = {} )
+    {
+        // Get the raw type names of the parameters.
+        Tp tup;
+
+        auto expander = map_tuple<string>(
+            tup,
+            [](auto t) {
+                return get_typename(t);
+            }
+        );
+
+        // If help was passed prepend the raw types with the
+        // passed display names.
+        size_t idx = 0;
+        for (string c : parameterHelp) {
+            if (c.empty())
+                continue;
+            expander[idx] = c + ":" + expander[idx];
+            ++idx;
+        }
+
+        // Line starts with the command name.
+        string result{ name };
+
+        // Append the command arguments.
+        if (expander.size() > 0) {
+            result.append(
+                " ");
+            // Add the first argument.
+            result.append(
+                expander[0]);
+            // For the remaining arguments.
+            for (size_t i = 1; i < expander.size(); i++) {
+                result.append(
+                    " ");
+                result.append(
+                    expander[i]);
+            }
+        }
+
+        // Add the description in the second line.
+        if (!description.empty()) {
+            result.append("\n    ");
+            result.append(description);
+        }
+
+        return result;
+    }
+
+    template <typename ParameterTuple, typename T>
+    static auto wrap( T functor )
+    {
+        return [functor](internal::IT v){
+            ParameterTuple params;
+            internal::convert( params, v );
+            return internal::callFunc(functor, params);
+        };
+    }
+};
+
 /**
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
@@ -261,162 +416,6 @@ public:
 
     constexpr size_t get_argument_count() const {
         return argumentCount_;
-    }
-};
-
-namespace internal {
-    using R = int;
-    using I = string;
-    using IT = const std::vector<I>&;
-
-    static string EMPTY_STRING;
-
-    /**
-     * The quote character to be used in error messages.
-     */
-    constexpr char kDelim_ {'\''};
-
-    /**
-     * Make a parameter pack from the passed params tuple and
-     * call the functor.
-     */
-    template<typename Fu,typename Tp, auto ... S>
-    static R callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>) {
-        return f(std::get<S>(params) ...);
-    }
-    /**
-     * Make a parameter pack from the passed params tuple and
-     * call the functor.
-     */
-    template<typename Fu, typename Tp>
-    static R callFunc(Fu f, const Tp& params)
-    {
-        constexpr auto sz =
-            std::tuple_size_v<Tp>;
-        constexpr auto idx = 
-            std::make_index_sequence<sz>{};
-        return callFuncImpl( f, params, idx );
-    }
-
-    /**
-     * Trigger mapping.
-     */
-    template <typename ... T>
-    static void map(T ...) 
-    {
-    }
-
-    template <typename To, typename From>
-    static int tf(To& param, const From& str)
-    {
-        try {
-            transform(str.c_str(), param);
-        }
-        catch (std::invalid_argument&) {
-            std::stringstream s;
-            s << 
-                std::quoted(str, kDelim_) <<
-                " -> " << 
-                get_typename<To>();
-
-            throw std::invalid_argument(s.str());
-        }
-        return 0;
-    }
-
-    template <typename T, typename Tp, auto ... S>
-    static void convertImpl(
-        const T& v,
-        Tp& params,
-        const std::index_sequence<S...>&)
-    {
-        map(
-            tf(std::get<S>(params), v[S]) ...
-        ); 
-    }
-
-    template <typename Tp>
-    static void convert(
-        Tp& params,
-        const std::vector<string>& argv) 
-    {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
-        if (argv.size() != sz)
-            throw std::invalid_argument("Wrong number of arguments.");
-        
-        constexpr auto idx =
-            std::make_index_sequence<sz>{};
-
-        convertImpl(argv,params,idx);
-    }
-
-    /**
-     * Creates a single-line command description that is displayed
-     * in the generated cli help.
-     */
-    template <typename Tp>
-    static string make_help_string(
-        const string& name,
-        initializer_list<const char*> parameterHelp,
-        const string& description = {} )
-    {
-        // Get the raw type names of the parameters.
-        Tp tup;
-
-        std::array<string, std::tuple_size_v<Tp>> expander = map_tuple<string>(
-            tup,
-            [](auto t) {
-                return get_typename(t);
-            }
-        );
-
-        // If help was passed prepend the raw types with the
-        // passed display names.
-        size_t idx = 0;
-        for (string c : parameterHelp) {
-            if (c.empty())
-                continue;
-            expander[idx] = c + ":" + expander[idx];
-            ++idx;
-        }
-
-        // Line starts with the command name.
-        string result{ name };
-
-        // Append the command arguments.
-        if (expander.size() > 0) {
-            result.append(
-                " ");
-            // Add the first argument.
-            result.append(
-                expander[0]);
-            // For the remaining arguments.
-            for (size_t i = 1; i < expander.size(); i++) {
-                result.append(
-                    " ");
-                result.append(
-                    expander[i]);
-            }
-        }
-
-        // Add the description in the second line.
-        if (!description.empty()) {
-            result.append("\n    ");
-            result.append(description);
-        }
-
-        return result;
-    }
-
-    template <typename Tp, typename T>
-    static auto wrap ( T functor )
-    {
-        return [functor](internal::IT v){
-            Tp params;
-            internal::convert( params, v );
-            return internal::callFunc(functor, params);
-        };
     }
 };
 
