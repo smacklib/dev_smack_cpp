@@ -753,3 +753,9 @@ TEST(SmackCliTest, CliTestCommandDescription) {
     ASSERT_EQ("    description:xxx", lines[5]);
     ASSERT_EQ("", lines[6]);
 }
+
+TEST(SmackCliTest, TemplateCtor) {
+
+    std::tuple<int,float> bah;
+    smack::cli::Command c { "313", bah };
+}

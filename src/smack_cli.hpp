@@ -378,6 +378,17 @@ public:
     {
     }
 
+    template <typename Tp>
+    Command(
+        const string& name,
+        const Tp& arguments)
+        :
+        name_(name)
+        , argumentCount_(std::tuple_size_v<Tp>)
+    {
+        std::cout << "Bah!\n";
+    }
+
     /**
      * Call the command with arguments to be converted.
      */
@@ -420,96 +431,97 @@ public:
 };
 
 /**
- * The required template specialisations used to create a functor for
- * a callable entity.
- */
-template <auto F>
-struct PListDed {};
-
-/**
- * Specialisation for free functions. 
- */
-template <typename R, typename... Args, auto (F)(Args...)->R>
-struct PListDed<F> 
-{
-    static auto make(
-        const string& name,
-        const string& description,
-        initializer_list<const char*> parameterHelper)
-    {
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf =
-            internal::wrap<Tp>(F);
-        string help = 
-            internal::make_help_string<Tp>(name,parameterHelper,description);
-
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
-    }
-};
-
-/**
- * Specialisation for instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        const string& name,
-        const string& description,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
-        };
-
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf =
-            internal::wrap<Tp>(functor);
-        string help =
-            internal::make_help_string<Tp>(name,parameterHelper,description);
-
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
-    }
-};
-
-/**
- * Specialisation for const instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        const string& name,
-        const string& description,
-        initializer_list<const char*> parameterHelper = {})
-    {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
-        };
-
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf = 
-            internal::wrap<Tp>(functor);
-        string help = 
-            internal::make_help_string<Tp>(name, parameterHelper, description);
-
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
-    }
-};
-
-/**
  * Offers the external interface.
  */
-struct Commands {
+class Commands {
+    /**
+     * The required template specialisations used to create a functor for
+     * a callable entity.
+     */
+    template <auto F>
+    struct PListDed {};
+
+    /**
+     * Specialisation for free functions. 
+     */
+    template <typename R, typename... Args, auto (F)(Args...)->R>
+    struct PListDed<F> 
+    {
+        static auto make(
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper)
+        {
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            auto cvf =
+                internal::wrap<Tp>(F);
+            string help = 
+                internal::make_help_string<Tp>(name,parameterHelper,description);
+
+            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+        }
+    };
+
+    /**
+     * Specialisation for instance operations.
+     */
+    template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+    struct PListDed<F> 
+    {
+        template <typename Ty>
+        static auto make(
+            const Ty instance,
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper = {})
+        {
+            auto functor =
+                [instance](Args ... a) {
+                return (instance->*F)(a...);
+            };
+
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            auto cvf =
+                internal::wrap<Tp>(functor);
+            string help =
+                internal::make_help_string<Tp>(name,parameterHelper,description);
+
+            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+        }
+    };
+
+    /**
+     * Specialisation for const instance operations.
+     */
+    template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+    struct PListDed<F> 
+    {
+        template <typename Ty>
+        static auto make(
+            const Ty instance,
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper = {})
+        {
+            auto functor =
+                [instance](Args ... a) {
+                return (instance->*F)(a...);
+            };
+
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            auto cvf = 
+                internal::wrap<Tp>(functor);
+            string help = 
+                internal::make_help_string<Tp>(name, parameterHelper, description);
+
+            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+        }
+    };
+
+public:
     /**
      * Create a command for a free function.
      *
