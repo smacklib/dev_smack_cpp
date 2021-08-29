@@ -29,12 +29,12 @@
 
 namespace smack::cli {
 
-using std::string;
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::initializer_list;
 using std::size_t;
+using std::string;
 
 class conversion_failure : public std::runtime_error {
 public:
@@ -167,33 +167,61 @@ constexpr cstr get_typename( T type ) {
     return get_typename<decltype(type)>(); 
 }
 
-template<typename R, typename T, typename Func, auto ... I>
-auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
-    std::array<R, sizeof ... (I)> result{
-        func(std::get<I>(tpl)) ... 
-    };
-
-    return result;
-}
-
-template<typename R, typename T, typename Func>
-auto map_tuple(T& tpl, Func func) {
-    constexpr auto i = 
-        std::make_index_sequence<std::tuple_size_v<T>>{};
-
-    return map_tuple_<R>( tpl, func, i );
-}
-
 namespace internal {
-    using I = string;
-    using IT = const std::vector<I>&;
-
     static string EMPTY_STRING;
 
     /**
      * The quote character to be used in error messages.
      */
     constexpr char kDelim_ {'\''};
+};
+
+/**
+ * A single command.  This wraps a function and the necessary logic
+ * to map from string-based command line arguments.
+ */
+class Command {
+    // Defines the return type.
+    using R = int;
+    using I = string;
+    using IT = const std::vector<I>&;
+
+    /**
+     * The command's name.
+     */
+    string name_;
+
+    /**
+     * The number of arguments the command accepts.
+     */
+    size_t argumentCount_;
+
+    /**
+     * The function to be called.
+     */
+    std::function<R(IT)> func_;
+
+    /**
+     * A help line describing the command.
+     */
+    string helpLine_;
+
+    template<typename R, typename T, typename Func, auto ... I>
+    static auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
+        std::array<R, sizeof ... (I)> result{
+            func(std::get<I>(tpl)) ... 
+        };
+
+        return result;
+    }
+
+    template<typename R, typename T, typename Func>
+    static auto map_tuple(T& tpl, Func func) {
+        constexpr auto i = 
+            std::make_index_sequence<std::tuple_size_v<T>>{};
+
+        return map_tuple_<R>( tpl, func, i );
+    }
 
     /**
      * Make a parameter pack from the passed params tuple and
@@ -234,7 +262,7 @@ namespace internal {
         catch (std::invalid_argument&) {
             std::stringstream s;
             s << 
-                std::quoted(str, kDelim_) <<
+                std::quoted(str, internal::kDelim_) <<
                 " -> " << 
                 get_typename<To>();
 
@@ -275,7 +303,7 @@ namespace internal {
      * in the generated cli help.
      */
     template <typename Tp>
-    static string make_help_string(
+    static string make_help(
         const string& name,
         initializer_list<const char*> parameterHelp,
         const string& description = {} )
@@ -331,43 +359,12 @@ namespace internal {
     template <typename ParameterTuple, typename T>
     static auto wrap( T functor )
     {
-        return [functor](internal::IT v){
+        return [functor](IT v){
             ParameterTuple params;
-            internal::convert( params, v );
-            return internal::callFunc(functor, params);
+            convert( params, v );
+            return callFunc(functor, params);
         };
     }
-};
-
-/**
- * A single command.  This wraps a function and the necessary logic
- * to map from string-based command line arguments.
- */
-class Command {
-    // Defines the return type.
-    using R = int;
-    using I = string;
-    using IT = const std::vector<I>&;
-
-    /**
-     * The command's name.
-     */
-    string name_;
-
-    /**
-     * The number of arguments the command accepts.
-     */
-    size_t argumentCount_;
-
-    /**
-     * The function to be called.
-     */
-    std::function<R(IT)> func_;
-
-    /**
-     * A help line describing the command.
-     */
-    string helpLine_;
 
 public:
     template <typename Tp, typename F>
@@ -380,8 +377,8 @@ public:
         :
         name_(name)
         , argumentCount_(std::tuple_size_v<Tp>)
-        , func_( internal::wrap<Tp>(f) )
-        , helpLine_( smack::cli::internal::make_help_string<Tp>(name,parameterHelper,description) )
+        , func_( wrap<Tp>(f) )
+        , helpLine_( make_help<Tp>(name,parameterHelper,description) )
     {
     }
 
