@@ -35,6 +35,7 @@ using std::endl;
 using std::initializer_list;
 using std::size_t;
 using std::string;
+using std::vector;
 
 class conversion_failure : public std::runtime_error {
 public:
@@ -180,11 +181,12 @@ namespace internal {
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
  */
+template <typename Result = int, typename Input = string>
 class Command {
     // Defines the return type.
-    using R = int;
-    using I = string;
-    using IT = const std::vector<I>&;
+    using R = Result;
+    using I = Input;
+    using IT = const vector<I>&;
 
     /**
      * The command's name.
@@ -285,7 +287,7 @@ class Command {
     template <typename Tp>
     static void convert(
         Tp& params,
-        const std::vector<string>& argv) 
+        const vector<string>& argv) 
     {
         constexpr auto sz = std::tuple_size_v<Tp>;
 
@@ -398,7 +400,7 @@ public:
     template <typename T = string, typename ... V>
     R call(V const & ... argv) const 
     {
-        std::vector<T> va {
+        vector<T> va {
             argv ... 
         };
 
@@ -622,11 +624,11 @@ public:
 /**
  * Represents the Cli.
  */
-template <typename... Cs>
+template <typename Result = int, typename Input = string, typename... Cs>
 class CliApplication
 {
     using CsTy_ = std::common_type_t<Cs...>;
-    static_assert(std::is_same<Command, CsTy_>());
+    static_assert(std::is_same<Command<Result,Input>, CsTy_>());
 
     /**
      * The registered commands. 
@@ -711,7 +713,7 @@ public:
         commands_{ commands ... },
         description_(description)
     {
-        for (Command& c : commands_) {
+        for (Command<>& c : commands_) {
             const auto& cname =
                 c.get_name();
             const auto& ccount =
@@ -748,7 +750,7 @@ public:
      * not pass argv[0].  See and prefer launch( int, char** ) which directly
      * accepts the arguments received in a main()-function.
      */
-    int launch(const std::vector<string>& argv) noexcept
+    Result launch(const vector<Input>& argv) noexcept
     {
         if (argv.empty()) {
             printHelp(cerr);
@@ -763,7 +765,7 @@ public:
         const string& cmd_name =
             argv[0];
         // And the parameter names, excluding the command name.
-        std::vector<string> cmdArgv(
+        vector<string> cmdArgv(
             argv.begin() + 1,
             argv.end());
 
@@ -825,7 +827,7 @@ public:
             name_ = argv[0];
 
         // Skip the program name.
-        std::vector<string> cmdArgv(
+        vector<Input> cmdArgv(
             argv + 1,
             argv + argc);
 
