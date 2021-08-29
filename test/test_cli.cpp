@@ -757,5 +757,7 @@ TEST(SmackCliTest, CliTestCommandDescription) {
 TEST(SmackCliTest, TemplateCtor) {
 
     std::tuple<int,const char *> bah;
-    smack::cli::Command c { "313", "desc", {"hu", "ha"}, bah, f2 };
+    smack::cli::Command c { 
+        "313",
+        "desc", {"hu", "ha"}, bah, f2 };
 }

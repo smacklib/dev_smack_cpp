@@ -370,19 +370,6 @@ class Command {
     string helpLine_;
 
 public:
-    Command(
-        const string& name,
-        size_t argumentCount,
-        std::function<R(IT)> f,
-        const string& helpLine)
-        :
-        name_(name),
-        argumentCount_(argumentCount),
-        func_(f),
-        helpLine_(helpLine)
-    {
-    }
-
     template <typename Tp, typename F>
     Command(
         const string& name,
@@ -396,7 +383,6 @@ public:
         , func_( internal::wrap<Tp>(f) )
         , helpLine_( smack::cli::internal::make_help_string<Tp>(name,parameterHelper,description) )
     {
-        std::cout << "Bah!\n";
     }
 
     /**
@@ -464,8 +450,13 @@ class Commands {
         {
             using Tp =
                 std::tuple< typename std::decay<Args>::type ... >;
-            Tp t;
-            return Command{name, description, parameterHelper, t, F};
+            Tp argumentTuple;
+            return Command{
+                name,
+                description, 
+                parameterHelper,
+                argumentTuple,
+                F};
         }
     };
 
@@ -489,12 +480,13 @@ class Commands {
 
             using Tp =
                 std::tuple< typename std::decay<Args>::type ... >;
-            auto cvf =
-                internal::wrap<Tp>(functor);
-            string help =
-                internal::make_help_string<Tp>(name,parameterHelper,description);
-
-            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+            Tp argumentTuple;
+            return Command{
+                name, 
+                description,
+                parameterHelper,
+                argumentTuple, 
+                functor};
         }
     };
 
@@ -518,12 +510,13 @@ class Commands {
 
             using Tp =
                 std::tuple< typename std::decay<Args>::type ... >;
-            auto cvf = 
-                internal::wrap<Tp>(functor);
-            string help = 
-                internal::make_help_string<Tp>(name, parameterHelper, description);
-
-            return Command{name, std::tuple_size_v<Tp>, cvf, help};
+            Tp argumentTuple;
+            return Command{
+                name, 
+                description,
+                parameterHelper,
+                argumentTuple, 
+                functor};
         }
     };
 
