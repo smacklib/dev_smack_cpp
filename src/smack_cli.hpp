@@ -181,17 +181,17 @@ namespace internal {
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
  */
-template <typename Result = int, typename Input = string>
+template <typename Result = int, typename Input = string, typename Collection = vector<Input>>
 class Command {
     // Defines the return type.
     using R = Result;
     using I = Input;
-    using IT = const vector<I>&;
+    using IT = Collection;
 
     /**
      * The command's name.
      */
-    string name_;
+    Input name_;
 
     /**
      * The number of arguments the command accepts.
@@ -229,10 +229,12 @@ class Command {
      * Make a parameter pack from the passed params tuple and
      * call the functor.
      */
-    template<typename Fu,typename Tp, auto ... S>
-    static auto callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>) {
+    template<typename Fu, typename Tp, auto ... S>
+    static auto callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>)
+    {
         return f(std::get<S>(params) ...);
     }
+
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
@@ -287,7 +289,7 @@ class Command {
     template <typename Tp>
     static void convert(
         Tp& params,
-        const vector<string>& argv) 
+        const vector<Input>& argv) 
     {
         constexpr auto sz = std::tuple_size_v<Tp>;
 
@@ -297,7 +299,7 @@ class Command {
         constexpr auto idx =
             std::make_index_sequence<sz>{};
 
-        convertImpl(argv,params,idx);
+        convertImpl(argv, params, idx);
     }
 
     /**
@@ -371,10 +373,10 @@ class Command {
 public:
     template <typename Tp, typename F>
     Command(
-        const string& name,
+        const Input& name,
         const string& description,
         initializer_list<const char*> parameterHelper,
-        Tp& arguments,
+        Tp&,
         F f)
         :
         name_(name)
@@ -397,10 +399,10 @@ public:
     /**
      * Call the command with arguments to be converted.
      */
-    template <typename T = string, typename ... V>
+    template <typename ... V>
     R call(V const & ... argv) const 
     {
-        vector<T> va {
+        IT va {
             argv ... 
         };
 
@@ -416,11 +418,11 @@ public:
         return helpLine_;
     }
 
-    string get_name() const {
+    Input name() const {
         return name_;
     }
 
-    constexpr size_t get_argument_count() const {
+    constexpr size_t argument_count() const {
         return argumentCount_;
     }
 };
@@ -715,9 +717,9 @@ public:
     {
         for (Command<>& c : commands_) {
             const auto& cname =
-                c.get_name();
+                c.name();
             const auto& ccount =
-                c.get_argument_count();
+                c.argument_count();
 
             // Ensure that no duplicate commands are added.
             if (commandMap_.count(cname) == 1 &&

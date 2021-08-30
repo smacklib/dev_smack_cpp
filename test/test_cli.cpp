@@ -480,7 +480,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
         { "p1" });
 
     std::vector<string> argv{
-        cmd.get_name(),
+        cmd.name(),
         "212:313" };
 
     smack::cli::CliApplication cli(
@@ -506,6 +506,8 @@ TEST(SmackCliTest, CommandCall) {
 
     auto cmd = Commands::make<f3>(
         "f3");
+
+    EXPECT_EQ("f3", cmd.name());
 
     string expected{"f3( 313, 3.1415, micbinz )\n"};
     {
@@ -565,7 +567,7 @@ TEST(SmackCliTest, CliErrorCommandArgMismatch) {
     smack::test::common::redir r{ std::cerr };
 
     std::vector<string> argv{
-        cmd.get_name(),
+        cmd.name(),
         "212:313",
         "donald" };
 
@@ -596,7 +598,7 @@ TEST(SmackCliTest, CliErrorCommandException) {
     smack::test::common::redir r{ std::cerr };
 
     std::vector<string> argv{
-        cmd.get_name(),
+        cmd.name(),
         "Groan!" };
 
     // Execute the application.
@@ -755,9 +757,10 @@ TEST(SmackCliTest, CliTestCommandDescription) {
 }
 
 TEST(SmackCliTest, TemplateCtor) {
+    using namespace std::string_literals;
 
     std::tuple<int,const char *> bah;
     smack::cli::Command c { 
-        "313",
+        "313"s,
         "desc", {"hu", "ha"}, bah, f2 };
 }

@@ -48,6 +48,10 @@ int pi() {
 int error() {
     throw std::runtime_error( "error() was called." );
 }
+// Throws an error.  Demonstrates error handling.
+int error_1(const string& message) {
+    throw std::runtime_error(message);
+}
 
 } // namespace anonymous
 
@@ -77,7 +81,11 @@ int main(int argc, char**argv) {
             "pi", "Returns PI."),
 
         Commands::make<error>(
-            "error", "Prints an error.")
+            "error", "Prints a predefined error."),
+        // Overload the 'error' command with a function taking one parameter. 
+        Commands::make<error_1>(
+            "error", "Prints an error message.",
+            {"message"})
     };
 
     // Finally launch the application.
