@@ -1,19 +1,21 @@
-/*
- * Smack C++
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+ *
+ * General utilities.
  *
  * Copyright © 2021 Michael Binz
  */
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <algorithm>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace smack::util {
 
 using std::string;
+using std::string_view;
 using std::vector;
 
 namespace strings {
@@ -81,7 +83,7 @@ string trim(const string& in, const string& toTrim);
  * @returns true if the passed string starts with the prefix,
  * false otherwise.
  */
-inline bool starts_with( const string& in, const string& prefix )
+inline constexpr bool starts_with( const string_view& in, const string_view& prefix )
 {
     return in.rfind( prefix, 0 ) != string::npos;
 }
@@ -94,7 +96,7 @@ inline bool starts_with( const string& in, const string& prefix )
  * @returns true if the passed string ends with the suffix,
  * false otherwise.
  */
-inline bool ends_with( const string& in, const string& suffix )
+inline constexpr bool ends_with( const string_view& in, const string_view& suffix )
 {
     return in.find( suffix, in.length() - suffix.length() ) != string::npos;
 }
