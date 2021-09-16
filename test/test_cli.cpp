@@ -228,6 +228,12 @@ void testConversion()
         smack::cli::transform(in, out);
         EXPECT_EQ(0x13, out);
     }
+    // Bin notation.
+    {
+        const char* in = "0b00010011";
+        smack::cli::transform(in, out);
+        EXPECT_EQ(0x13, out);
+    }
 }
 
 template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
