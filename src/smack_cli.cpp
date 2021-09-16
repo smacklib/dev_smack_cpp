@@ -1,4 +1,4 @@
-/* $Id: 528b24919929c65ff5bf571071f613e1925b7461 $
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
  * Console application helper.
  *
@@ -34,7 +34,7 @@ void throwConversionFailure(const char* what, const char* type) {
     throw conversion_failure(msg.str());
 }
 
-template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = true>
 auto convert_(std::string_view str, T& result)
 {
     int radix = 10;
@@ -51,7 +51,7 @@ auto convert_(std::string_view str, T& result)
     return std::from_chars(str.data(), str.data() + str.size(), result, radix);
 }
 
-template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+template <typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
 auto convert_( std::string_view str, T& result ) {
     return std::from_chars(str.data(), str.data() + str.size(), result);
 }
