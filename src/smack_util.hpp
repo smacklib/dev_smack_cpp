@@ -82,7 +82,7 @@ string trim(const string& in, const string& toTrim);
  * @returns true if the passed string starts with the prefix,
  * false otherwise.
  */
-inline bool starts_with( const string_view& in, const string_view& prefix )
+inline constexpr bool starts_with( const string_view& in, const string_view& prefix )
 {
     return in.rfind( prefix, 0 ) != string::npos;
 }
@@ -95,7 +95,7 @@ inline bool starts_with( const string_view& in, const string_view& prefix )
  * @returns true if the passed string ends with the suffix,
  * false otherwise.
  */
-inline bool ends_with( const string& in, const string& suffix )
+inline constexpr bool ends_with( const string_view& in, const string_view& suffix )
 {
     return in.find( suffix, in.length() - suffix.length() ) != string::npos;
 }
