@@ -66,21 +66,14 @@ auto transformImpl2(
     T result{};
 
     try {
-
         auto r = convert_(str, result);
 
         if (r.ec == std::errc() && *r.ptr)
-        {
             throw std::invalid_argument(r.ptr);
-        }
         else if (r.ec == std::errc::invalid_argument)
-        {
             throw std::invalid_argument("Not a number.");
-        }
         else if (r.ec == std::errc::result_out_of_range)
-        {
             throw std::out_of_range("ov");
-        }
     }
     catch (const std::out_of_range&) {
         std::ostringstream msg;
