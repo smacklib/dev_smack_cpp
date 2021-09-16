@@ -56,35 +56,29 @@ auto convert_( std::string_view str, T& result ) {
     return std::from_chars(str.data(), str.data() + str.size(), result);
 }
 
-#if 0
-#endif
 template <typename T>
 auto transformImpl2(
-    const char* in,
+    std::string_view in,
     const char* type = get_typename<T>()) -> T
 {
     std::string_view str{ in };
 
+    T result{};
+
     try {
-        T result{};
 
         auto r = convert_(str, result);
 
-        if (r.ec == std::errc())
+        if (r.ec == std::errc() && *r.ptr)
         {
-//            std::cout << "Result: " << result << ", ptr -> " << std::quoted(r.ptr) << '\n';
-            if (*r.ptr==0)
-                return result;
             throw std::invalid_argument(r.ptr);
         }
         else if (r.ec == std::errc::invalid_argument)
         {
-//            std::cout << "That isn't a number.\n";
             throw std::invalid_argument("Not a number.");
         }
         else if (r.ec == std::errc::result_out_of_range)
         {
-//            std::cout << "This number is larger than an int.\n";
             throw std::out_of_range("ov");
         }
     }
@@ -114,6 +108,8 @@ auto transformImpl2(
 
         throw conversion_failure(msg.str());
     }
+
+    return result;
 }
 
 } // namespace anonymous
