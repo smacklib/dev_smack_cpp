@@ -1,15 +1,16 @@
-/*
- * Smack C++
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+ *
+ * General utilities.
  *
  * Copyright © 2021 Michael Binz
  */
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <algorithm>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace smack::util {
 
