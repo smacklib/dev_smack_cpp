@@ -29,12 +29,13 @@
 
 namespace smack::cli {
 
-using std::string;
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::initializer_list;
 using std::size_t;
+using std::string;
+using std::vector;
 
 class conversion_failure : public std::runtime_error {
 public:
@@ -59,8 +60,13 @@ public:
  * Define the transformation function.  Implementations for primitives 
  * and string-like types are available in the implementation file.
  */
-template <typename To, typename From>
+template <typename From, typename To>
 void transform(From in, To& out);
+
+template <typename To>
+void transform(const std::string& in, To& out) {
+    transform(in.c_str(), out);
+}
 
 using cstr = const char*;
 
@@ -162,37 +168,30 @@ constexpr cstr get_typename( T type ) {
     return get_typename<decltype(type)>(); 
 }
 
-template<typename R, typename T, typename Func, auto ... I>
-auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
-    std::array<R, sizeof ... (I)> result{
-        func(std::get<I>(tpl)) ... 
-    };
+namespace internal {
+    static string EMPTY_STRING;
 
-    return result;
-}
-
-template<typename R, typename T, typename Func>
-auto map_tuple(T& tpl, Func func) {
-    constexpr auto i = 
-        std::make_index_sequence<std::tuple_size_v<T>>{};
-
-    return map_tuple_<R>( tpl, func, i );
-}
+    /**
+     * The quote character to be used in error messages.
+     */
+    constexpr char kDelim_ {'\''};
+};
 
 /**
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
  */
+template <typename Result = int, typename Input = string, typename Collection = vector<Input>>
 class Command {
     // Defines the return type.
-    using R = int;
-    using I = string;
-    using IT = const std::vector<I>&;
+    using R = Result;
+    using I = Input;
+    using IT = Collection;
 
     /**
      * The command's name.
      */
-    string name_;
+    Input name_;
 
     /**
      * The number of arguments the command accepts.
@@ -209,87 +208,39 @@ class Command {
      */
     string helpLine_;
 
-public:
-    Command(
-        const string& name,
-        size_t argumentCount,
-        std::function<R(IT)> f,
-        const string& helpLine)
-        :
-        name_(name),
-        argumentCount_(argumentCount),
-        func_(f),
-        helpLine_(helpLine)
-    {
-    }
-
-    /**
-     * Call the command with arguments to be converted.
-     */
-    R callv(IT v) const {
-        if (v.size() != argumentCount_)
-            throw std::invalid_argument("Wrong number of arguments.");
-
-        return func_( v );
-    }
-
-    /**
-     * Call the command with arguments to be converted.
-     */
-    template <typename T = string, typename ... V>
-    R call(V const & ... argv) const 
-    {
-        std::vector<T> va {
-            argv ... 
+    template<typename R, typename T, typename Func, auto ... I>
+    static auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
+        std::array<R, sizeof ... (I)> result{
+            func(std::get<I>(tpl)) ... 
         };
 
-        return callv( va );
+        return result;
     }
 
-    /**
-     * Creates a single-line command description that is displayed
-     * in the generated cli help.
-     */
-    string to_string() const 
-    {
-        return helpLine_;
+    template<typename R, typename T, typename Func>
+    static auto map_tuple(T& tpl, Func func) {
+        constexpr auto i = 
+            std::make_index_sequence<std::tuple_size_v<T>>{};
+
+        return map_tuple_<R>( tpl, func, i );
     }
-
-    string get_name() const {
-        return name_;
-    }
-
-    constexpr size_t get_argument_count() const {
-        return argumentCount_;
-    }
-};
-
-namespace internal {
-    using R = int;
-    using I = string;
-    using IT = const std::vector<I>&;
-
-    static string EMPTY_STRING;
-
-    /**
-     * The quote character to be used in error messages.
-     */
-    constexpr char kDelim_ {'\''};
 
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
      */
-    template<typename Fu,typename Tp, auto ... S>
-    static R callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>) {
+    template<typename Fu, typename Tp, auto ... S>
+    static auto callFuncImpl(Fu f, const Tp& params, std::index_sequence<S...>)
+    {
         return f(std::get<S>(params) ...);
     }
+
     /**
      * Make a parameter pack from the passed params tuple and
      * call the functor.
      */
     template<typename Fu, typename Tp>
-    static R callFunc(Fu f, const Tp& params)
+    static auto callFunc(Fu f, const Tp& params)
     {
         constexpr auto sz =
             std::tuple_size_v<Tp>;
@@ -310,12 +261,12 @@ namespace internal {
     static int tf(To& param, const From& str)
     {
         try {
-            transform(str.c_str(), param);
+            transform(str, param);
         }
         catch (std::invalid_argument&) {
             std::stringstream s;
             s << 
-                std::quoted(str, kDelim_) <<
+                std::quoted(str, internal::kDelim_) <<
                 " -> " << 
                 get_typename<To>();
 
@@ -338,7 +289,7 @@ namespace internal {
     template <typename Tp>
     static void convert(
         Tp& params,
-        const std::vector<string>& argv) 
+        const vector<Input>& argv) 
     {
         constexpr auto sz = std::tuple_size_v<Tp>;
 
@@ -348,7 +299,7 @@ namespace internal {
         constexpr auto idx =
             std::make_index_sequence<sz>{};
 
-        convertImpl(argv,params,idx);
+        convertImpl(argv, params, idx);
     }
 
     /**
@@ -356,7 +307,7 @@ namespace internal {
      * in the generated cli help.
      */
     template <typename Tp>
-    static string make_help_string(
+    static string make_help(
         const string& name,
         initializer_list<const char*> parameterHelp,
         const string& description = {} )
@@ -364,7 +315,7 @@ namespace internal {
         // Get the raw type names of the parameters.
         Tp tup;
 
-        std::array<string, std::tuple_size_v<Tp>> expander = map_tuple<string>(
+        auto expander = map_tuple<string>(
             tup,
             [](auto t) {
                 return get_typename(t);
@@ -409,108 +360,168 @@ namespace internal {
         return result;
     }
 
-    template <typename Tp, typename T>
-    static auto wrap ( T functor )
+    template <typename ParameterTuple, typename T>
+    static auto wrap( T functor )
     {
-        return [functor](internal::IT v){
-            Tp params;
-            internal::convert( params, v );
-            return internal::callFunc(functor, params);
+        return [functor](IT v){
+            ParameterTuple params;
+            convert( params, v );
+            return callFunc(functor, params);
         };
     }
-};
 
-/**
- * The required template specialisations used to create a functor for
- * a callable entity.
- */
-template <auto F>
-struct PListDed {};
-
-/**
- * Specialisation for free functions. 
- */
-template <typename R, typename... Args, auto (F)(Args...)->R>
-struct PListDed<F> 
-{
-    static auto make(
-        const string& name,
+public:
+    template <typename Tp, typename F>
+    Command(
+        const Input& name,
         const string& description,
-        initializer_list<const char*> parameterHelper)
+        initializer_list<const char*> parameterHelper,
+        Tp&,
+        F f)
+        :
+        name_(name)
+        , argumentCount_(std::tuple_size_v<Tp>)
+        , func_( wrap<Tp>(f) )
+        , helpLine_( make_help<Tp>(name,parameterHelper,description) )
     {
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf =
-            internal::wrap<Tp>(F);
-        string help = 
-            internal::make_help_string<Tp>(name,parameterHelper,description);
-
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
     }
-};
 
-/**
- * Specialisation for instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        const string& name,
-        const string& description,
-        initializer_list<const char*> parameterHelper = {})
+    /**
+     * Call the command with arguments to be converted.
+     */
+    R callv(IT v) const {
+        if (v.size() != argumentCount_)
+            throw std::invalid_argument("Wrong number of arguments.");
+
+        return func_( v );
+    }
+
+    /**
+     * Call the command with arguments to be converted.
+     */
+    template <typename ... V>
+    R call(V const & ... argv) const 
     {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
+        IT va {
+            argv ... 
         };
 
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf =
-            internal::wrap<Tp>(functor);
-        string help =
-            internal::make_help_string<Tp>(name,parameterHelper,description);
-
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
+        return callv( va );
     }
-};
 
-/**
- * Specialisation for const instance operations.
- */
-template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-struct PListDed<F> 
-{
-    template <typename Ty>
-    static auto make(
-        const Ty instance,
-        const string& name,
-        const string& description,
-        initializer_list<const char*> parameterHelper = {})
+    /**
+     * Creates a single-line command description that is displayed
+     * in the generated cli help.
+     */
+    string to_string() const 
     {
-        auto functor =
-            [instance](Args ... a) {
-            return (instance->*F)(a...);
-        };
+        return helpLine_;
+    }
 
-        using Tp =
-            std::tuple< typename std::decay<Args>::type ... >;
-        auto cvf = 
-            internal::wrap<Tp>(functor);
-        string help = 
-            internal::make_help_string<Tp>(name, parameterHelper, description);
+    Input name() const {
+        return name_;
+    }
 
-        return Command{name, std::tuple_size_v<Tp>, cvf, help};
+    constexpr size_t argument_count() const {
+        return argumentCount_;
     }
 };
 
 /**
  * Offers the external interface.
  */
-struct Commands {
+class Commands {
+    /**
+     * The required template specialisations used to create a functor for
+     * a callable entity.
+     */
+    template <auto F>
+    struct PListDed {};
+
+    /**
+     * Specialisation for free functions. 
+     */
+    template <typename R, typename... Args, auto (F)(Args...)->R>
+    struct PListDed<F> 
+    {
+        static auto make(
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper)
+        {
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            Tp argumentTuple;
+            return Command{
+                name,
+                description, 
+                parameterHelper,
+                argumentTuple,
+                F};
+        }
+    };
+
+    /**
+     * Specialisation for instance operations.
+     */
+    template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
+    struct PListDed<F> 
+    {
+        template <typename Ty>
+        static auto make(
+            const Ty instance,
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper = {})
+        {
+            auto functor =
+                [instance](Args ... a) {
+                return (instance->*F)(a...);
+            };
+
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            Tp argumentTuple;
+            return Command{
+                name, 
+                description,
+                parameterHelper,
+                argumentTuple, 
+                functor};
+        }
+    };
+
+    /**
+     * Specialisation for const instance operations.
+     */
+    template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
+    struct PListDed<F> 
+    {
+        template <typename Ty>
+        static auto make(
+            const Ty instance,
+            const string& name,
+            const string& description,
+            initializer_list<const char*> parameterHelper = {})
+        {
+            auto functor =
+                [instance](Args ... a) {
+                return (instance->*F)(a...);
+            };
+
+            using Tp =
+                std::tuple< typename std::decay<Args>::type ... >;
+            Tp argumentTuple;
+            return Command{
+                name, 
+                description,
+                parameterHelper,
+                argumentTuple, 
+                functor};
+        }
+    };
+
+public:
     /**
      * Create a command for a free function.
      *
@@ -615,11 +626,11 @@ struct Commands {
 /**
  * Represents the Cli.
  */
-template <typename... Cs>
+template <typename Result = int, typename Input = string, typename... Cs>
 class CliApplication
 {
     using CsTy_ = std::common_type_t<Cs...>;
-    static_assert(std::is_same<Command, CsTy_>());
+    static_assert(std::is_same<Command<Result,Input>, CsTy_>());
 
     /**
      * The registered commands. 
@@ -704,11 +715,11 @@ public:
         commands_{ commands ... },
         description_(description)
     {
-        for (Command& c : commands_) {
+        for (Command<>& c : commands_) {
             const auto& cname =
-                c.get_name();
+                c.name();
             const auto& ccount =
-                c.get_argument_count();
+                c.argument_count();
 
             // Ensure that no duplicate commands are added.
             if (commandMap_.count(cname) == 1 &&
@@ -741,7 +752,7 @@ public:
      * not pass argv[0].  See and prefer launch( int, char** ) which directly
      * accepts the arguments received in a main()-function.
      */
-    int launch(const std::vector<string>& argv) noexcept
+    Result launch(const vector<Input>& argv) noexcept
     {
         if (argv.empty()) {
             printHelp(cerr);
@@ -756,7 +767,7 @@ public:
         const string& cmd_name =
             argv[0];
         // And the parameter names, excluding the command name.
-        std::vector<string> cmdArgv(
+        vector<string> cmdArgv(
             argv.begin() + 1,
             argv.end());
 
@@ -818,7 +829,7 @@ public:
             name_ = argv[0];
 
         // Skip the program name.
-        std::vector<string> cmdArgv(
+        vector<Input> cmdArgv(
             argv + 1,
             argv + argc);
 
