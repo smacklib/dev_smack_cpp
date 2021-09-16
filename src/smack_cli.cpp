@@ -57,7 +57,7 @@ auto convert_( std::string_view str, T& result ) {
 }
 
 template <typename T>
-auto transformImpl2(
+auto transformImpl(
     std::string_view in,
     const char* type = get_typename<T>()) -> T
 {
@@ -110,59 +110,59 @@ auto transformImpl2(
 // Define the explict instantiations of the conversion functions.
 
 template<> void transform(const char* in, char& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, signed char& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned char& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, short& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, int& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, long& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, long long& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned short& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned int& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned long& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned long long& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, float& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, double& out) {
-    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
+    out = transformImpl<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, bool& out) {
-    std::string parameter = in;
+    std::string_view parameter{ in };
 
     if (parameter == "true") {
         out = true;
