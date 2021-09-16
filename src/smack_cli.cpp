@@ -7,8 +7,10 @@
 
 #include "smack_cli.hpp"
 
+#include <charconv>
 #include <limits>
 #include <sstream>
+#include "smack_util.hpp"
 
 namespace smack::cli {
 
@@ -32,193 +34,142 @@ void throwConversionFailure(const char* what, const char* type) {
     throw conversion_failure(msg.str());
 }
 
-/**
- * Validate if a value from a wider type is in the limits of a narrower type.
- * F is wider, T is the narrower type.
- */
-template <typename T, typename F>
-T validateRange(F val) {
-    T downcast = 
-        static_cast<T>(val);
-    F upcast = 
-        downcast;
-
-    if ( upcast != val )   
-        throw std::out_of_range("");
-
-    return downcast;
-}
-
-/**
- * Conversion function specialisation.
- */
-template <auto F>
-struct ConvFu {};
-
-template <typename R, typename... Args, auto (F)(Args...)->R>
-struct ConvFu<F> 
+template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+auto convert_(std::string_view str, T& result)
 {
-    template <typename T, typename Fu, std::enable_if_t<std::is_integral<T>::value, bool> = true>
-    static void make(
-        Fu function,
-        const char* in,
-        T& out,
-        const char* tname)
-    {
-        std::size_t pos = 0;
-        try {
-            R result = function(in, &pos, 0);
-            // If all input is processed ...
-            if (!in[pos]) {
-                // ... and is in range ...
-                out = validateRange<T>(result);
-                // ... we're done
-                return;
-            }
-        }
-        catch (const std::invalid_argument&) {
-            // Ignore this exception.  A corresponding exception
-            // with a better message is thrown below. 
-        }
-        catch (const std::out_of_range&) {
-            std::ostringstream msg;
+    int radix = 10;
 
-            msg <<
-                "Value " <<
-                in <<
-                " must be in range [" <<
-                to_string(std::numeric_limits<T>::min()) <<
-                ".." <<
-                to_string(std::numeric_limits<T>::max()) <<
-                "].";
-
-            throw conversion_failure(msg.str());
-        }
-
-        throwConversionFailure(in, tname);
+    if (smack::util::strings::starts_with(str, "0x")) {
+        radix = 16;
+        str = str.substr(2);
+    }
+    else if (smack::util::strings::starts_with(str, "0b")) {
+        radix = 2;
+        str = str.substr(2);
     }
 
-    template <typename T, typename Fu, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-    static void make(
-        Fu function,
-        const char* in,
-        T& out,
-        const char* tname)
-    {
-        std::size_t pos = 0;
-        try {
-            R result = function(in, &pos);
-            // If all input is processed ...
-            if (!in[pos]) {
-                // ... we're done.
-                out = result;
-                return;
-            }
-        }
-        catch (const std::invalid_argument&) {
-            // Ignore this expection.  A corresponding exception
-            // with a better message is thrown below. 
-        }
-        catch (const std::out_of_range&) {
-            std::ostringstream msg;
-
-            msg <<
-                "Value " <<
-                in <<
-                " must be in range [" <<
-                to_string(std::numeric_limits<T>::min()) <<
-                ".." <<
-                to_string(std::numeric_limits<T>::max()) <<
-                "].";
-
-            throw conversion_failure(msg.str());
-        }
-
-        throwConversionFailure(in, tname);
-    }
-};
-
-template <auto F, typename T>
-auto transformImpl( 
-    const char* in, 
-    T& out, 
-    const char* tname = get_typename<T>()) {
-    return ConvFu<F>::make(
-        F,
-        in,
-        out,
-        tname
-    );
+    return std::from_chars(str.data(), str.data() + str.size(), result, radix);
 }
 
-// Select the string overloads of the respective standard functions.
-constexpr auto cvStoi = 
-    static_cast<int(*)(const string&, size_t*, int)>(std::stoi);
-constexpr auto cvStol = 
-    static_cast<long(*)(const string&, size_t*, int)>(std::stol);
-constexpr auto cvStoll = 
-    static_cast<long long(*)(const string&, size_t*, int)>(std::stoll);
-constexpr auto cvUnsigned = 
-    static_cast<unsigned long long(*)(const string&, size_t*, int)>(std::stoull);
-constexpr auto cvFloat = 
-    static_cast<float(*)(const string&, size_t*)>(std::stof);
-constexpr auto cvDouble = 
-    static_cast<double(*)(const string&, size_t*)>(std::stod);
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+auto convert_( std::string_view str, T& result ) {
+    return std::from_chars(str.data(), str.data() + str.size(), result);
+}
+
+#if 0
+#endif
+template <typename T>
+auto transformImpl2(
+    const char* in,
+    const char* type = get_typename<T>()) -> T
+{
+    std::string_view str{ in };
+
+    try {
+        T result{};
+
+        auto r = convert_(str, result);
+
+        if (r.ec == std::errc())
+        {
+//            std::cout << "Result: " << result << ", ptr -> " << std::quoted(r.ptr) << '\n';
+            if (*r.ptr==0)
+                return result;
+            throw std::invalid_argument(r.ptr);
+        }
+        else if (r.ec == std::errc::invalid_argument)
+        {
+//            std::cout << "That isn't a number.\n";
+            throw std::invalid_argument("Not a number.");
+        }
+        else if (r.ec == std::errc::result_out_of_range)
+        {
+//            std::cout << "This number is larger than an int.\n";
+            throw std::out_of_range("ov");
+        }
+    }
+    catch (const std::out_of_range&) {
+        std::ostringstream msg;
+
+        msg <<
+            "Value " <<
+            in <<
+            " must be in range [" <<
+            to_string(std::numeric_limits<T>::min()) <<
+            ".." <<
+            to_string(std::numeric_limits<T>::max()) <<
+            "].";
+
+        throw conversion_failure(msg.str());
+    }
+    catch (const std::invalid_argument&) {
+        std::ostringstream msg;
+
+        msg <<
+            "Cannot convert '" <<
+            in <<
+            "' to " <<
+            type <<
+            ".";
+
+        throw conversion_failure(msg.str());
+    }
+}
 
 } // namespace anonymous
 
 // Define the explict instantiations of the conversion functions.
 
 template<> void transform(const char* in, char& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, signed char& out) {
-    transformImpl<cvStoi>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned char& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, short& out) {
-    transformImpl<cvStoi>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, int& out) {
-    transformImpl<cvStoi>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, long& out) {
-    transformImpl<cvStol>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, long long& out) {
-    transformImpl<cvStoll>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned short& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned int& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned long& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, unsigned long long& out) {
-    transformImpl<cvUnsigned>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, float& out) {
-    transformImpl<cvFloat>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, double& out) {
-    transformImpl<cvDouble>(in, out);
+    out = transformImpl2<typename std::decay<decltype(out)>::type>(in);
 }
 
 template<> void transform(const char* in, bool& out) {

@@ -14,6 +14,7 @@
 namespace smack::util {
 
 using std::string;
+using std::string_view;
 using std::vector;
 
 namespace strings {
@@ -81,7 +82,7 @@ string trim(const string& in, const string& toTrim);
  * @returns true if the passed string starts with the prefix,
  * false otherwise.
  */
-inline bool starts_with( const string& in, const string& prefix )
+inline bool starts_with( const string_view& in, const string_view& prefix )
 {
     return in.rfind( prefix, 0 ) != string::npos;
 }
