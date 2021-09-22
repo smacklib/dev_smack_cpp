@@ -38,7 +38,7 @@ namespace {
     }
 }
 
-TEST(SmackCliTest, CommandHelpFull) {
+TEST(SmackCli, CommandHelpFull) {
     using smack::cli::Commands;
 
     auto cmd1 = Commands::make<f1>(
@@ -50,7 +50,7 @@ TEST(SmackCliTest, CommandHelpFull) {
     EXPECT_EQ( "eins p1:int", help);
 }
 
-TEST(SmackCliTest, CommandHelpNone) {
+TEST(SmackCli, CommandHelpNone) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<f2>(
@@ -61,7 +61,7 @@ TEST(SmackCliTest, CommandHelpNone) {
     EXPECT_EQ("zwei int string", help);
 }
 
-TEST(SmackCliTest, CommandHelpPartial) {
+TEST(SmackCli, CommandHelpPartial) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<f3>(
@@ -73,339 +73,21 @@ TEST(SmackCliTest, CommandHelpPartial) {
     EXPECT_EQ("drei p1:int p2:double string", help);
 }
 
-TEST(SmackCliTest, TypenameTest) {
-    using smack::cli::get_typename;
-
-    // Test the integer definitions with explit width.
-    EXPECT_EQ("ubyte", string{ get_typename<uint8_t>() });
-    EXPECT_EQ("byte", string{ get_typename<int8_t>() });
-    EXPECT_EQ("ushort", string{ get_typename<uint16_t>() });
-    EXPECT_EQ("short", string{ get_typename<int16_t>() });
-    EXPECT_EQ("uint", string{ get_typename<uint32_t>() });
-    EXPECT_EQ("int", string{ get_typename<int32_t>() });
-    EXPECT_EQ("ulong", string{ get_typename<uint64_t>() });
-    EXPECT_EQ("long", string{ get_typename<int64_t>() });
-
-    // Test the plain primitive types.
-    EXPECT_EQ("bool", string{ get_typename<bool>() });
-
-    EXPECT_EQ("ubyte", string{ get_typename<unsigned char>() });
-    EXPECT_EQ("byte", string{ get_typename<char>() });
-
-    EXPECT_EQ("ushort", string{ get_typename<unsigned short>() });
-    EXPECT_EQ("short", string{ get_typename<short>() });
-
-    EXPECT_EQ("uint", string{ get_typename<unsigned>() });
-    EXPECT_EQ("int", string{ get_typename<int>() });
-
-#ifndef _WIN32
-    // On Windows long is equivalent to int.
-    EXPECT_EQ("ulong", string{ get_typename<unsigned long>() });
-    EXPECT_EQ("long", string{ get_typename<long>() });
-#endif
-
-    EXPECT_EQ("float", string{ get_typename<float>() });
-    EXPECT_EQ("double", string{ get_typename<double>() });
-#ifndef _WIN32
-    // On Windows long double is equivalent to double.
-    EXPECT_EQ("ldouble", string{ get_typename<long double>() });
-#endif
-
-    EXPECT_EQ("string", string{ get_typename<std::string>() });
-    EXPECT_EQ("string", string{ get_typename<char*>() });
-    EXPECT_EQ("string", string{ get_typename<const char*>() });
-    EXPECT_EQ("string", string{ get_typename<std::string&>() });
-    EXPECT_EQ("string", string{ get_typename<const std::string&>() });
-
-    EXPECT_EQ("unknown", string{ get_typename<void>() });
-
-    EXPECT_EQ("string", string{ get_typename<char*>() });
-    EXPECT_EQ("string", string{ get_typename<const char*>() });
-
-    EXPECT_EQ("int", string{ get_typename<int&>() });
-    EXPECT_EQ("int", string{ get_typename<const int&>() });
-}
-
-template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
-void testConversion()
-{
-    T min = std::numeric_limits<T>::min();
-    T max = std::numeric_limits<T>::max();
-
-    T out;
-
-    // Test conversion in the range of T.
-    {
-        // Border cases.
-        smack::cli::transform( to_string(min).c_str(), out );
-        EXPECT_EQ(min, out);
-        smack::cli::transform( to_string(max).c_str(), out);
-        EXPECT_EQ(max, out);
-        // One inside range.
-        smack::cli::transform( to_string(min+1).c_str(), out );
-        EXPECT_EQ(min+1, out);
-        smack::cli::transform( to_string(max-1).c_str(), out);
-        EXPECT_EQ(max-1, out);
-    }
-    // Underflow.
-    if ( min < 0 )
-    {
-        string belowMin = to_string(min);
-        // Zero append is equivalent to multiply by ten.
-        belowMin.append( "0" );
-
-        try {
-            smack::cli::transform( belowMin.c_str(), out );
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected = 
-                "Value " +
-                belowMin +
-                " must be in range [" +
-                to_string( min ) +
-                ".." +
-                to_string( max ) +
-                "].";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-    // Overflow.
-    {
-        string overMax = to_string( max );
-        // Zero append is equivalent to multiply by ten.
-        overMax.append( "0" );
-
-        try {
-            smack::cli::transform( overMax.c_str(), out );
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected = 
-                "Value " +
-                overMax +
-                " must be in range [" +
-                to_string( min ) +
-                ".." +
-                to_string( max ) +
-                "].";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-    // Bogus.
-    {
-        try {
-            const char* in = "dreizehn";
-            smack::cli::transform(in, out);
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected =
-                "Cannot convert 'dreizehn' to " +
-                string{ smack::cli::get_typename<T>() } +
-                ".";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-    // Number prefix.
-    {
-        try {
-            const char* in = "13x";
-            smack::cli::transform(in, out);
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected =
-                "Cannot convert '13x' to " +
-                string{ smack::cli::get_typename<T>() } +
-                ".";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-    // Hex notation.
-    {
-        const char* in = "0x13";
-        smack::cli::transform(in, out);
-        EXPECT_EQ(0x13, out);
-    }
-    // Bin notation.
-    {
-        const char* in = "0b00010011";
-        smack::cli::transform(in, out);
-        EXPECT_EQ(0x13, out);
-    }
-}
-
-template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-void testConversion()
-{
-    static_assert(
-        std::is_floating_point<T>::value,
-        "T must be a floating point type." );
-
-    T out;
-
-    // Test conversion in the range of T.
-    {
-        T min = 1.0;
-        T max = std::numeric_limits<T>::max();
-
-        smack::cli::transform( to_string(max).c_str(), out);
-        EXPECT_EQ(max, out);
-        // One inside range.
-        smack::cli::transform( to_string(min+1).c_str(), out );
-        EXPECT_EQ(min+1, out);
-        smack::cli::transform( to_string(max-1).c_str(), out);
-        EXPECT_EQ(max-1, out);
-    }
-    // Bogus.
-    {
-        try {
-            const char* in = "dreizehn";
-            smack::cli::transform(in, out);
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected =
-                "Cannot convert 'dreizehn' to " +
-                string{ smack::cli::get_typename<T>() } +
-                ".";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-    // Number prefix.
-    {
-        try {
-            const char* in = "13x";
-            smack::cli::transform(in, out);
-            FAIL();
-        }
-        catch (const smack::cli::conversion_failure& e) {
-            string expected =
-                "Cannot convert '13x' to " +
-                string{ smack::cli::get_typename<T>() } +
-                ".";
-            EXPECT_EQ(expected, e.what());
-        }
-    }
-}
-
-TEST(SmackCliTest, TransformBool) {
-    bool out;
-
-    smack::cli::transform("true", out);
-    EXPECT_TRUE( out );
-    smack::cli::transform("false", out);
-    EXPECT_FALSE( out );
-
-    try {
-        const char* in = "13x";
-        smack::cli::transform(in, out);
-        FAIL();
-    }
-    catch (const smack::cli::conversion_failure& e) {
-        string expected =
-            "Cannot convert '13x' to " +
-            string{ smack::cli::get_typename<bool>() } +
-            ".";
-        EXPECT_EQ(expected, e.what());
-    }
-}
-
-TEST(SmackCliTest, TransformChar) {
-    testConversion<char>();
-}
-
-TEST(SmackCliTest, TransformShort) {
-    testConversion<short>();
-}
-
-TEST(SmackCliTest, TransformInt) {
-    testConversion<int>();
-}
-
-TEST(SmackCliTest, TransformLong) {
-    testConversion<long>();
-}
-
-TEST(SmackCliTest, TransformLongLong) {
-    testConversion<long long>();
-}
-
-TEST(SmackCliTest, TransformUnsignedChar) {
-    testConversion<unsigned char>();
-}
-
-TEST(SmackCliTest, TransformUnsignedShort) {
-    testConversion<unsigned short>();
-}
-
-TEST(SmackCliTest, TransformUnsignedInt) {
-    testConversion<unsigned int>();
-}
-
-TEST(SmackCliTest, TransformUnsignedLong) {
-    testConversion<unsigned long>();
-}
-
-TEST(SmackCliTest, TransformUnsignedLongLong) {
-    testConversion<unsigned long long>();
-}
-
-TEST(SmackCliTest, TransformFloat) {
-    testConversion<float>();
-}
-   
-TEST(SmackCliTest, TransformDouble) {
-    testConversion<double>();
-}
-
-TEST(SmackCliTest, TransformInt8) {
-    testConversion<int8_t>();
-}
-
-TEST(SmackCliTest, TransformUint8) {
-    testConversion<uint8_t>();
-}
-
-TEST(SmackCliTest, TransformInt16) {
-    testConversion<int16_t>();
-}
-
-TEST(SmackCliTest, TransformUint16) {
-    testConversion<uint16_t>();
-}
-
-TEST(SmackCliTest, TransformInt32) {
-    testConversion<int32_t>();
-}
-
-TEST(SmackCliTest, TransformUint32) {
-    testConversion<uint32_t>();
-}
-
-TEST(SmackCliTest, TransformInt64) {
-    testConversion<int64_t>();
-}
-
-TEST(SmackCliTest, TransformUint64) {
-    testConversion<uint64_t>();
-}
-
 template<>
-constexpr const char* smack::cli::get_typename( std::pair<int,int> type ) { 
+constexpr const char* smack::convert::get_typename( std::pair<int,int> type ) { 
     return "pair"; 
 }
 
-TEST(SmackCliTest, PairTypename) {
-    using smack::cli::get_typename;
+
+TEST(SmackCli, PairTypename) {
+    using smack::convert::get_typename;
 
     std::pair<int,int> pair_;
 
     EXPECT_EQ("pair", string{ get_typename(pair_) });
 }
 
-template<> void smack::cli::transform(const char* in, std::pair<int,int>& out) {
+template<> void smack::convert::transform(const char* in, std::pair<int,int>& out) {
     string input{ in };
     string delimiter{ ":" };
 
@@ -419,24 +101,15 @@ template<> void smack::cli::transform(const char* in, std::pair<int,int>& out) {
     auto second = 
         input.substr( pos + delimiter.length() );
 
-    smack::cli::transform(
+    smack::convert::transform(
         first.c_str(),
         out.first );
-    smack::cli::transform(
+    smack::convert::transform(
         second.c_str(),
         out.second );
 }
 
-TEST(SmackCliTest, PairTransform) {
-    std::pair<int,int> pair;
-
-    smack::cli::transform( "3:4", pair );
-
-    EXPECT_EQ( 3, pair.first );
-    EXPECT_EQ( 4, pair.second );
-}
-
-TEST(SmackCliTest, CommandPairHelp) {
+TEST(SmackCli, CommandPairHelp) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -459,7 +132,7 @@ TEST(SmackCliTest, CommandPairHelp) {
     EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
 
-TEST(SmackCliTest, CommandPairExec) {
+TEST(SmackCli, CommandPairExec) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -478,7 +151,7 @@ TEST(SmackCliTest, CommandPairExec) {
     EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
 
-TEST(SmackCliTest, CommandPairExecCli) {
+TEST(SmackCli, CommandPairExecCli) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -507,7 +180,7 @@ TEST(SmackCliTest, CommandPairExecCli) {
     EXPECT_EQ("fPair( 212, 313 )\n", text);
 }
 
-TEST(SmackCliTest, CommandCall) {
+TEST(SmackCli, CommandCall) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<f3>(
@@ -529,7 +202,7 @@ TEST(SmackCliTest, CommandCall) {
     }
 }
 
-TEST(SmackCliTest, CliErrorCommandNotFound) {
+TEST(SmackCli, CliErrorCommandNotFound) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -559,7 +232,7 @@ TEST(SmackCliTest, CliErrorCommandNotFound) {
     EXPECT_EQ("Unknown command 'bogus'.", lines[0]);
 }
 
-TEST(SmackCliTest, CliErrorCommandArgMismatch) {
+TEST(SmackCli, CliErrorCommandArgMismatch) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fPair>(
@@ -590,7 +263,7 @@ TEST(SmackCliTest, CliErrorCommandArgMismatch) {
     EXPECT_EQ("The command 'fPair' does not support 2 parameters.", lines[0]);
 }
 
-TEST(SmackCliTest, CliErrorCommandException) {
+TEST(SmackCli, CliErrorCommandException) {
     using smack::cli::Commands;
 
     auto cmd = Commands::make<fError>(
@@ -620,7 +293,7 @@ TEST(SmackCliTest, CliErrorCommandException) {
     EXPECT_EQ("'xxx' failed: Groan!", lines[0]);
 }
 
-TEST(SmackCliTest, CliTestHelp) {
+TEST(SmackCli, CliTestHelp) {
     using smack::cli::Commands;
 
     smack::cli::CliApplication cli(
@@ -653,7 +326,7 @@ TEST(SmackCliTest, CliTestHelp) {
     ASSERT_EQ("", lines[4]);
 }
 
-TEST(SmackCliTest, CliTestHelpExplicit) {
+TEST(SmackCli, CliTestHelpExplicit) {
     using smack::cli::Commands;
 
     string applicationHelpString{ "application help string." };
@@ -690,7 +363,7 @@ TEST(SmackCliTest, CliTestHelpExplicit) {
     ASSERT_EQ("", lines[5]);
 }
 
-TEST(SmackCliTest, CliTestHelpSorted) {
+TEST(SmackCli, CliTestHelpSorted) {
     using smack::cli::Commands;
 
     smack::cli::CliApplication cli(
@@ -723,7 +396,7 @@ TEST(SmackCliTest, CliTestHelpSorted) {
     ASSERT_EQ("", lines[6]);
 }
 
-TEST(SmackCliTest, CliTestCommandDescription) {
+TEST(SmackCli, CliTestCommandDescription) {
     using smack::cli::Commands;
 
     string applicationHelpString{ "application help string." };
@@ -762,7 +435,7 @@ TEST(SmackCliTest, CliTestCommandDescription) {
     ASSERT_EQ("", lines[6]);
 }
 
-TEST(SmackCliTest, TemplateCtor) {
+TEST(SmackCli, TemplateCtor) {
     using namespace std::string_literals;
 
     std::tuple<int,const char *> bah;

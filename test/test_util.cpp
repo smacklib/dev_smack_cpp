@@ -8,7 +8,7 @@
 using std::string;
 using std::vector;
 
-TEST(SmackUtilTest, StringSplit) {
+TEST(SmackUtil, StringSplit) {
     string splitMe = "abc:def";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -18,7 +18,7 @@ TEST(SmackUtilTest, StringSplit) {
     EXPECT_EQ("def", v[1]);
 }
 
-TEST(SmackUtilTest, StringSplit2) {
+TEST(SmackUtil, StringSplit2) {
     string splitMe = "milchmolch";
 
     auto v = smack::util::strings::split(splitMe, "lc");
@@ -29,7 +29,7 @@ TEST(SmackUtilTest, StringSplit2) {
     EXPECT_EQ("h", v[2]);
 }
 
-TEST(SmackUtilTest, StringSplitEmpty) {
+TEST(SmackUtil, StringSplitEmpty) {
     string splitMe = ":";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -39,7 +39,7 @@ TEST(SmackUtilTest, StringSplitEmpty) {
     EXPECT_TRUE(v[1].empty());
 }
 
-TEST(SmackUtilTest, StringSplitEmptySlots) {
+TEST(SmackUtil, StringSplitEmptySlots) {
     string splitMe = ":a::b:";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -52,7 +52,7 @@ TEST(SmackUtilTest, StringSplitEmptySlots) {
     EXPECT_TRUE(v[4].empty());
 }
 
-TEST(SmackUtilTest, StringSplitNone) {
+TEST(SmackUtil, StringSplitNone) {
     string splitMe;
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -60,7 +60,7 @@ TEST(SmackUtilTest, StringSplitNone) {
     EXPECT_EQ(0, v.size());
 }
 
-TEST(SmackUtilTest, StringSplitNoDelimiter) {
+TEST(SmackUtil, StringSplitNoDelimiter) {
     string splitMe{ "313" };
 
     auto v = smack::util::strings::split(splitMe, "");
@@ -69,63 +69,63 @@ TEST(SmackUtilTest, StringSplitNoDelimiter) {
     EXPECT_EQ("313", v[0]);
 }
 
-TEST(SmackUtilTest, StringTrimNone) {
+TEST(SmackUtil, StringTrimNone) {
     string trimMe{ "q" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("q", r);
 }
 
-TEST(SmackUtilTest, StringTrimAll) {
+TEST(SmackUtil, StringTrimAll) {
     string trimMe{ "\n\t " };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("", r);
 }
 
-TEST(SmackUtilTest, StringTrimFront) {
+TEST(SmackUtil, StringTrimFront) {
     string trimMe{ "\t\t313" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtilTest, StringTrimBack) {
+TEST(SmackUtil, StringTrimBack) {
     string trimMe{ "313\t\t" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtilTest, StringTrimBoth) {
+TEST(SmackUtil, StringTrimBoth) {
     string trimMe{ "\t\n313\t\r" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtilTest, StringTrimCharsSingle) {
+TEST(SmackUtil, StringTrimCharsSingle) {
     string trimMe{ "313" };
 
     auto r = smack::util::strings::trim(trimMe, "3");
     EXPECT_EQ("1", r);
 }
 
-TEST(SmackUtilTest, StringTrimCharsMultiple) {
+TEST(SmackUtil, StringTrimCharsMultiple) {
     string trimMe{ "121micbinz313" };
 
     auto r = smack::util::strings::trim(trimMe, "123456789");
     EXPECT_EQ("micbinz", r);
 }
 
-TEST(SmackUtilTest, StringTrimCharsAll) {
+TEST(SmackUtil, StringTrimCharsAll) {
     string trimMe{ "121658765576313" };
 
     auto r = smack::util::strings::trim(trimMe, "123456789");
     EXPECT_EQ("", r);
 }
 
-TEST(SmackUtilTest, StringConcat1) {
+TEST(SmackUtil, StringConcat1) {
     vector<string> sv = { "a" };
 
     string r = smack::util::strings::concat(sv, "-");
@@ -133,7 +133,7 @@ TEST(SmackUtilTest, StringConcat1) {
     EXPECT_EQ("a", r);
 }
 
-TEST(SmackUtilTest, StringConcat2) {
+TEST(SmackUtil, StringConcat2) {
     vector<string> sv = { "a", "b" };
 
     string r = smack::util::strings::concat(sv, "-");
@@ -141,7 +141,7 @@ TEST(SmackUtilTest, StringConcat2) {
     EXPECT_EQ("a-b", r);
 }
 
-TEST(SmackUtilTest, StringConcat3) {
+TEST(SmackUtil, StringConcat3) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "++");
@@ -149,7 +149,7 @@ TEST(SmackUtilTest, StringConcat3) {
     EXPECT_EQ("a++b++c", r);
 }
 
-TEST(SmackUtilTest, StringConcatEmptyDelimiter) {
+TEST(SmackUtil, StringConcatEmptyDelimiter) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "");
@@ -157,7 +157,7 @@ TEST(SmackUtilTest, StringConcatEmptyDelimiter) {
     EXPECT_EQ("abc", r);
 }
 
-TEST(SmackUtilTest, StringSplitConcat3) {
+TEST(SmackUtil, StringSplitConcat3) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "++");
@@ -171,7 +171,7 @@ TEST(SmackUtilTest, StringSplitConcat3) {
     EXPECT_EQ("c", v[2]);
 }
 
-TEST(SmackUtilTest, StringStartsWith) {
+TEST(SmackUtil, StringStartsWith) {
     using smack::util::strings::starts_with;
     string s = "prefixAndMore";
 
@@ -183,7 +183,7 @@ TEST(SmackUtilTest, StringStartsWith) {
     EXPECT_FALSE( starts_with( s, "x" ) );
 }
 
-TEST(SmackUtilTest, StringEndsWith) {
+TEST(SmackUtil, StringEndsWith) {
     using smack::util::strings::ends_with;
 
     string s = "prefixAndMore";
@@ -196,7 +196,7 @@ TEST(SmackUtilTest, StringEndsWith) {
     EXPECT_FALSE( ends_with( s, "x" ) );
 }
 
-TEST(SmackUtilTest, OutputRedirection) {
+TEST(SmackUtil, OutputRedirection) {
 
     smack::test::common::redir out{ std::cout };
 
@@ -207,7 +207,7 @@ TEST(SmackUtilTest, OutputRedirection) {
     EXPECT_EQ(test, out.str());
 }
 
-TEST(SmackUtilTest, OutputRedirectionMultiline) {
+TEST(SmackUtil, OutputRedirectionMultiline) {
 
     smack::test::common::redir out{ std::cout };
 
@@ -252,7 +252,7 @@ namespace {
     }
 }
 
-TEST(SmackUtilTest, Disposer) {
+TEST(SmackUtil, Disposer) {
     {
         Disposer handle{ argOpen(), argClose };
         EXPECT_EQ(7, handle);
@@ -285,7 +285,7 @@ void handleConst(const smack::test::common::Tracer& t)
 
 }
 
-TEST(SmackUtilTest, CopyTracer) {
+TEST(SmackUtil, CopyTracer) {
 
     smack::test::common::redir out{ std::cout };
 
