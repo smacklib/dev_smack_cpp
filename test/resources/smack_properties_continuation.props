@@ -1,0 +1,15 @@
+# Test file for smack::properties
+# Line continuation
+
+one=one
+
+two=tw\
+o
+
+three=t\
+h\
+r\
+e\
+e
+
+eof=eof\

@@ -1,0 +1,17 @@
+# Test file for smack::properties
+# Empty line below
+
+ # Indented comment
+
+propertyCount=8
+
+1=one
+2=two
+3=three
+
+January=1
+February=2
+November=11
+December=12
+
+Donaldian=313
