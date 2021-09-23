@@ -1,52 +1,26 @@
 /* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  * 
- * smack::cli demo
+ * smack::cli example.
  * 
  * Copyright © 2019-2021 Michael Binz
  */
 
-#include <cmath>
 #include <iostream>
-#include <vector>
 #include <string>
 
 // Include smack cli support.
 #include <smack_cli.hpp>
 
-// This definition of type Point and the get_typename()- and transform()-
-// operations below add a new type 'Point' to the automatic type conversion.
-// This is required by of the 'distance' command that we offer.
-using Point = std::pair<float, float>;
+// smack::cli's basic concept is to make functions implemented in
+// C++ callable from the command line as commands with minimial
+// efforts for the coder.  That is, parameter conversion is
+// handled automatically and a nice help page is printed if
+// the cli is executed without any arguments.
 
-// Add a decent name for our new type.
-template<>
-constexpr const char* smack::convert::get_typename(Point type) {
-    return "point";
-}
-// A point is written as 'x:y', e.g. '1.0:2.5'.  This operation adds
-// the converter to smack::cli's automatic type transformations.
-template<> void smack::convert::transform(const char* in, Point& out) {
-    string input{ in };
-    string delimiter{ ":" };
+// See ...
 
-    auto pos = input.find(delimiter);
-
-    if (pos == string::npos)
-        throw std::invalid_argument(in);
-
-    auto first =
-        input.substr(0, pos);
-    auto second =
-        input.substr(pos + delimiter.length());
-
-    transform(
-        first.c_str(),
-        out.first);
-    transform(
-        second.c_str(),
-        out.second);
-}
-
+// This anonymous name space is used to hold the functions that should
+// be invoked from the command line. Not needed but recommended.
 namespace {
 
 using smack::cli::Commands;
@@ -54,9 +28,13 @@ using std::cout;
 using std::endl;
 using std::string;
 
-// Offer the functionality to be called from the command line
-// in typed functions.  These are only called if the parameters
-// could be converted successfully to the required type.
+// Here come the plain functions.  Each one represents later a 
+// command on the command line.
+// Add function parameters as needed, these are automatically
+// converted by smack::cli when the function is called from the
+// command line.  Below we only use primitive parameters.
+// See https://github.com/smacklib/dev_smack_cpp/blob/master/examples/cli_hello_new_type.cpp
+// for an example that adds user-defined types.
 // The function's return value represents the process return code.
 
 int add_int(int p1, int p2) {
@@ -64,7 +42,7 @@ int add_int(int p1, int p2) {
     return EXIT_SUCCESS;
 }
 
-int add_float(double p1, double p2) {
+int add_float(float p1, float p2) {
     cout << (p1+p2) << endl;
     return EXIT_SUCCESS;
 }
@@ -74,24 +52,14 @@ int concat(string p1, string p2) {
     return EXIT_SUCCESS;
 }
 
-int dist(Point a, Point b)
-{
-    float result = std::hypot(
-        a.first - b.first,
-        a.second - b.second);
-
-    cout << result << endl;
-
-    return 0;
-}
-
 // No arguments.
 int pi() {
     cout << 3.14159265 << endl;
     return EXIT_SUCCESS;
 }
 
-// Throws an error.  Demonstrates error handling.
+// Throws an error.  The error is catched by cli::smack
+// and returned as a proper error message.
 int error() {
     throw std::runtime_error( "error() was called." );
 }
@@ -102,46 +70,56 @@ int error_1(const string& message) {
 
 } // namespace anonymous
 
-int main(int argc, char**argv) {
-
-    // Create an application proxy and register the
-    // commands with the proxy. 
+int main(int argc, char**argv) 
+{
+    // Now tie everything together:  Create an application object
+    // and register the commands one by one. 
     smack::cli::CliApplication cli{
+        // An overall help text for the cli.
         "Demonstrates smack::cli.  Enjoy...",
 
+        // A fully specified command.  The template parameter
+        // refers to the function above that is called by the
+        // command.
         Commands::make<add_int>(
             // The command name that is used to select the
             // command on the command line.  This can be freely
             // selected.
-            "add_int", "Add two integers.",
-            // An optional list of symbolic argument names.  This
-            // is printed in the cli help page.
+            "add_int",
+            // Text describing the command.
+            "Add two integers.",
+            // A list of symbolic argument names.
             { "first", "second" }),
 
+        // A minimal command, just a function reference and the 
+        // command name need to be passed.
         Commands::make<add_float>(
-            "add_float", "Add two floating point numbers."),
+            "add_float"),
 
+        // Simple.  Function arguments are strings, but these
+        // are automatically parsed as the arguments of the
+        // functions above.
         Commands::make<concat>(
             "concat", "Concatenate strings." ),
 
+        // No argument at all.
         Commands::make<pi>(
             "pi", "Returns PI."),
 
+        // Overloading.  This is 'error' with no parameter.
         Commands::make<error>(
             "error", "Print a predefined error."),
-        // Overload the 'error' command with a function taking one parameter. 
+        // Overload the 'error' command with a function taking one
+        // parameter. 
         Commands::make<error_1>(
             "error", "Print an error message.",
-            {"message"}),
-
-        // Add an operation that takes the Point types we defined above, see
-        // 'using Point = ...' et al.  Note that this does not differ from
-        // the other operations we added.  
-        Commands::make<dist>(
-            "distance", "Compute the distance between two points.",
-            {"a", "b"})
+            {"message"})
     };
 
-    // Finally launch the application.
+    // Finally launch the application.  The launch operation
+    // returns the executed command's return value.  We simply return
+    // this from main() and are done.
     return cli.launch(argc, argv);
+
+    // Easy, eh?
 }
