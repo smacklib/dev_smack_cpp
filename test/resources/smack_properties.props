@@ -14,4 +14,5 @@ February=2
 November=11
 December=12
 
-Donaldian=313
+# Key is expected to be trimmed.
+ trimmed =313

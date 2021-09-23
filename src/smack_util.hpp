@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -40,20 +41,6 @@ vector<string> split(const string& in, const string& delimiter);
  */
 string concat(const vector<string>& in, const string& delimiter);
 
-template <typename T>
-string trim_(const string& in, T pred)
-{
-    size_t begin = 0;
-    while (begin < in.length() && pred(in[begin]))
-        begin++;
-    size_t end = in.length();
-    while (end > 0 && pred(in[end - 1]))
-        end--;
-    if (end <= begin)
-        return string{};
-    return in.substr(begin, end - begin);
-}
-
 /**
  * Trims, i.e. removes, space characters at the beginning and the end
  * of the passed string.  Formally characters where std::isspace() 
@@ -63,6 +50,7 @@ string trim_(const string& in, T pred)
  * @returns The trimmed string.
  */
 string trim(const string& in);
+string_view trim(string_view in);
 
 /**
  * Trims, i.e. removes, characters at the beginning and the end
@@ -74,6 +62,7 @@ string trim(const string& in);
  * @returns The trimmed string.
  */
 string trim(const string& in, const string& toTrim);
+string_view trim(string_view in, const string_view& toTrim);
 
 /**
  * Checks if a string starts with a given prefix.

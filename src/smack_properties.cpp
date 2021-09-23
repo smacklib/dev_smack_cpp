@@ -69,6 +69,7 @@ namespace smack::util::properties
                 throw std::runtime_error("Missing '='@" + std::to_string(lineCount));
 
             auto key = buffer.substr(0, equalsPosition);
+            key = util::strings::trim(key);
             auto val = buffer.substr(equalsPosition + 1);
 
             result[string{ key }] = string{ val };
