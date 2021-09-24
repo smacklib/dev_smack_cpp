@@ -23,6 +23,11 @@ TEST(UtilProperties, BasicObject) {
     ASSERT_EQ("8", map.get("propertyCount"));
 }
 
+TEST(UtilProperties, GetTrimmedKey) {
+    Properties map{ "../../test/resources/smack_properties.props" };
+    ASSERT_EQ("313", map.get("trimmed"));
+}
+
 TEST(UtilProperties, GetAs) {
     Properties map{ "../../test/resources/smack_properties.props" };
     ASSERT_EQ(8, map.getAs<int>("propertyCount"));

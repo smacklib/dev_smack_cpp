@@ -6,9 +6,10 @@
 #include "test_common.hpp"
 
 using std::string;
+using std::string_view;
 using std::vector;
 
-TEST(SmackUtil, StringSplit) {
+TEST(SmackStrings, StringSplit) {
     string splitMe = "abc:def";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -18,7 +19,7 @@ TEST(SmackUtil, StringSplit) {
     EXPECT_EQ("def", v[1]);
 }
 
-TEST(SmackUtil, StringSplit2) {
+TEST(SmackStrings, StringSplit2) {
     string splitMe = "milchmolch";
 
     auto v = smack::util::strings::split(splitMe, "lc");
@@ -29,7 +30,7 @@ TEST(SmackUtil, StringSplit2) {
     EXPECT_EQ("h", v[2]);
 }
 
-TEST(SmackUtil, StringSplitEmpty) {
+TEST(SmackStrings, StringSplitEmpty) {
     string splitMe = ":";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -39,7 +40,7 @@ TEST(SmackUtil, StringSplitEmpty) {
     EXPECT_TRUE(v[1].empty());
 }
 
-TEST(SmackUtil, StringSplitEmptySlots) {
+TEST(SmackStrings, StringSplitEmptySlots) {
     string splitMe = ":a::b:";
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -52,7 +53,7 @@ TEST(SmackUtil, StringSplitEmptySlots) {
     EXPECT_TRUE(v[4].empty());
 }
 
-TEST(SmackUtil, StringSplitNone) {
+TEST(SmackStrings, StringSplitNone) {
     string splitMe;
 
     auto v = smack::util::strings::split(splitMe, ":");
@@ -60,7 +61,7 @@ TEST(SmackUtil, StringSplitNone) {
     EXPECT_EQ(0, v.size());
 }
 
-TEST(SmackUtil, StringSplitNoDelimiter) {
+TEST(SmackStrings, StringSplitNoDelimiter) {
     string splitMe{ "313" };
 
     auto v = smack::util::strings::split(splitMe, "");
@@ -69,63 +70,119 @@ TEST(SmackUtil, StringSplitNoDelimiter) {
     EXPECT_EQ("313", v[0]);
 }
 
-TEST(SmackUtil, StringTrimNone) {
+TEST(SmackStrings, StringTrimNone) {
     string trimMe{ "q" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("q", r);
 }
 
-TEST(SmackUtil, StringTrimAll) {
+TEST(SmackStrings, StringViewTrimNone) {
+    string_view trimMe{ "q" };
+
+    auto r = smack::util::strings::trim(trimMe);
+    EXPECT_EQ("q", r);
+}
+
+TEST(SmackStrings, StringTrimAll) {
     string trimMe{ "\n\t " };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("", r);
 }
 
-TEST(SmackUtil, StringTrimFront) {
+TEST(SmackStrings, StringViewTrimAll) {
+    string_view trimMe{ "\n\t " };
+
+    auto r = smack::util::strings::trim(trimMe);
+    EXPECT_EQ("", r);
+}
+
+TEST(SmackStrings, StringTrimFront) {
     string trimMe{ "\t\t313" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtil, StringTrimBack) {
+TEST(SmackStrings, StringViewTrimFront) {
+    string_view trimMe{ "\t\t313" };
+
+    auto r = smack::util::strings::trim(trimMe);
+    EXPECT_EQ("313", r);
+}
+
+TEST(SmackStrings, StringTrimBack) {
     string trimMe{ "313\t\t" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtil, StringTrimBoth) {
+TEST(SmackStrings, StringViewTrimBack) {
+    string_view trimMe{ "313\t\t" };
+
+    auto r = smack::util::strings::trim(trimMe);
+    EXPECT_EQ("313", r);
+}
+
+TEST(SmackStrings, StringTrimBoth) {
     string trimMe{ "\t\n313\t\r" };
 
     auto r = smack::util::strings::trim(trimMe);
     EXPECT_EQ("313", r);
 }
 
-TEST(SmackUtil, StringTrimCharsSingle) {
+TEST(SmackStrings, StringViewTrimBoth) {
+    string_view trimMe{ "\t\n313\t\r" };
+
+    auto r = smack::util::strings::trim(trimMe);
+    EXPECT_EQ("313", r);
+}
+
+TEST(SmackStrings, StringTrimCharsSingle) {
     string trimMe{ "313" };
 
     auto r = smack::util::strings::trim(trimMe, "3");
     EXPECT_EQ("1", r);
 }
 
-TEST(SmackUtil, StringTrimCharsMultiple) {
+TEST(SmackStrings, StringViewTrimCharsSingle) {
+    string_view trimMe{ "313" };
+
+    auto r = smack::util::strings::trim(trimMe, "3");
+    EXPECT_EQ("1", r);
+}
+
+TEST(SmackStrings, StringTrimCharsMultiple) {
     string trimMe{ "121micbinz313" };
 
     auto r = smack::util::strings::trim(trimMe, "123456789");
     EXPECT_EQ("micbinz", r);
 }
 
-TEST(SmackUtil, StringTrimCharsAll) {
+TEST(SmackStrings, StringViewTrimCharsMultiple) {
+    string_view trimMe{ "121micbinz313" };
+
+    auto r = smack::util::strings::trim(trimMe, "123456789");
+    EXPECT_EQ("micbinz", r);
+}
+
+TEST(SmackStrings, StringTrimCharsAll) {
     string trimMe{ "121658765576313" };
 
     auto r = smack::util::strings::trim(trimMe, "123456789");
     EXPECT_EQ("", r);
 }
 
-TEST(SmackUtil, StringConcat1) {
+TEST(SmackStrings, StringViewTrimCharsAll) {
+    string_view trimMe{ "121658765576313" };
+
+    auto r = smack::util::strings::trim(trimMe, "123456789");
+    EXPECT_EQ("", r);
+}
+
+TEST(SmackStrings, StringConcat1) {
     vector<string> sv = { "a" };
 
     string r = smack::util::strings::concat(sv, "-");
@@ -133,7 +190,7 @@ TEST(SmackUtil, StringConcat1) {
     EXPECT_EQ("a", r);
 }
 
-TEST(SmackUtil, StringConcat2) {
+TEST(SmackStrings, StringConcat2) {
     vector<string> sv = { "a", "b" };
 
     string r = smack::util::strings::concat(sv, "-");
@@ -141,7 +198,7 @@ TEST(SmackUtil, StringConcat2) {
     EXPECT_EQ("a-b", r);
 }
 
-TEST(SmackUtil, StringConcat3) {
+TEST(SmackStrings, StringConcat3) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "++");
@@ -149,7 +206,7 @@ TEST(SmackUtil, StringConcat3) {
     EXPECT_EQ("a++b++c", r);
 }
 
-TEST(SmackUtil, StringConcatEmptyDelimiter) {
+TEST(SmackStrings, StringConcatEmptyDelimiter) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "");
@@ -157,7 +214,7 @@ TEST(SmackUtil, StringConcatEmptyDelimiter) {
     EXPECT_EQ("abc", r);
 }
 
-TEST(SmackUtil, StringSplitConcat3) {
+TEST(SmackStrings, StringSplitConcat3) {
     vector<string> sv = { "a", "b", "c" };
 
     string r = smack::util::strings::concat(sv, "++");
@@ -171,7 +228,7 @@ TEST(SmackUtil, StringSplitConcat3) {
     EXPECT_EQ("c", v[2]);
 }
 
-TEST(SmackUtil, StringStartsWith) {
+TEST(SmackStrings, StringStartsWith) {
     using smack::util::strings::starts_with;
     string s = "prefixAndMore";
 
@@ -183,7 +240,7 @@ TEST(SmackUtil, StringStartsWith) {
     EXPECT_FALSE( starts_with( s, "x" ) );
 }
 
-TEST(SmackUtil, StringEndsWith) {
+TEST(SmackStrings, StringEndsWith) {
     using smack::util::strings::ends_with;
 
     string s = "prefixAndMore";

@@ -13,26 +13,54 @@ namespace smack {
 namespace util {
 
 using std::string;
+using std::string_view;
 using std::vector;
 
+namespace {
+template <typename T>
+void trimInplace_(string_view& in, const T& pred)
+{
+    while (!in.empty() && pred(in[0]))
+        in = in.substr(1);
+    while (!in.empty() && pred(in[in.size() - 1]))
+        in = in.substr(0, in.size() - 1);
+}
+}
+
 string strings::trim(const string& in)
+{
+    string_view inv{ in };
+    inv = strings::trim(inv);
+    return string{inv};
+}
+
+string_view strings::trim(string_view in)
 {
     auto pred = [](int c) {
         // Note that isspace may be inlined, thus the wrapping into
         // a lambda.
-        return std::isspace( c );
+        return std::isspace(c);
     };
 
-    return strings::trim_(in, pred);
+    trimInplace_(in, pred);
+    return in;
 }
 
 string strings::trim(const string& in, const string& toTrim)
+{
+    string_view inv{ in };
+    inv = strings::trim(inv, string_view{toTrim});
+    return string{ inv };
+}
+
+string_view strings::trim(string_view in, const string_view& toTrim)
 {
     auto pred = [&toTrim](int c) {
         return string::npos != toTrim.find_first_of(c);
     };
 
-    return strings::trim_(in, pred);
+    trimInplace_(in, pred);
+    return in;
 }
 
 vector<string> strings::split(const string& in, const string& delimiter)
