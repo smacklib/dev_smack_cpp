@@ -22,14 +22,16 @@
 // This is needed by the 'distance' command we want to offer.
 using Point = std::pair<float, float>;
 
+namespace smack::convert {
+
 // Add a decent name for our new type.
 template<>
-constexpr const char* smack::convert::get_typename(Point type) {
+constexpr const char* get_typename(Point type) {
     return "point";
 }
 // A point is written as 'x:y', e.g. '1.0:2.5'.  This operation adds
 // the converter to smack::cli's automatic type transformations.
-template<> void smack::convert::transform(const char* in, Point& out) {
+template<> void transform(const char* in, Point& out) {
     string input{ in };
     string delimiter{ ":" };
 
@@ -50,6 +52,8 @@ template<> void smack::convert::transform(const char* in, Point& out) {
         second.c_str(),
         out.second);
 }
+
+} // namespace smack::convert
 
 namespace {
 
