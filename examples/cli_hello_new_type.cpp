@@ -22,6 +22,7 @@
 // This is needed by the 'distance' command we want to offer.
 using Point = std::pair<float, float>;
 
+// The type extensions have to be placed in namespace smack::convert.
 namespace smack::convert {
 
 // Add a decent name for our new type.
@@ -29,6 +30,7 @@ template<>
 constexpr const char* get_typename(Point type) {
     return "point";
 }
+
 // A point is written as 'x:y', e.g. '1.0:2.5'.  This operation adds
 // the converter to smack::cli's automatic type transformations.
 template<> void transform(const char* in, Point& out) {
@@ -77,7 +79,7 @@ int dist(Point a, Point b)
     return 0;
 }
 
-// The remaining functionality continues to work unmidf
+// The primitive argument types stay available.
 int move_x(Point p, float distance) {
     cout << (p.first + distance) << ":" << p.second << endl;
     return EXIT_SUCCESS;
