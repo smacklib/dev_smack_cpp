@@ -4,10 +4,8 @@
  * Copyright © 2019 Michael Binz
  */
 
-#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include "../test/test_common.hpp"
 
@@ -25,7 +23,7 @@ int free_function(int p1) {
         std::endl;
     return EXIT_SUCCESS;
 }
-};
+}
 
 class TestApplication
 {
@@ -67,16 +65,17 @@ public:
     int f7(int p1) const {
         return smack::test::common::f(__func__, p1);
     }
+
     int f7_2(int p1, double p2) const {
         return smack::test::common::f(__func__, p1, p2);
     }
 
-    int execute(const std::vector<std::string>& argv) {
+    int execute(int argc, char **argv) {
         using smack::cli::Commands;
 
         smack::cli::CliApplication cli(
             Commands::make<&TestApplication::f1>(
-                "eins", this),
+                "eins", "description:eins", this),
             Commands::make<&TestApplication::f2>(
                 "zwei", this),
             Commands::make<&TestApplication::f3>(
@@ -87,16 +86,18 @@ public:
                 "fuenf", this),
             Commands::make<&TestApplication::f6>(
                 "sechs", this),
+
             // Register two commands with argument lists of different
             // length for the same command name.
             Commands::make<&TestApplication::f7>(
                 "sieben", this),
             Commands::make<&TestApplication::f7_2>(
                 "sieben", this ),
+
             Commands::make<free_function>(
                 "acht") );
 
-        return cli.launch(argv);
+        return cli.launch(argc,argv);
     }
 };
 
@@ -106,9 +107,5 @@ int main(int argc, char**argv)
         argv[0] 
     };
 
-    std::vector<std::string> cmdArgv(
-        argv + 1, 
-        argv + argc);
-
-    return ta.execute(cmdArgv);
+    return ta.execute(argc, argv);
 }

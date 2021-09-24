@@ -5,7 +5,6 @@
  */
 
 #include <iostream>
-#include <vector>
 #include <string>
 
 #include "../test/test_common.hpp"
@@ -48,56 +47,41 @@ int f7(int p1, double p2) {
     return smack::test::common::f(__func__, p1, p2);
 }
 
-int execute(const std::vector<std::string>& argv) {
-    auto cmd1 = Commands::make<f1>(
-        "eins",
-        { "p1" });
-
-    auto cmd2 = Commands::make<f2>(
-        "zwei");
-
-    auto cmd3 = Commands::make<f3>(
-        "drei");
-
-    auto cmd4 = Commands::make<f4>(
-        "vier");
-
-    auto cmd5 = Commands::make<f5>(
-        "fuenf");
-
-    auto cmd6 = Commands::make<f6>(
-        "sechs");
-
-    // Example for an overloaded function.
-    auto cmd7 = Commands::make<static_cast<int(*)(int)>(f7)>(
-        "sieben");
-
-    // Example for an overloaded function. Generally this is doable but
-    // does not make a lot of sense.  The alternative, a different name for
-    // the overloaded function, is much simpler.
-    auto cmd7_2 = Commands::make<static_cast<int(*)(int, double)>(f7)>(
-        "sieben_2");
-
-    smack::cli::CliApplication cli(
-        cmd1,
-        cmd2,
-        cmd3,
-        cmd4,
-        cmd5,
-        cmd6,
-        cmd7,
-        cmd7_2
-    );
-
-    return cli.launch(argv);
-}
-
 } // namespace anonymous
 
 int main(int argc, char**argv) {
-    std::vector<std::string> cmdArgv(
-        argv + 1, 
-        argv + argc);
+    std::cout << argv[0] << std::endl;
 
-    return execute(cmdArgv);
+    smack::cli::CliApplication cli(
+        Commands::make<f1>(
+            "eins",
+            { "p1" }),
+
+        Commands::make<f2>(
+            "zwei"),
+
+        Commands::make<f3>(
+            "drei"),
+
+        Commands::make<f4>(
+            "vier"),
+
+        Commands::make<f5>(
+            "fuenf"),
+
+        Commands::make<f6>(
+            "sechs"),
+
+        // Example for an overloaded function.
+        Commands::make<static_cast<int(*)(int)>(f7)>(
+            "sieben"),
+
+        // Example for an overloaded function. Generally this is doable but
+        // does not make a lot of sense.  The alternative, a different name for
+        // the overloaded function, is much simpler.
+        Commands::make<static_cast<int(*)(int, double)>(f7)>(
+            "sieben_2")
+    );
+
+    return cli.launch(argc, argv);
 }
