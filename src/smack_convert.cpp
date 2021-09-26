@@ -2,7 +2,7 @@
  *
  * Type conversions.
  *
- * Copyright © 2021 Michael Binz
+ * Copyright Â© 2021 Michael Binz
  */
 
 #include "smack_convert.hpp"
