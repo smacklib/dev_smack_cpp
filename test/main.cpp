@@ -1,3 +1,10 @@
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+ *
+ * Tests.
+ *
+ * Copyright © 2021 Michael Binz
+ */
+
 #include <string>
 #include <gtest/gtest.h>
 #include "test_common.hpp"
