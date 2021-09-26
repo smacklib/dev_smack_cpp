@@ -1,10 +1,11 @@
 #include <array>
-#include <utility>
 #include <cstdlib>
+#include <string_view>
+#include <utility>
 
 // std::swap is constexpr in c++20
 template<class T>
-constexpr void swap(T& l, T& r)
+constexpr void swap_(T& l, T& r)
 {
     T tmp = std::move(l);
     l = std::move(r);
@@ -23,7 +24,7 @@ constexpr void quick_sort_impl(A<T, N> &to_sort, size_t left, size_t right)
 
         for (size_t i = left + 1; i<right; i++)
             if (to_sort[i]<to_sort[left])
-                swap(to_sort[++m], to_sort[i]);
+                swap_(to_sort[++m], to_sort[i]);
 
         swap(to_sort[left], to_sort[m]);
 
@@ -53,7 +54,7 @@ constexpr void comb_sort_impl_2(A<T, N> &to_sort, size_t left, size_t right)
         for ( S i = 0 ; i + gap < to_sort.size() ; ++i )
         { 
             if ( to_sort[ i ] > to_sort[ i + gap ] ) {
-                swap( to_sort[ i ], to_sort[ i + gap ] );
+                swap_( to_sort[ i ], to_sort[ i + gap ] );
                 sorted = false;
             }
         }
@@ -68,7 +69,12 @@ constexpr A<T, N> sort(A<T, N> cx_array)
     return sorted;
 }
 
+#if 0
 constexpr A unsorted{5,7,3,4,313,1,8,2,9,0,6,10,-121};
+#else
+using namespace std::literals::string_view_literals;
+constexpr A unsorted{"blue"sv,"yellow"sv,"black"sv,"white"sv,"cyan"sv,"pink"sv,"magenta"sv,"grey"sv,"cobalt"sv,"white"sv};
+#endif
 constexpr auto sorted = sort(unsorted);
 
 #include <iostream>
