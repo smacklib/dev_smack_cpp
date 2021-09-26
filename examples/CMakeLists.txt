@@ -39,3 +39,12 @@ add_executable( cli_functional
 target_link_libraries( cli_functional
   smack_cpp
 )
+
+add_executable( cli_functional_2
+    cli_functional_2.cpp
+    ${headers}
+)
+
+target_link_libraries( cli_functional_2
+  smack_cpp
+)
