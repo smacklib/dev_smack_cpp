@@ -1,5 +1,6 @@
-/*
- * Smack C++
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+ *
+ * General utilities.
  *
  * Copyright © 2019-2021 Michael Binz
  */

@@ -1,5 +1,4 @@
-/*
- * $Id: 5d9b36a7883830a97f9c90d57b644e02f8fba503 $
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
  * Console application helper.
  *

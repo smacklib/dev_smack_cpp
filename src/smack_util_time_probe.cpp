@@ -1,6 +1,7 @@
-/*
- * Smack C++
+/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
+ * Time measurement support.
+ * 
  * Copyright © 2019 Michael Binz
  */
 

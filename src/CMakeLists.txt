@@ -8,7 +8,6 @@ set(headers
     smack_util_time_probe.hpp
 )
 set(implementation
-    smack_cli.cpp
     smack_convert.cpp
     smack_properties.cpp
     smack_util.cpp
