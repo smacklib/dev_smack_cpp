@@ -2,17 +2,17 @@
 
 enable_testing()
 
-option(INSTALL_GTEST "Include gtest in product install." OFF)
-option(INSTALL_GMOCK "Include gmock in product install." OFF)
-
 include(FetchContent)
-	
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.10.0
+  GIT_TAG        release-1.11.0
 )
 
+# See https://github.com/google/googletest/blob/master/googletest/README.md
+set(gtest_force_shared_crt ON CACHE BOOL "Use debug dll." FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "No gmock." FORCE)
 # After the following call, the CMake targets defined by googletest
 # are available to the rest of the build.
 FetchContent_MakeAvailable(googletest)
