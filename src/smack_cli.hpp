@@ -587,6 +587,40 @@ class CliApplication
             stream << variant.second->to_string() << "\n";
     }
 
+    int printHelpCommand()
+    {
+        printHelp(cout);
+        return 0;
+    };
+
+    Command<> help_ = Commands::make<&CliApplication::printHelpCommand>(
+        "--help",
+        "Display this help page.",
+        this );
+
+    void addCommand( Command<>& c )
+    {
+        const auto& cname =
+            c.name();
+        const auto& ccount =
+            c.argument_count();
+
+        // Ensure that no duplicate commands are added.
+        if (commandMap_.count(cname) == 1 &&
+            commandMap_.at(cname).count(ccount) == 1)
+        {
+            cerr <<
+                "Implementation error: Duplicate definition of command " <<
+                std::quoted(cname, internal::kDelim_) <<
+                " with argument count: " <<
+                ccount;
+
+            std::exit(EXIT_FAILURE);
+        }
+
+        commandMap_[cname][ccount] = &c;
+    }
+
 public:
     /**
      * Create an instance that offers the passed commands.
@@ -599,26 +633,9 @@ public:
         description_(description)
     {
         for (Command<>& c : commands_) {
-            const auto& cname =
-                c.name();
-            const auto& ccount =
-                c.argument_count();
-
-            // Ensure that no duplicate commands are added.
-            if (commandMap_.count(cname) == 1 &&
-                commandMap_.at(cname).count(ccount) == 1)
-            {
-                cerr <<
-                    "Implementation error: Duplicate definition of command " <<
-                    std::quoted(cname, internal::kDelim_) <<
-                    " with argument count: " <<
-                    ccount;
-
-                std::exit(EXIT_FAILURE);
-            }
-
-            commandMap_[cname][ccount] = &c;
+            addCommand( c );
         }
+        addCommand(help_);
     }
 
     /**
