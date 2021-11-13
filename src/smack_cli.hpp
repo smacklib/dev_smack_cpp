@@ -96,20 +96,18 @@ class Command {
     string helpLine_;
 
     template<typename R, typename T, typename Func, auto ... I>
-    static auto map_tuple_(T& tpl, Func func, std::index_sequence<I...> ) {
-        std::array<R, sizeof ... (I)> result{
+    static auto map_tuple_(const T& tpl, Func func, std::index_sequence<I...> ) {
+        return std::array<R, sizeof ... (I)>{
             func(std::get<I>(tpl)) ... 
         };
-
-        return result;
     }
 
     template<typename R, typename T, typename Func>
-    static auto map_tuple(T& tpl, Func func) {
-        constexpr auto i = 
-            std::make_index_sequence<std::tuple_size_v<T>>{};
-
-        return map_tuple_<R>( tpl, func, i );
+    static auto map_tuple(const T& tpl, Func func) {
+        return map_tuple_<R>(
+            tpl,
+            func,
+            std::make_index_sequence<std::tuple_size_v<T>>{} );
     }
 
     /**
@@ -200,10 +198,8 @@ class Command {
         const string& description = {} )
     {
         // Get the raw type names of the parameters.
-        Tp tup;
-
         auto expander = map_tuple<string>(
-            tup,
+            Tp{},
             [](auto t) {
                 return smack::convert::get_typename(t);
             }
@@ -531,7 +527,7 @@ class CliApplication
     std::map<
         string,
         std::map<
-            size_t,
+            typename decltype(commands_)::size_type,
             typename decltype(commands_)::const_pointer>> commandMap_;
 
     /**
