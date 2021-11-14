@@ -2,7 +2,7 @@
  *
  * Tests.
  *
- * Copyright (c) 2019-2021 Michael Binz
+ * Copyright © 2019-2021 Michael Binz
  */
 
 #include <gtest/gtest.h>
