@@ -2,7 +2,7 @@
  *
  * Tests.
  *
- * Copyright © 2021 Michael Binz
+ * Copyright ï¿½ 2021 Michael Binz
  */
 
 #include <gtest/gtest.h>
@@ -325,12 +325,13 @@ TEST(SmackCli, CliTestHelp) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(5, lines.size());
+    ASSERT_EQ(7, lines.size());
     ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
     ASSERT_EQ("", lines[1]);
     ASSERT_EQ("Commands:", lines[2]);
-    ASSERT_EQ("xxx p1:string", lines[3]);
-    ASSERT_EQ("", lines[4]);
+    ASSERT_EQ("--help", lines[3]);
+    ASSERT_EQ("xxx p1:string", lines[5]);
+    ASSERT_EQ("", lines[6]);
 }
 
 TEST(SmackCli, CliTestHelpExplicit) {
@@ -350,7 +351,7 @@ TEST(SmackCli, CliTestHelpExplicit) {
 
     smack::test::common::redir r{ std::cout };
 
-    std::vector<string> argv{ "?" };
+    std::vector<string> argv{ "--help" };
 
     // Execute the application.
     auto exitCode =
@@ -361,13 +362,15 @@ TEST(SmackCli, CliTestHelpExplicit) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(6, lines.size());
+    ASSERT_EQ(8, lines.size());
     ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
     ASSERT_EQ(applicationHelpString, lines[1]);
     ASSERT_EQ("", lines[2]);
     ASSERT_EQ("Commands:", lines[3]);
-    ASSERT_EQ("xxx p1:string", lines[4]);
-    ASSERT_EQ("", lines[5]);
+    ASSERT_EQ("--help", lines[4]);
+    ASSERT_EQ("    Display this help page.", lines[5]);
+    ASSERT_EQ("xxx p1:string", lines[6]);
+    ASSERT_EQ("", lines[7]);
 }
 
 TEST(SmackCli, CliTestHelpSorted) {
@@ -384,7 +387,7 @@ TEST(SmackCli, CliTestHelpSorted) {
 
     smack::test::common::redir r{ std::cout };
 
-    std::vector<string> argv{ "?" };
+    std::vector<string> argv{ "--help" };
 
     // Execute the application.
     auto exitCode =
@@ -395,12 +398,13 @@ TEST(SmackCli, CliTestHelpSorted) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(7, lines.size());
+    ASSERT_EQ(9, lines.size());
     ASSERT_EQ("Commands:", lines[2]);
-    ASSERT_EQ("aaa string", lines[3]);
-    ASSERT_EQ("xxx string", lines[4]);
-    ASSERT_EQ("zzz string", lines[5]);
-    ASSERT_EQ("", lines[6]);
+    ASSERT_EQ("--help", lines[3]);
+    ASSERT_EQ("aaa string", lines[5]);
+    ASSERT_EQ("xxx string", lines[6]);
+    ASSERT_EQ("zzz string", lines[7]);
+    ASSERT_EQ("", lines[8]);
 }
 
 TEST(SmackCli, CliTestCommandDescription) {
@@ -421,7 +425,7 @@ TEST(SmackCli, CliTestCommandDescription) {
 
     smack::test::common::redir r{ std::cout };
 
-    std::vector<string> argv{ "?" };
+    std::vector<string> argv{ "--help" };
 
     // Execute the application.
     auto exitCode =
@@ -432,14 +436,16 @@ TEST(SmackCli, CliTestCommandDescription) {
     // Get err content.
     auto lines = r.strs();
 
-    ASSERT_EQ(7, lines.size());
+    ASSERT_EQ(9, lines.size());
     ASSERT_EQ("Usage: smack_cpp_test COMMAND arguments", lines[0]);
     ASSERT_EQ(applicationHelpString, lines[1]);
     ASSERT_EQ("", lines[2]);
     ASSERT_EQ("Commands:", lines[3]);
-    ASSERT_EQ("xxx p1:string", lines[4]);
-    ASSERT_EQ("    description:xxx", lines[5]);
-    ASSERT_EQ("", lines[6]);
+    ASSERT_EQ("--help", lines[4]);
+    ASSERT_EQ("    Display this help page.", lines[5]);
+    ASSERT_EQ("xxx p1:string", lines[6]);
+    ASSERT_EQ("    description:xxx", lines[7]);
+    ASSERT_EQ("", lines[8]);
 }
 
 TEST(SmackCli, TemplateCtor) {
