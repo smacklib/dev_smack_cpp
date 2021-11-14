@@ -516,13 +516,12 @@ class CliApplication
     static_assert(std::is_same<Command<Result,Input>, CsTy_>());
 
     /**
-     * The registered commands. 
+     * Holds the user-defined commands. 
      */
     std::array<CsTy_, sizeof ... (Cs)> commands_;
 
     /**
-     * Maps a command name to a map of n-argument alternatives.  The command entries
-     * point to the entries in the commands_ array.
+     * Maps a command name to a map of n-argument alternatives.
      */
     std::map<
         string,
@@ -587,6 +586,50 @@ class CliApplication
             stream << variant.second->to_string() << "\n";
     }
 
+    /**
+     * Adapts the printHelp operation so that it can be used in a command
+     * definition.
+     */
+    int printHelpCommand()
+    {
+        printHelp(cout);
+        return EXIT_SUCCESS;
+    };
+
+    /**
+     * The special --help command.
+     */
+    Command<> help_ = Commands::make<&CliApplication::printHelpCommand>(
+        "--help",
+        "Display this help page.",
+        this );
+
+    /**
+     * Adds a command to the command map.
+     */
+    void addCommand( Command<>& c )
+    {
+        const auto& cname =
+            c.name();
+        const auto& ccount =
+            c.argument_count();
+
+        // Ensure that no duplicate commands are added.
+        if (commandMap_.count(cname) == 1 &&
+            commandMap_.at(cname).count(ccount) == 1)
+        {
+            cerr <<
+                "Implementation error: Duplicate definition of command " <<
+                std::quoted(cname, internal::kDelim_) <<
+                " with argument count: " <<
+                ccount;
+
+            std::exit(EXIT_FAILURE);
+        }
+
+        commandMap_[cname][ccount] = &c;
+    }
+
 public:
     /**
      * Create an instance that offers the passed commands.
@@ -598,27 +641,13 @@ public:
         commands_{ commands ... },
         description_(description)
     {
-        for (Command<>& c : commands_) {
-            const auto& cname =
-                c.name();
-            const auto& ccount =
-                c.argument_count();
+        static_assert( sizeof ... (Cs) > 0, "No commands passed." );
 
-            // Ensure that no duplicate commands are added.
-            if (commandMap_.count(cname) == 1 &&
-                commandMap_.at(cname).count(ccount) == 1)
-            {
-                cerr <<
-                    "Implementation error: Duplicate definition of command " <<
-                    std::quoted(cname, internal::kDelim_) <<
-                    " with argument count: " <<
-                    ccount;
-
-                std::exit(EXIT_FAILURE);
-            }
-
-            commandMap_[cname][ccount] = &c;
-        }
+        // Add the user-defined commands.
+        for (Command<>& c : commands_)
+            addCommand( c );
+        // Add the predefined commands.
+        addCommand( help_ );
     }
 
     /**
@@ -640,10 +669,6 @@ public:
         if (argv.empty()) {
             printHelp(cerr);
             return EXIT_FAILURE;
-        }
-        else if (argv.size() == 1 && argv[0] == "?") {
-            printHelp(cout);
-            return EXIT_SUCCESS;
         }
 
         // Take the command name.
