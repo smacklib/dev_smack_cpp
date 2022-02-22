@@ -1,0 +1,18 @@
+# Development setup for Linux.
+#
+# Switch to gcc 11.  Version 11 is at least required
+# for smack::c++.  See issue #98. 
+#
+buildDir=build
+
+rm -rf $buildDir
+mkdir $buildDir
+cd $buildDir
+
+# Generation of tests and examples is enabled.
+cmake \
+    -DENABLE_TESTS=ON \
+    -DENABLE_EXAMPLES=ON \
+    -DCMAKE_C_COMPILER=/usr/bin/gcc-11 \
+    -DCMAKE_CXX_COMPILER=/usr/bin/g++-11 \
+    ..
