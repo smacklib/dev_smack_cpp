@@ -364,3 +364,70 @@ TEST(SmackUtil, CopyTracer) {
     EXPECT_EQ("KONG(1) copy", lines[0]);
     EXPECT_TRUE( lines[1].empty() );
 }
+
+#include <iostream>
+#include <string>
+#include <unordered_map>
+
+template <typename C, typename E, typename Found, typename NotFound>
+bool ifFound(C container, E element, Found found, NotFound notFound)
+{
+    const auto i = container.find(element);
+    if (i != container.end()) {
+        found(i->second);
+        return true;
+    }
+    else {
+        notFound();
+        return false;
+    }
+}
+
+TEST(SmackUtil, ifContainsSuccess)
+{
+    // Create an unordered_map of three strings (that map to strings)
+    std::unordered_map<std::string, std::string> u = {
+        {"RED","#FF0000"},
+        {"GREEN","#00FF00"},
+        {"BLUE","#0000FF"}
+    };
+
+    bool found = false;
+    bool fail = false;
+
+    ifFound(
+        u,
+        "RED",
+        [&found](std::string value) {
+            found = true;
+            ASSERT_EQ(value, "#FF0000");
+        },
+        [&fail]() { fail = true; }
+        );
+    EXPECT_TRUE(found);
+    EXPECT_FALSE(fail);
+}
+
+TEST(SmackUtil, ifContainsNot)
+{
+    // Create an unordered_map of three strings (that map to strings)
+    std::unordered_map<std::string, std::string> u = {
+        {"RED","#FF0000"},
+        {"GREEN","#00FF00"},
+        {"BLUE","#0000FF"}
+    };
+
+    bool found = false;
+    bool fail = false;
+
+    ifFound(
+        u,
+        "MAGENTA",
+        [&found](std::string value) {
+            found = true;
+        },
+        [&fail]() { fail = true; }
+        );
+    EXPECT_FALSE(found);
+    EXPECT_TRUE(fail);
+}
