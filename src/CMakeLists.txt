@@ -4,6 +4,7 @@ set(headers
     smack_cli.hpp
     smack_convert.hpp
     smack_properties.hpp
+    smack_queue.hpp
     smack_util.hpp
     smack_util_time_probe.hpp
 )
