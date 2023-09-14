@@ -2,7 +2,7 @@
  *
  * Tests.
  *
- * Copyright © 2021 Michael Binz
+ * Copyright © 2021-2023 Michael Binz
  */
 
 #include <gtest/gtest.h>
@@ -78,6 +78,18 @@ TEST(SmackCli, CommandHelpPartial) {
     auto help = cmd.to_string();
 
     EXPECT_EQ("drei p1:int p2:double string", help);
+}
+
+TEST(SmackCli, CommandHelpTooMany) {
+    using smack::cli::Commands;
+
+    auto cmd1 = Commands::make<f1>(
+        "eins",
+        { "p1", "p2" });
+
+    auto help = cmd1.to_string();
+
+    EXPECT_EQ("eins p1:int", help);
 }
 
 template<>
