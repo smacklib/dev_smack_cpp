@@ -2,7 +2,7 @@
  *
  * Console application helper.
  *
- * Copyright (c) 2019-2021 Michael Binz
+ * Copyright (c) 2019-2023 Michael Binz
  */
 
 #pragma once
@@ -209,6 +209,12 @@ class Command {
         // passed display names.
         size_t idx = 0;
         for (string c : parameterHelp) {
+            // Catch the case where the help array is longer than
+            // the actual number of paramters of the operation.
+            // This is currently silently igored.
+            // This should be catchable at compile time.
+            if (idx >= expander.size())
+                break;
             if (c.empty())
                 continue;
             expander[idx] = c + ":" + expander[idx];
