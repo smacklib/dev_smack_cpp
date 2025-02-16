@@ -2,12 +2,12 @@
  *
  * Localisation support.
  *
- * Copyright © 2025 Michael Binz
+ * Copyright ï¿½ 2025 Michael Binz
  */
 
 #pragma once
 
-#include "Locale.h"
+#include "smack_locale.h"
 #include "smack_properties.hpp"
 
 #include <filesystem>
@@ -99,7 +99,7 @@ public:
      * @param text The text to translate. Looks like "Camera" or "scopes.camera".
      * @throws invalid::argument if there is a syntax error a resource definition file.
      */
-    auto translate(const Locale& locale, const std::string& key) -> std::string;
+    auto translate(const smack::localisation::Locale& locale, const std::string& key) -> std::string;
 
     /**
      * Translates the passed \b key using the current locale that can be accessed by

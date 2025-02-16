@@ -25,6 +25,33 @@ namespace {
             return smack::util::properties::PropertyMap{};
         }
     }
+
+#if 0
+    /*!
+     * Read a file containing key=value definitions.  Does not throw an exception.
+     * The returned map allows to access the filename by the key '::filename'. In
+     * case the file could not be found the value of this key is "FileNotFound".
+     */
+    PropertyMap loadPropertiesOptionalFile(const std::string& filename)
+    {
+        const std::string filenameMetaKey = "::filename";
+
+        try {
+            auto result = loadProperties(filename);
+            result[filenameMetaKey] = filename;
+            return result;
+        }
+        catch (const std::invalid_argument& e) {
+            if (starts_with(e.what(), "FileNotFound")) {
+                PropertyMap result;
+                result[filenameMetaKey] = "FileNotFound";
+                return result;
+            }
+
+            throw;
+        }
+    }
+#endif
 }
 
 namespace smack::localisation {

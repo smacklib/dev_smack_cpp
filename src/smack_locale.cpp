@@ -2,14 +2,14 @@
  *
  * Localisation support.
  *
- * Copyright © 2025 Michael Binz
+ * Copyright ï¿½ 2025 Michael Binz
  */
 
-#include "Locale.h"
+#include "smack_locale.h"
 
 namespace smack::localisation {
 
-std::unique_ptr<Locale> Locale::s_current;
+std::unique_ptr<smack::localisation::Locale> Locale::s_current;
 
 std::mutex Locale::s_mutex;
 
