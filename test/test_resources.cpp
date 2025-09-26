@@ -1,14 +1,23 @@
-/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+﻿/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
  * Tests.
  *
- * Copyright � 2019-2025 Michael Binz
+ * Copyright © 2019-2025 Michael Binz
  */
 #include <gtest/gtest.h> // googletest header file
 
-#include <set>
-#include <string>
 #include <filesystem>
+#include <set>
+#include <algorithm>
+#include <string>
+#include <vector>
+
+// Disables warnings when windows.h is included.
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+#include <Windows.h>
+#include <WinNls.h>
 
 #include <smack_resource_bundle.h>
 #include <smack_properties.hpp>
@@ -18,60 +27,270 @@
 using Locale = smack::localisation::Locale;
 using PropertyMap = smack::util::properties::PropertyMap;
 using ResourceBundle = smack::localisation::ResourceBundle;
+using std::string;
+using std::vector;
+using namespace std::string_literals;
 namespace strings = smack::util::strings;
 namespace properties = smack::util::properties;
 
-namespace
+namespace {
+    const std::string PROJ_RESOURCE_DIR =
+        "../../test/resources/resourceBundle/good";
+}
+
+TEST(CommonResourceBundle, resourceDirExists)
 {
-    /**
-     * Makes a locale Locale{language,country} from a string language_country.
-     */
-    auto localeFromName( std::string name ) -> Locale
-    {
-        auto split = strings::split( name, "_" );
+    ASSERT_TRUE(
+        std::filesystem::exists(PROJ_RESOURCE_DIR));
+}
 
-        if (split.size() == 2) {
-            return Locale{
-                split.at( 0 ),
-                split.at( 1 ) };
-        } else {
-            return Locale{split.at(0)};
-        }
+TEST(ResourceBundleLocale, constructor)
+{
+    ASSERT_THROW(
+        Locale l("de_"),
+        std::exception
+    );
+    ASSERT_THROW(
+        Locale l("de", "BY_"),
+        std::exception
+    );
+    {
+        Locale l("de");
+
+        ASSERT_EQ("de", l.toString());
+        ASSERT_EQ("de", l.getLanguage());
+        ASSERT_EQ("", l.getCountry());
     }
-
-}
-
-TEST(Resources, LocalizationFallbackExists){
-    ASSERT_TRUE(std::filesystem::exists("../../resources/localization/cmob.properties"));
-}
-
-TEST(Resources, LocalizationFallbackEqualsEnglish){
-    std::string source = "../../resources/localization/cmob_eng.properties";
-    std::string target = "../../resources/localization/cmob.properties";
-
-    PropertyMap sourceMap = properties::loadProperties(source);
-    PropertyMap targetMap = properties::loadProperties(target);
-
-    for (auto [srcKey, srcTranslation] : sourceMap)
     {
-        ASSERT_TRUE(targetMap.find(srcKey)->second == srcTranslation);
+        Locale l("de", "DE");
+
+        ASSERT_EQ("de_DE", l.toString());
+        ASSERT_EQ("de", l.getLanguage());
+        ASSERT_EQ("DE", l.getCountry());
     }
 }
 
-TEST(Resources, LocalizationPropertiesExist){
+TEST(CommonResourceBundle, toString)
+{
+    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
-    std::string location = "../../resources/localization/";
+    ASSERT_EQ("ResourceBundle{smack@../../test/resources/resourceBundle/good}", rb.toString());
+}
 
-    PropertyMap sourceProperties = properties::loadProperties(location + "cmob.properties");
+TEST(CommonResourceBundle, listLocales)
+{
+    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
-    for (const std::filesystem::path& fspath : std::filesystem::directory_iterator(location))
+    auto locales = rb.listLocales();
+
+    ASSERT_EQ(7U, locales.size());
+
+    std::sort( locales.begin(), locales.end() );
+
+    size_t pos{};
+
+    // Alphabetically sorted.
+    ASSERT_EQ("", locales.at(pos++));
+    ASSERT_EQ("cn", locales.at(pos++));
+    ASSERT_EQ("de", locales.at(pos++));
+    ASSERT_EQ("en", locales.at(pos++));
+    ASSERT_EQ("en_GB", locales.at(pos++));
+    ASSERT_EQ("es", locales.at(pos++));
+    ASSERT_EQ("fr", locales.at(pos++));
+}
+
+
+TEST(CommonResourceBundle, translate_enUs)
+{
+    Locale en_US{ "en", "US" };
+    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+
+    // We have *no* US-language.
+    ASSERT_FALSE(rb.hasDefinitions(en_US));
+    // Thus we resolve to en.
+    ASSERT_EQ("Yes"s, rb.translate(en_US, "smack.yes"));
+}
+
+
+TEST(CommonResourceBundle, translate_loads_of_stuff)
+{
+    const string LNG = "ISO-639-1"s;
+    const string CNT = "ISO-3166-2"s;
+
+    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+
     {
-        PropertyMap targetProperties = properties::loadProperties(fspath.string());
+        Locale cn{ "cn" };
+        ASSERT_EQ(
+            "cn"s,
+            rb.translate(cn, LNG));
 
-        for (auto i : sourceProperties){
-            if(! strings::starts_with(i.first, "cmob.scope")){
-                ASSERT_TRUE(targetProperties.find(i.first)->second != "" && targetProperties.find(i.first) != targetProperties.end());
-            }
-        }
+        ASSERT_EQ(
+            u8"是"s,
+            rb.translate(cn, "smack.yes"));
+        ASSERT_EQ(
+            "垃圾桶"s,
+            rb.translate(cn, "smack.trash"));
     }
+
+    {
+        Locale en{ "en" };
+
+        ASSERT_EQ(
+            "en"s,
+            rb.translate(en, LNG));
+        ASSERT_EQ(
+            "n/a"s,
+            rb.translate(en, CNT));
+
+        ASSERT_EQ(
+            "Trashcan"s,
+            rb.translate( en, "smack.trash"));
+    }
+
+    {
+        // Fallback to en.
+        Locale enUs{ "en", "US" };
+
+        ASSERT_EQ(
+            "Trashcan"s,
+            rb.translate( enUs, "smack.trash") );
+    }
+
+    {
+        // en_GB exists.
+        Locale enGb{ "en", "GB" };
+        ASSERT_EQ(
+            "Wastebasket"s,
+            rb.translate( enGb, "smack.trash"));
+    }
+
+    {
+        // de exists. Trivial.
+        Locale de{ "de" };
+        ASSERT_EQ(
+            "Papierkorb"s,
+            rb.translate( de, "smack.trash") );
+    }
+
+    {
+        Locale zh{ "zh" };
+        ASSERT_EQ(
+            "_trash"s,
+            rb.translate( zh, "smack.trash") );
+    }
+
+    {
+        // Locale does not exist.
+        Locale it{ "it" };
+        ASSERT_EQ(
+            "default.test.trash"s,
+            rb.translate( it, "test.trash" ) );
+    }
+
+    {
+        // Resolve with empty locale.  Results in fallback.
+        ASSERT_EQ(
+            "_trash"s,
+            rb.translate( Locale{}, "smack.trash") );
+    }
+
+    {
+        //  Locale exists, key *not* defined.
+        ASSERT_EQ(
+            "default.test.undefined"s,
+            rb.translate(Locale{ "zh" }, "test.undefined"));
+    }
+
+    {
+        // Locale and key unknown.
+        ASSERT_EQ(
+            "default.test.undefined"s,
+            rb.translate(Locale{ "it" }, "test.undefined"));
+    }
+}
+
+
+TEST(CommonResourceBundle, translate_loads_of_stuff_withCurrentLocale)
+{
+    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+
+
+    auto originalLocale = Locale::getCurrent();
+
+    //// Check the default case when the locale is not set yet.
+    ASSERT_EQ(
+        ""s,
+        originalLocale.toString());
+
+    // Resolve with empty locale.  Results in fallback.
+    ASSERT_EQ(
+        "_trash"s,
+        rb.translate("smack.trash"));
+
+    // en exists. Trivial.
+    Locale::setCurrent(Locale{ "en" });
+    ASSERT_EQ(
+        "Trashcan"s,
+        rb.translate("smack.trash"));
+
+    // Fallback to en.
+    Locale::setCurrent(Locale{ "en", "US" });
+    ASSERT_EQ(
+        "Trashcan"s,
+        rb.translate("smack.trash"));
+
+    // en_GB exists.
+    Locale::setCurrent(Locale{ "en", "GB" });
+    ASSERT_EQ(
+        "Wastebasket"s,
+        rb.translate("smack.trash"));
+
+    Locale::setCurrent(originalLocale);
+}
+
+TEST(CommonResourceBundle, current_locale_setGet)
+{
+    // Check the default case when the locale is not set yet.
+    ASSERT_EQ(
+        ""s,
+        Locale::getCurrent().toString());
+
+    Locale::setCurrent(
+        Locale{ "de", "DE" });
+    ASSERT_EQ(
+        "de_DE"s,
+        Locale::getCurrent().toString());
+
+    Locale::setCurrent(
+        Locale{ "en", "US" });
+    ASSERT_EQ(
+        "en_US"s,
+        Locale::getCurrent().toString());
+
+    Locale::setCurrent(
+        Locale{ "it", "US" });
+    ASSERT_EQ(
+        "it_US"s,
+        Locale::getCurrent().toString());
+}
+
+TEST(Resources, LocaleEq) {
+
+    Locale enUs1{ "en", "US" };
+    Locale enUs2{ "en", "US" };
+    ASSERT_EQ(enUs1, enUs2);
+    Locale enGb{ "en", "GB" };
+    ASSERT_FALSE(enUs1 == enGb);
+}
+
+TEST(Resources, Locale) {
+
+    //ASSERT_EQ( "micbinz", std::locale("").name() );
+    _locale_t loc = _get_current_locale();
+
+    WCHAR wcBuffer[LOCALE_NAME_MAX_LENGTH];
+
+    int x = GetUserDefaultLocaleName(wcBuffer, LOCALE_NAME_MAX_LENGTH);
+    int y = GetLastError();
 }

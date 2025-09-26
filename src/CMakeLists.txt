@@ -13,7 +13,7 @@ set(implementation
 smack_locale.cpp
     smack_convert.cpp
     smack_properties.cpp
-	smack_resource_bundle.h
+	smack_resource_bundle.cpp
     smack_util.cpp
     smack_util_time_probe.cpp
 )

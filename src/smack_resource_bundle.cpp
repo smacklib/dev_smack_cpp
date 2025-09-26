@@ -5,7 +5,7 @@
  * Copyright © 2025 Michael Binz
  */
 
-#include "ResourceBundle.h"
+#include "smack_resource_bundle.h"
 
 #include "smack_util.hpp"
 
@@ -60,8 +60,7 @@ using namespace std::string_literals;
 
 auto ResourceBundle::toString() const -> std::string
 {
-//    return fmt::sprintf("ResourceBundle{%s@%s}", baseName_, location_.c_str());
-    return "TODO";
+    return "ResourceBundle{" + baseName_ + "@" + location_.string() + "}";
 }
 
 auto ResourceBundle::listLocales() const -> std::vector<std::string>

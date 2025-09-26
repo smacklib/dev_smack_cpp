@@ -1,9 +1,10 @@
-/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+﻿/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
  * Tests.
  *
- * Copyright � 2025 Michael Binz
+ * Copyright © 2025 Michael Binz
  */
+
 
 #include <gtest/gtest.h>
 

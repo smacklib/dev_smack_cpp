@@ -1,8 +1,8 @@
-/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
+﻿/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
- * Localisation support.
+ * Tests.
  *
- * Copyright � 2025 Michael Binz
+ * Copyright © 2019-2025 Michael Binz
  */
 
 #pragma once
@@ -49,7 +49,7 @@ class Locale final {
     /**
      * A mutex that needs to be locked by the static operations.
      */
-    static std::mutex s_mutex;
+    static std::mutex s_current_mutex;
 
 public:
     /**
@@ -71,9 +71,6 @@ public:
         : language_{isoLanguage}
         , country_{isoCountry}
     {
-        if (language_.empty()) {
-            throw std::invalid_argument("Empty isoLanguage.");
-        }
         if (country_.find_first_of("_") != std::string::npos) {
             throw std::invalid_argument("isoCountry contains '_'.");
         }
@@ -120,7 +117,7 @@ public:
      */
     static auto getCurrent() -> Locale
     {
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::mutex> lock(s_current_mutex);
 
         if (s_current == nullptr) {
             s_current = std::make_unique<Locale>();
@@ -138,13 +135,20 @@ public:
     }
 
     /**
+     * Support std::set<Locale>.
+     */
+    bool operator==(const Locale& r) const
+    {
+        return toString() == r.toString();
+    }
+
+    /**
      * Set the currently active locale.  This is intended as the interface
-     * to a system that knows the current locale and can set it properly,
-     * e.g. the MbientSystemLanguage package.
+     * to a system that knows the current locale and can set it properly.
      */
     static auto setCurrent(const Locale& locale) -> void
     {
-        std::lock_guard<std::mutex> lock(s_mutex);
+        std::lock_guard<std::mutex> lock(s_current_mutex);
 
         s_current = std::make_unique<Locale>(locale.language_, locale.country_);
     }
