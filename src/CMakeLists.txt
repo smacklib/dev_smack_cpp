@@ -1,15 +1,19 @@
-﻿cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
-
+﻿
 set(headers
+    smack_locale.h
     smack_cli.hpp
     smack_convert.hpp
     smack_properties.hpp
+	smack_resource_bundle.h
+	smack_thread_pool.h
     smack_util.hpp
     smack_util_time_probe.hpp
 )
 set(implementation
+smack_locale.cpp
     smack_convert.cpp
     smack_properties.cpp
+	smack_resource_bundle.cpp
     smack_util.cpp
     smack_util_time_probe.cpp
 )

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR)
 
 # Use -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON for command debugging.
 # Use -DCMAKE_BUILD_TYPE=Release

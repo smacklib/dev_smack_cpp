@@ -72,7 +72,7 @@ public:
     auto getAs(string key, T dflt = T{} )->T {
 
         try {
-            T result;
+            T result{};
 
             transform(
                 get(key),

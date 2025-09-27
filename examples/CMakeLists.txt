@@ -1,5 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
+﻿
 set(headers
   ../test/test_common.hpp
 )
