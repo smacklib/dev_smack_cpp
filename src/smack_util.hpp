@@ -2,7 +2,7 @@
  *
  * General utilities.
  *
- * Copyright © 2021 Michael Binz
+ * Copyright © 2021-2025 Michael Binz
  */
 
 #pragma once
@@ -12,6 +12,20 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+namespace smack
+{
+
+/**
+ * Performs an in-place sort of the passed container.
+ */
+template <typename C>
+auto sort( C& c ) -> void
+{
+    std::sort( c.begin(), c.end() );
+}
+
+} // namespace smack
 
 namespace smack::util {
 

@@ -260,6 +260,18 @@ TEST(SmackStrings, StringEndsWith) {
     EXPECT_FALSE( ends_with( s, "x" ) );
 }
 
+TEST( SmackUtil, sort_int )
+{
+    std::vector<int> ints = {313, -1 , 121};
+
+    smack::sort( ints );
+
+    ASSERT_EQ( 3, ints.size() );
+    ASSERT_EQ( -1, ints[0] );
+    ASSERT_EQ( 121, ints[1] );
+    ASSERT_EQ( 313, ints[2] );
+}
+
 TEST(SmackUtil, OutputRedirection) {
 
     smack::test::common::redir out{ std::cout };

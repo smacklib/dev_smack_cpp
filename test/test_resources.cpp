@@ -85,7 +85,7 @@ TEST(CommonResourceBundle, listLocales)
 
     ASSERT_EQ(7U, locales.size());
 
-    std::sort( locales.begin(), locales.end() );
+    smack::sort( locales );
 
     size_t pos{};
 
@@ -129,7 +129,7 @@ TEST(CommonResourceBundle, translate_loads_of_stuff)
             u8"是"s,
             rb.translate(cn, "smack.yes"));
         ASSERT_EQ(
-            "垃圾桶"s,
+            u8"垃圾桶"s,
             rb.translate(cn, "smack.trash"));
     }
 
