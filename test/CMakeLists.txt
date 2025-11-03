@@ -27,7 +27,7 @@ add_executable( smack_cpp_test
   test_time_probe.cpp
   test_properties.cpp
   test_resources.cpp
-  test_thread_pool.cpp
+  test_threadpool.cpp
   test_util.cpp
 )
 

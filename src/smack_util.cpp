@@ -10,14 +10,32 @@
 
 #include "smack_util.hpp"
 
+
+namespace {
+
+    /**
+     * The current thread's id.  If this is 0, then it is not set yet.
+     */
+    thread_local unsigned threadId_ = 0;
+
+    /**
+     * A counter for generating thread-ids.
+     */
+    std::atomic_uint counter_{ 1 };
+
+}
+
 namespace smack {
+
+
+
+
 namespace util {
 
 using std::string;
 using std::string_view;
 using std::vector;
 
-namespace {
 template <typename T>
 void trimInplace_(string_view& in, const T& pred)
 {
@@ -25,7 +43,6 @@ void trimInplace_(string_view& in, const T& pred)
         in = in.substr(1);
     while (!in.empty() && pred(in[in.size() - 1]))
         in = in.substr(0, in.size() - 1);
-}
 }
 
 string strings::trim(const string& in)
@@ -111,4 +128,22 @@ string strings::concat(const vector<string>& in, const string& delimiter)
 }
 
 } // namepace util
+
+/**
+ * Get a unique, human-readable thread id.
+ *
+ * @return The thread id.
+ */
+auto thread_id() -> unsigned
+{
+    if (threadId_ == 0) {
+        // This is equivalent to counter++; (post increment).
+        threadId_ = counter_.fetch_add(1);
+    }
+
+    return threadId_;
+}    
+
 } // namespace smack
+
+
