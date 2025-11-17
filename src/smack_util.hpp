@@ -25,6 +25,13 @@ auto sort( C& c ) -> void
     std::sort( c.begin(), c.end() );
 }
 
+/** 
+ * Get a unique thread id, much shorter than the std::thread id.
+ * Used for debugging and logging.
+ * */
+auto thread_id() -> unsigned;
+
+
 } // namespace smack
 
 namespace smack::util {
