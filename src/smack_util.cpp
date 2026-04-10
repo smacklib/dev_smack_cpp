@@ -145,5 +145,3 @@ auto thread_id() -> unsigned
 }    
 
 } // namespace smack
-
-
