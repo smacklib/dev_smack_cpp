@@ -12,12 +12,14 @@
 #include <string>
 #include <vector>
 
+#if 0
 // Disables warnings when windows.h is included.
 #ifndef NOMINMAX
 # define NOMINMAX
 #endif
 #include <Windows.h>
 #include <WinNls.h>
+#endif
 
 #include <smack_resource_bundle.h>
 #include <smack_properties.hpp>
@@ -38,7 +40,7 @@ namespace {
         "../../test/resources/resourceBundle/good";
 }
 
-TEST(CommonResourceBundle, resourceDirExists)
+TEST(ResourceBundleLocale, resourceDirExists)
 {
     ASSERT_TRUE(
         std::filesystem::exists(PROJ_RESOURCE_DIR));
@@ -70,14 +72,14 @@ TEST(ResourceBundleLocale, constructor)
     }
 }
 
-TEST(CommonResourceBundle, toString)
+TEST(ResourceBundleLocale, toString)
 {
     ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
     ASSERT_EQ("ResourceBundle{smack@../../test/resources/resourceBundle/good}", rb.toString());
 }
 
-TEST(CommonResourceBundle, listLocales)
+TEST(ResourceBundleLocale, listLocales)
 {
     ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
@@ -99,8 +101,7 @@ TEST(CommonResourceBundle, listLocales)
     ASSERT_EQ("fr", locales.at(pos++));
 }
 
-
-TEST(CommonResourceBundle, translate_enUs)
+TEST(ResourceBundleLocale, translate_enUs)
 {
     Locale en_US{ "en", "US" };
     ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
@@ -111,8 +112,7 @@ TEST(CommonResourceBundle, translate_enUs)
     ASSERT_EQ("Yes"s, rb.translate(en_US, "smack.yes"));
 }
 
-
-TEST(CommonResourceBundle, translate_loads_of_stuff)
+TEST(ResourceBundleLocale, translate_loads_of_stuff)
 {
     const string LNG = "ISO-639-1"s;
     const string CNT = "ISO-3166-2"s;
@@ -210,8 +210,7 @@ TEST(CommonResourceBundle, translate_loads_of_stuff)
     }
 }
 
-
-TEST(CommonResourceBundle, translate_loads_of_stuff_withCurrentLocale)
+TEST(ResourceBundleLocale, translate_loads_of_stuff_withCurrentLocale)
 {
     ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
@@ -249,7 +248,7 @@ TEST(CommonResourceBundle, translate_loads_of_stuff_withCurrentLocale)
     Locale::setCurrent(originalLocale);
 }
 
-TEST(CommonResourceBundle, current_locale_setGet)
+TEST(ResourceBundleLocale, current_locale_setGet)
 {
     // Check the default case when the locale is not set yet.
     ASSERT_EQ(
@@ -275,7 +274,7 @@ TEST(CommonResourceBundle, current_locale_setGet)
         Locale::getCurrent().toString());
 }
 
-TEST(Resources, LocaleEq) {
+TEST(ResourceBundleLocale, LocaleEq) {
 
     Locale enUs1{ "en", "US" };
     Locale enUs2{ "en", "US" };
@@ -284,7 +283,8 @@ TEST(Resources, LocaleEq) {
     ASSERT_FALSE(enUs1 == enGb);
 }
 
-TEST(Resources, Locale) {
+#ifdef WIN32
+TEST(ResourceBundleLocale, Locale) {
 
     //ASSERT_EQ( "micbinz", std::locale("").name() );
     _locale_t loc = _get_current_locale();
@@ -294,3 +294,4 @@ TEST(Resources, Locale) {
     int x = GetUserDefaultLocaleName(wcBuffer, LOCALE_NAME_MAX_LENGTH);
     int y = GetLastError();
 }
+#endif
