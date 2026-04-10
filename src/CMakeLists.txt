@@ -5,6 +5,7 @@ set(headers
     smack_convert.hpp
     smack_properties.hpp
 	smack_resource_bundle.h
+    smack_scheduler.h
 	smack_threadpool.h
     smack_util.hpp
     smack_util_time_probe.hpp

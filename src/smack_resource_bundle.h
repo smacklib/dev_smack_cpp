@@ -2,7 +2,7 @@
  *
  * Localisation support.
  *
- * Copyright � 2025 Michael Binz
+ * Copyright © 2025 Michael Binz
  */
 
 #pragma once

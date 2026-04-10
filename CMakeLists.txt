@@ -27,6 +27,7 @@ if (ENABLE_EXAMPLES)
 endif ()
 
 if (ENABLE_TESTS)
+# Use ctest -V to execute the tests with verbose output.
     enable_testing()
     add_subdirectory(test)
 endif ()
