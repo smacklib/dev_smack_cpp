@@ -9,12 +9,14 @@
 
 // https://www.geeksforgeeks.org/thread-pool-in-cpp/
 
-#include <array>
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <queue>
+#include <stdexcept>
 #include <thread>
+#include <vector>
 
 namespace smack {
 

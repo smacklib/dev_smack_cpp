@@ -2,7 +2,7 @@
  *
  * A task scheduler.
  *
- * Copyright © 2025 Michael Binz
+ * Copyright © 2025-2026 Michael Binz
  */
 
 #pragma once
@@ -14,24 +14,9 @@
 #include <functional>
 #include <map>
 #include <mutex>
-#include <queue>
 #include <thread>
 
 #include "smack_common.h"
-
-// A hash function for std::chrono::time_point is missing in C++17.
-// C++26 delivers it.  This is a workaround.
-namespace std {
-template<typename _rep, typename ratio>
-struct hash<std::chrono::time_point<_rep, ratio>> {
-    typedef std::chrono::time_point<_rep, ratio> argument_type;
-    typedef std::size_t result_type;
-    result_type operator()(argument_type const& s) const
-    {
-        return std::hash<_rep>{}(s.count());
-    }
-};
-} // namespace std
 
 namespace smack {
 
@@ -68,8 +53,6 @@ class Scheduler : private std::mutex {
 
     auto dispatch() -> void
     {
-        self_ = this;
-
         while (!stop_) {
             auto now = std::chrono::system_clock::now();
 
@@ -86,7 +69,8 @@ class Scheduler : private std::mutex {
                     continue;
                 }
 
-                auto [next, task] = *first;
+                auto& [next, task] = *first;
+
                 if (next > now) {
                     // Wait until the next task is due or a new task is scheduled.
                     cv_.wait_until(lock, next);
@@ -99,8 +83,27 @@ class Scheduler : private std::mutex {
                 ptasks_.erase(first);
             }
 
-            consumer_(to_execute);
+            consumer_([this, thunk = std::move(to_execute)]() mutable {
+                self_ = this;
+                // Ensure that self_ is reset to nullptr when the task
+                // finishes, even if it throws an exception.
+                struct Guard { ~Guard() { self_ = nullptr; } } guard;
+                thunk();
+            });
         }
+    }
+
+    auto cycler(THUNK task, Duration cycleDuration) -> void
+    {
+        if (stop_) {
+            return;
+        }
+
+        task();
+
+        scheduleIn(
+            [this, task = std::move(task), cycleDuration](){ cycler( std::move(task), cycleDuration ); },
+            cycleDuration );
     }
 
 public:
@@ -126,6 +129,11 @@ public:
     {
     }
 
+    Scheduler(const Scheduler&) = delete;
+    Scheduler& operator=(const Scheduler&) = delete;
+    Scheduler(Scheduler&&) = delete;
+    Scheduler& operator=(Scheduler&&) = delete;
+
     /**
      * Stop the scheduler.  Note that this blocks until all threads
      * in the pool finished.
@@ -145,7 +153,8 @@ public:
     }
 
     /**
-     * Stop scheduling.
+     * Stop scheduling.  All pending tasks are discarded and no new tasks
+     * are accepted.
      */
     void stop()
     {
@@ -173,15 +182,13 @@ public:
      */
     auto scheduleIn(THUNK task, Duration duration) -> bool
     {
-        if (stop_) {
-            return false;
-        }
-
         {
             std::unique_lock<std::mutex> lock(*this);
+            if (stop_) {
+                return false;
+            }
             ptasks_.emplace(
                 std::chrono::system_clock::now() + duration,
-                // Decided for move, could copy?
                 move(task));
         }
 
@@ -209,25 +216,67 @@ public:
      */
     auto scheduleAt(THUNK task, TimePoint time) -> bool
     {
-        if (stop_) {
-            return false;
-        }
-
         if ( time < std::chrono::system_clock::now() ) {
             return false;
         }
 
         {
             std::unique_lock<std::mutex> lock(*this);
+            if (stop_) {
+                return false;
+            }
             ptasks_.emplace(
                 time,
-                // Decided for move, could copy?
                 move(task));
         }
 
         cv_.notify_one();
 
         return true;
+    }
+
+    /**
+     * Schedule a task for cyclic execution.
+     *
+     * @param task The task to execute. Note that cyclic execution is stopped
+     * if the passed task throws an exception.
+     * @param cycleDuration The duration between the end of one execution and
+     * the start of the next.  Note that this may involve a time drift.
+     * @return false if the scheduler is already stopped, otherwise true.
+     */
+    auto scheduleCyclic(THUNK task, Duration cycleDuration) -> bool
+    {
+        THUNK cyclerSelf =
+            [this, task = std::move(task), cycleDuration]()
+            {
+                cycler( std::move(task), cycleDuration );
+            };
+
+        return schedule( std::move(cyclerSelf) );
+    }
+
+    /**
+     * Schedule a task for cyclic execution where the cycle starts at a
+     * specific time.
+     *
+     * @param task The task to execute. Note that cyclic execution is stopped
+     * if the passed task throws an exception.
+     * @param cycleDuration The duration between the end of one execution and
+     * the start of the next.  Note that this may involve a time drift.
+     * @param startAt The time when the first execution should start.  Note
+     * that this must be a future time, otherwise the task is not scheduled
+     * and false is returned.
+     * @return false if the scheduler is already stopped, otherwise true.
+     */
+    auto scheduleCyclic(THUNK task, Duration cycleDuration, TimePoint startAt) -> bool
+    {
+        THUNK cyclerSelf =
+            [this, task = std::move(task), cycleDuration]()
+            {
+                cycler( std::move(task), cycleDuration );
+            };
+
+        return scheduleAt( std::move(cyclerSelf), startAt );
     }
 };
 

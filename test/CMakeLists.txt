@@ -35,4 +35,4 @@ target_link_libraries( smack_cpp_test
   smack_cpp
 )
 
-add_test(NAME smack_cpp_test COMMAND smack_cpp_test)
+add_test(NAME smack_cpp_test COMMAND smack_cpp_test WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
