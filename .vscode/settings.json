@@ -1,4 +1,7 @@
 {
+  "files.trimTrailingWhitespace": true,
+  "editor.trimAutoWhitespace": true,
+
     "files.associations": {
         "type_traits": "cpp",
         "limits": "cpp",

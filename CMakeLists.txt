@@ -14,6 +14,7 @@ set(CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
 
@@ -27,6 +28,7 @@ if (ENABLE_EXAMPLES)
 endif ()
 
 if (ENABLE_TESTS)
+# Use ctest -V to execute the tests with verbose output.
     enable_testing()
     add_subdirectory(test)
 endif ()

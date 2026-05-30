@@ -25,6 +25,7 @@ add_executable( smack_cpp_test
   test_time_probe.cpp
   test_properties.cpp
   test_resources.cpp
+  test_scheduler.cpp
   test_threadpool.cpp
   test_util.cpp
 )
@@ -34,4 +35,4 @@ target_link_libraries( smack_cpp_test
   smack_cpp
 )
 
-add_test(NAME smack_cpp_test COMMAND smack_cpp_test)
+add_test(NAME smack_cpp_test COMMAND smack_cpp_test WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

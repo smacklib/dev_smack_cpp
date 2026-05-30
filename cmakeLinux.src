@@ -8,6 +8,7 @@ cd $buildDir
 
 # Generation of tests and examples is enabled.
 cmake \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DENABLE_TESTS=ON \
     -DENABLE_EXAMPLES=ON \
     ..
