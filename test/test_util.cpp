@@ -10,6 +10,7 @@
 #include <string>
 
 #include <smack_util.hpp>
+#include <smack_common.h>
 #include "test_common.hpp"
 
 using std::string;
@@ -375,4 +376,10 @@ TEST(SmackUtil, CopyTracer) {
     EXPECT_EQ(2, lines.size());
     EXPECT_EQ("KONG(1) copy", lines[0]);
     EXPECT_TRUE( lines[1].empty() );
+}
+
+TEST(SmackVersion, members_match_project_version) {
+    EXPECT_EQ(17u, smack::version.major);
+    EXPECT_EQ(1u,  smack::version.minor);
+    EXPECT_EQ(0u,  smack::version.patch);
 }

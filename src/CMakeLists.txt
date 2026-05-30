@@ -1,4 +1,6 @@
 ﻿
+configure_file(smack_version.h.in smack_version.h)
+
 set(headers
     smack_locale.h
     smack_cli.hpp
@@ -25,11 +27,17 @@ add_library(smack_cpp STATIC
     ${headers}
 )
 
-target_include_directories(smack_cpp INTERFACE .)
+target_include_directories(smack_cpp INTERFACE .
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:include/smack_cpp>
+)
 
 install(TARGETS
   smack_cpp
   DESTINATION lib)
 install(FILES
   ${headers}
+  DESTINATION include/smack_cpp)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/smack_version.h
   DESTINATION include/smack_cpp)

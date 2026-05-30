@@ -11,12 +11,14 @@ set(CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 #
 # Common for all architectures..
 #
-set(CMAKE_CXX_STANDARD 17)
+set(SMACK_CXX_STANDARD 17)
+
+set(CMAKE_CXX_STANDARD ${SMACK_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(smack_cpp VERSION 0.1.0 LANGUAGES CXX)
+project(smack_cpp VERSION ${SMACK_CXX_STANDARD}.1.0 LANGUAGES CXX)
 
 option(ENABLE_TESTS "Enable testing" OFF)
 option(ENABLE_EXAMPLES "Enable building examples" OFF)
