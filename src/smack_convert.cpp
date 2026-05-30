@@ -39,11 +39,11 @@ auto convert_(std::string_view str, T& result)
 {
     int radix = 10;
 
-    if (smack::util::strings::starts_with(str, "0x")) {
+    if (smack::starts_with(str, "0x")) {
         radix = 16;
         str = str.substr(2);
     }
-    else if (smack::util::strings::starts_with(str, "0b")) {
+    else if (smack::starts_with(str, "0b")) {
         radix = 2;
         str = str.substr(2);
     }

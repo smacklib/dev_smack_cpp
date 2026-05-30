@@ -9,6 +9,11 @@
 
 #include <string>
 
+// Suppress deprecation warnings: the tests below intentionally exercise
+// the deprecated smack::util::* and smack::strings::* aliases.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <smack_util.hpp>
 #include <smack_common.h>
 #include "test_common.hpp"
@@ -311,7 +316,7 @@ TEST(SmackUtil, OutputRedirectionMultiline) {
 namespace {
     using std::cout;
     using std::endl;
-    using smack::util::Disposer;
+    using smack::Disposer;
 
     int closedCount = 0;
 
@@ -382,4 +387,75 @@ TEST(SmackVersion, members_match_project_version) {
     EXPECT_EQ(17u, smack::version.major);
     EXPECT_EQ(1u,  smack::version.minor);
     EXPECT_EQ(0u,  smack::version.patch);
+}
+
+#pragma GCC diagnostic pop
+
+// Tests for symbols at their new positions in namespace smack.
+
+TEST(SmackNS, split) {
+    auto v = smack::split("abc:def", ":");
+    ASSERT_EQ(2u, v.size());
+    EXPECT_EQ("abc", v[0]);
+    EXPECT_EQ("def", v[1]);
+}
+
+TEST(SmackNS, splitEmpty) {
+    auto v = smack::split("", ":");
+    EXPECT_EQ(0u, v.size());
+}
+
+TEST(SmackNS, splitNoDelimiter) {
+    auto v = smack::split("313", "");
+    ASSERT_EQ(1u, v.size());
+    EXPECT_EQ("313", v[0]);
+}
+
+TEST(SmackNS, concat) {
+    vector<string> sv = { "a", "b", "c" };
+    EXPECT_EQ("a-b-c", smack::concat(sv, "-"));
+}
+
+TEST(SmackNS, concatEmpty) {
+    vector<string> sv;
+    EXPECT_EQ("", smack::concat(sv, "-"));
+}
+
+TEST(SmackNS, trimString) {
+    EXPECT_EQ("313", smack::trim(string{"\t 313 \n"}));
+}
+
+TEST(SmackNS, trimStringView) {
+    EXPECT_EQ("313", smack::trim(string_view{"\t 313 \n"}));
+}
+
+TEST(SmackNS, trimStringChars) {
+    EXPECT_EQ("micbinz", smack::trim(string{"121micbinz313"}, "123456789"));
+}
+
+TEST(SmackNS, trimStringViewChars) {
+    EXPECT_EQ("micbinz", smack::trim(string_view{"121micbinz313"}, "123456789"));
+}
+
+TEST(SmackNS, startsWith) {
+    EXPECT_TRUE(smack::starts_with("prefixAndMore", "prefix"));
+    EXPECT_FALSE(smack::starts_with("prefixAndMore", "And"));
+    EXPECT_TRUE(smack::starts_with("prefixAndMore", ""));
+}
+
+TEST(SmackNS, endsWith) {
+    EXPECT_TRUE(smack::ends_with("prefixAndMore", "More"));
+    EXPECT_FALSE(smack::ends_with("prefixAndMore", "And"));
+    EXPECT_TRUE(smack::ends_with("prefixAndMore", ""));
+}
+
+TEST(SmackNS, Disposer) {
+    int closed = 0;
+    auto cleanup = [&closed](int) { closed++; };
+    {
+        smack::Disposer<int, decltype(cleanup)> handle{ 42, cleanup };
+        EXPECT_EQ(42, static_cast<int>(handle));
+        EXPECT_EQ(0, closed);
+    }
+    EXPECT_EQ(1, closed);
 }

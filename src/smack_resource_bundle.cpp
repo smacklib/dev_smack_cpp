@@ -163,7 +163,7 @@ auto ResourceBundle::detectLocales() -> void
         std::string base = fspath.stem().u8string();
 
         // Is now xxx, skip if not starting with basename.
-        if (! smack::util::strings::starts_with(base, baseName_)) {
+        if (! smack::starts_with(base, baseName_)) {
             continue;
         }
 
@@ -182,12 +182,12 @@ auto ResourceBundle::detectLocales() -> void
         }
 
         // Remove the leading _.
-        if (smack::util::strings::starts_with(base, "_")) {
+        if (smack::starts_with(base, "_")) {
             base = base.substr(1);
         }
 
         // Validate the remaining locale definitions.  Expected DE, DE_de.
-        auto locales = smack::util::strings::split(base, "_");
+        auto locales = smack::split(base, "_");
         if (locales.size() == 1) {
             ;
         } else if (locales.size() == 2) {
