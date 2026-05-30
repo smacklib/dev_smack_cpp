@@ -22,7 +22,7 @@ bool nextLine(T& stream, U& result) {
 
     while (std::getline(stream, currentLine)) {
         count++;
-        if (!smack::util::strings::ends_with(currentLine, "\\")) {
+        if (!smack::ends_with(currentLine, "\\")) {
             result.append(currentLine);
             break;
         }
@@ -69,7 +69,7 @@ namespace smack::util::properties
                 throw std::runtime_error("Missing '='@" + std::to_string(lineCount));
 
             auto key = buffer.substr(0, equalsPosition);
-            key = util::strings::trim(key);
+            key = smack::trim(key);
             auto val = buffer.substr(equalsPosition + 1);
 
             result[string{ key }] = string{ val };

@@ -47,7 +47,7 @@ int f(const char* func, TT ... args) {
 /**
  * Temporarily redirect a stream.
  */
-class redir 
+class redir
 {
 private:
     std::ostream& ss_;
@@ -70,7 +70,7 @@ public:
     }
 
     /**
-     * Get the full content of the redirected stream. 
+     * Get the full content of the redirected stream.
      */
     std::string str()
     {
@@ -82,7 +82,7 @@ public:
      */
     std::vector<std::string> strs()
     {
-        return smack::util::strings::split(
+        return smack::split(
             buffer_.str(),
             "\n");
     }
