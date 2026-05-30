@@ -27,6 +27,17 @@ namespace smack {
         std::chrono::milliseconds;
     using TimePoint =
         std::chrono::time_point<std::chrono::system_clock>;
+
+    /**
+     * Holds a semantic version number (major.minor.patch).
+     */
+    struct Version {
+        unsigned major;
+        unsigned minor;
+        unsigned patch;
+    };
 }
+
+#include "smack_version.h"
 
 using namespace std::chrono_literals;
