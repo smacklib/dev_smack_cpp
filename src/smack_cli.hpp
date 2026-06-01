@@ -67,12 +67,20 @@ namespace internal {
 /**
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
+ *
+ * @tparam Result The return type of the command function.
+ * @tparam Input  The type of each raw argument element passed on the command
+ *                line.  Defaults to std::string.  To use a custom type,
+ *                provide an explicit specialisation of
+ *                smack::convert::transform(const Input&, To&) for every
+ *                target type To the command accepts.
+ * @tparam Collection The container type holding the raw arguments.  Defaults
+ *                    to vector<Input>.
  */
 template <typename Result = int, typename Input = string, typename Collection = vector<Input>>
 class Command {
     // Defines the return type.
     using R = Result;
-    using I = Input;
     using IT = Collection;
 
     /**

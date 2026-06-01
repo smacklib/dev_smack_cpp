@@ -120,7 +120,7 @@ const char* get_typename_() {
 }
 
 template<typename T>
-constexpr cstr get_typename_(Choice<0>) {
+const char* get_typename_(Choice<0>) {
     return get_typename_<T>();
 }
 
@@ -128,7 +128,7 @@ constexpr cstr get_typename_(Choice<0>) {
  * @return a string representation for the supported types.
  */
 template<typename T>
-constexpr cstr get_typename() {
+const char* get_typename() {
     return get_typename_<T>(Choice<10>{});
 }
 
@@ -136,7 +136,7 @@ constexpr cstr get_typename() {
  * @return a string representation for the supported types.
  */
 template<typename T>
-constexpr cstr get_typename( T type ) {
+const char* get_typename( T type ) {
     return get_typename<decltype(type)>();
 }
 
