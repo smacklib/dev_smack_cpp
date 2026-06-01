@@ -135,10 +135,8 @@ class Command {
     template<typename Fu, typename Tp>
     static auto callFunc(Fu f, const Tp& params)
     {
-        constexpr auto sz =
-            std::tuple_size_v<Tp>;
         constexpr auto idx =
-            std::make_index_sequence<sz>{};
+            std::make_index_sequence<std::tuple_size_v<Tp>>{};
         return callFuncImpl( f, params, idx );
     }
 
@@ -184,10 +182,8 @@ class Command {
         Tp& params,
         const vector<Input>& argv)
     {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
         constexpr auto idx =
-            std::make_index_sequence<sz>{};
+            std::make_index_sequence<std::tuple_size_v<Tp>>{};
 
         convertImpl(argv, params, idx);
     }
