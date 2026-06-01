@@ -93,8 +93,8 @@ TEST(SmackCli, CommandHelpTooMany) {
 }
 
 template<>
-constexpr const char* smack::convert::get_typename( std::pair<int,int> type ) { 
-    return "pair"; 
+constexpr const char* smack::convert::get_typename( std::pair<int,int> type ) {
+    return "pair";
 }
 
 
@@ -115,9 +115,9 @@ template<> void smack::convert::transform(const char* in, std::pair<int,int>& ou
     if ( pos == string::npos )
         throw std::invalid_argument( in );
 
-    auto first = 
+    auto first =
         input.substr( 0, pos );
-    auto second = 
+    auto second =
         input.substr( pos + delimiter.length() );
 
     smack::convert::transform(
@@ -427,7 +427,7 @@ TEST(SmackCli, CliTestCommandDescription) {
     smack::cli::CliApplication cli(
         applicationHelpString.c_str(),
         Commands::make<fError>(
-            "xxx", 
+            "xxx",
             "description:xxx",
             { "p1" })
     );
@@ -464,7 +464,21 @@ TEST(SmackCli, TemplateCtor) {
     using namespace std::string_literals;
 
     std::tuple<int,const char *> bah;
-    smack::cli::Command c { 
+    smack::cli::Command c {
         "313"s,
         "desc", {"hu", "ha"}, bah, f2 };
+}
+
+TEST(SmackCli, CliDuplicateCommandExits) {
+    using smack::cli::Commands;
+
+    // Two commands with the same name and the same argument count must
+    // print an error and call exit(EXIT_FAILURE) during construction.
+    EXPECT_EXIT(
+        (smack::cli::CliApplication{
+            Commands::make<f1>("dup"),
+            Commands::make<f1>("dup")
+        }),
+        ::testing::ExitedWithCode(EXIT_FAILURE),
+        "Implementation error: Duplicate definition of command 'dup'");
 }

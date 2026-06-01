@@ -325,6 +325,26 @@ class Commands {
     struct PListDed {};
 
     /**
+     * Shared implementation for member-function specialisations.
+     */
+    template <typename... Args, typename Functor>
+    static auto makeMemberImpl(
+        Functor functor,
+        const string& name,
+        const string& description,
+        initializer_list<const char*> parameterHelper)
+    {
+        using Tp = std::tuple< typename std::decay<Args>::type ... >;
+        Tp argumentTuple;
+        return Command{
+            name,
+            description,
+            parameterHelper,
+            argumentTuple,
+            functor};
+    }
+
+    /**
      * Specialisation for free functions.
      */
     template <typename R, typename... Args, auto (F)(Args...)->R>
@@ -348,7 +368,7 @@ class Commands {
     };
 
     /**
-     * Specialisation for instance operations.
+     * Specialisation for instance operations (const and non-const).
      */
     template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
     struct PListDed<F>
@@ -360,26 +380,12 @@ class Commands {
             const string& description,
             initializer_list<const char*> parameterHelper = {})
         {
-            auto functor =
-                [instance](Args ... a) {
-                return (instance->*F)(a...);
-            };
-
-            using Tp =
-                std::tuple< typename std::decay<Args>::type ... >;
-            Tp argumentTuple;
-            return Command{
-                name,
-                description,
-                parameterHelper,
-                argumentTuple,
-                functor};
+            return makeMemberImpl<Args...>(
+                [instance](Args ... a) { return (instance->*F)(a...); },
+                name, description, parameterHelper);
         }
     };
 
-    /**
-     * Specialisation for const instance operations.
-     */
     template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
     struct PListDed<F>
     {
@@ -390,20 +396,9 @@ class Commands {
             const string& description,
             initializer_list<const char*> parameterHelper = {})
         {
-            auto functor =
-                [instance](Args ... a) {
-                return (instance->*F)(a...);
-            };
-
-            using Tp =
-                std::tuple< typename std::decay<Args>::type ... >;
-            Tp argumentTuple;
-            return Command{
-                name,
-                description,
-                parameterHelper,
-                argumentTuple,
-                functor};
+            return makeMemberImpl<Args...>(
+                [instance](Args ... a) { return (instance->*F)(a...); },
+                name, description, parameterHelper);
         }
     };
 

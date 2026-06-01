@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
 
 namespace smack::convert {
 
@@ -112,8 +113,10 @@ constexpr cstr get_typename_(Choice<1>) {
 }
 
 template<typename T>
-constexpr cstr get_typename_() {
-    return "unknown";
+const char* get_typename_() {
+    // Fallback: returns the compiler-mangled type name.
+    // For a readable name, provide an explicit specialisation of get_typename<T>().
+    return typeid(T).name();
 }
 
 template<typename T>
