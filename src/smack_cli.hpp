@@ -56,7 +56,7 @@ public:
 using cstr = const char*;
 
 namespace internal {
-    static string EMPTY_STRING;
+    inline const string EMPTY_STRING;
 
     /**
      * The quote character to be used in error messages.

@@ -7,34 +7,16 @@
 
 #pragma once
 
-#include <array>
 #include <cstddef>
-#include <cstdlib>
-#include <filesystem>
-#include <functional>
-#include <initializer_list>
-#include <iomanip>
-#include <iostream>
 #include <limits>
-#include <map>
 #include <stdexcept>
-#include <sstream>
 #include <string>
-#include <tuple>
 #include <type_traits>
-#include <typeindex>
-#include <typeinfo>
-#include <vector>
 
 namespace smack::convert {
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::initializer_list;
 using std::size_t;
 using std::string;
-using std::vector;
 
 class conversion_failure : public std::runtime_error {
 public:
@@ -44,7 +26,7 @@ public:
 };
 
 /**
- * Define the transformation function.  Implementations for primitives 
+ * Define the transformation function.  Implementations for primitives
  * and string-like types are available in the implementation file.
  */
 template <typename From, typename To>
@@ -120,39 +102,39 @@ constexpr cstr get_typename_(Choice<3>) {
 template<typename T,
 std::enable_if_t<std::is_same<T, string>::value, bool> = true>
 constexpr cstr get_typename_(Choice<2>) {
-    return "string"; 
+    return "string";
 }
 
 template<typename T,
 std::enable_if_t<std::is_same<T, char*>::value, bool> = true>
 constexpr cstr get_typename_(Choice<1>) {
-    return "string"; 
+    return "string";
 }
 
 template<typename T>
 constexpr cstr get_typename_() {
-    return "unknown"; 
+    return "unknown";
 }
 
 template<typename T>
 constexpr cstr get_typename_(Choice<0>) {
-    return get_typename_<T>(); 
+    return get_typename_<T>();
 }
 
 /**
  * @return a string representation for the supported types.
  */
 template<typename T>
-constexpr cstr get_typename() { 
-    return get_typename_<T>(Choice<10>{}); 
+constexpr cstr get_typename() {
+    return get_typename_<T>(Choice<10>{});
 }
 
 /**
  * @return a string representation for the supported types.
  */
 template<typename T>
-constexpr cstr get_typename( T type ) { 
-    return get_typename<decltype(type)>(); 
+constexpr cstr get_typename( T type ) {
+    return get_typename<decltype(type)>();
 }
 
 } // namespace smack::convert
