@@ -23,7 +23,7 @@ namespace smack {
 /**
  * A task scheduler.
  */
-class Scheduler : private std::mutex {
+class Scheduler {
 
     static auto internalConsumer( THUNK thunk ) -> void
     {
@@ -42,6 +42,9 @@ class Scheduler : private std::mutex {
     // The scheduled tasks in sorted order.
     std::multimap<std::chrono::time_point<std::chrono::system_clock>, THUNK> ptasks_;
 
+    // Protects ptasks_ and stop_.
+    std::mutex mutex_;
+
     // Signals changes in the tasks queue.
     std::condition_variable cv_;
 
@@ -59,7 +62,7 @@ class Scheduler : private std::mutex {
             THUNK to_execute;
 
             {
-                std::unique_lock<std::mutex> lock(*this);
+                std::unique_lock<std::mutex> lock(mutex_);
 
                 auto first = ptasks_.begin();
                 if (first == ptasks_.end()) {
@@ -160,7 +163,7 @@ public:
     {
         {
             // Modify the stop flag under lock.
-            std::unique_lock<std::mutex> lock(*this);
+            std::lock_guard<std::mutex>lock{mutex_};
 
             // Ignore if already stopped.
             if (stop_) {
@@ -183,7 +186,7 @@ public:
     auto scheduleIn(THUNK task, Duration duration) -> bool
     {
         {
-            std::unique_lock<std::mutex> lock(*this);
+            std::lock_guard<std::mutex> lock(mutex_);
             if (stop_) {
                 return false;
             }
@@ -221,7 +224,8 @@ public:
         }
 
         {
-            std::unique_lock<std::mutex> lock(*this);
+            std::lock_guard<std::mutex> lock(mutex_);
+
             if (stop_) {
                 return false;
             }

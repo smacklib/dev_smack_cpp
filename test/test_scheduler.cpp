@@ -292,4 +292,3 @@ TEST(Scheduler, get_scheduler_returns_self_from_thunk) {
 TEST(Scheduler, get_scheduler_throws_outside_thunk) {
     EXPECT_THROW(smack::Scheduler::get_scheduler(), std::runtime_error);
 }
-
