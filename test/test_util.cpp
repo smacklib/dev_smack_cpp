@@ -318,30 +318,48 @@ namespace {
     using std::endl;
     using smack::Disposer;
 
-    int closedCount = 0;
+    int count = 0;
 
     int argOpen() {
         auto seven = 7;
+        count++;
         return seven;
     }
 
     int argDo(int what) {
-        return 313;
+        return what + 313;
     }
 
     void argClose(int what) {
-        closedCount++;
+        ASSERT_EQ(7, what);
+        count--;
     }
 }
 
 TEST(SmackUtil, Disposer) {
     {
         Disposer handle{ argOpen(), argClose };
-        EXPECT_EQ(7, handle);
-        EXPECT_EQ(0, closedCount);
-        EXPECT_EQ(313, argDo(handle));
+        ASSERT_EQ(7, handle);
+        ASSERT_EQ(1, count);
+
+        EXPECT_EQ(320, argDo(handle));
     }
-    EXPECT_EQ(1, closedCount);
+    ASSERT_EQ(0, count);
+}
+// An example of performing proper resource cleanup without the Disposer class.
+TEST(SmackUtil, Disposer2) {
+    struct Guard {
+        int value;
+        ~Guard() { argClose(value); }
+    };
+    {
+        Guard handle{ argOpen() };
+        ASSERT_EQ(7, handle.value);
+        ASSERT_EQ(1, count);
+
+        EXPECT_EQ(320, argDo(handle.value));
+    }
+    ASSERT_EQ(0, count);
 }
 
 namespace {

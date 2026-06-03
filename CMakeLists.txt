@@ -30,8 +30,7 @@ if (ENABLE_EXAMPLES)
 endif ()
 
 if (ENABLE_TESTS)
-# Use ctest -V to execute the tests with verbose output.
-    set(CMAKE_CTEST_ARGUMENTS "-V")
+    set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
     enable_testing()
     add_subdirectory(test)
 endif ()
