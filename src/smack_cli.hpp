@@ -56,7 +56,7 @@ public:
 using cstr = const char*;
 
 namespace internal {
-    static string EMPTY_STRING;
+    inline const string EMPTY_STRING;
 
     /**
      * The quote character to be used in error messages.
@@ -67,12 +67,20 @@ namespace internal {
 /**
  * A single command.  This wraps a function and the necessary logic
  * to map from string-based command line arguments.
+ *
+ * @tparam Result The return type of the command function.
+ * @tparam Input  The type of each raw argument element passed on the command
+ *                line.  Defaults to std::string.  To use a custom type,
+ *                provide an explicit specialisation of
+ *                smack::convert::transform(const Input&, To&) for every
+ *                target type To the command accepts.
+ * @tparam Collection The container type holding the raw arguments.  Defaults
+ *                    to vector<Input>.
  */
 template <typename Result = int, typename Input = string, typename Collection = vector<Input>>
 class Command {
     // Defines the return type.
     using R = Result;
-    using I = Input;
     using IT = Collection;
 
     /**
@@ -98,7 +106,7 @@ class Command {
     template<typename R, typename T, typename Func, auto ... I>
     static auto map_tuple_(const T& tpl, Func func, std::index_sequence<I...> ) {
         return std::array<R, sizeof ... (I)>{
-            func(std::get<I>(tpl)) ... 
+            func(std::get<I>(tpl)) ...
         };
     }
 
@@ -127,10 +135,8 @@ class Command {
     template<typename Fu, typename Tp>
     static auto callFunc(Fu f, const Tp& params)
     {
-        constexpr auto sz =
-            std::tuple_size_v<Tp>;
-        constexpr auto idx = 
-            std::make_index_sequence<sz>{};
+        constexpr auto idx =
+            std::make_index_sequence<std::tuple_size_v<Tp>>{};
         return callFuncImpl( f, params, idx );
     }
 
@@ -138,7 +144,7 @@ class Command {
      * Trigger mapping.
      */
     template <typename ... T>
-    static void map(T ...) 
+    static void map(T ...)
     {
     }
 
@@ -150,9 +156,9 @@ class Command {
         }
         catch (std::invalid_argument&) {
             std::stringstream s;
-            s << 
+            s <<
                 std::quoted(str, internal::kDelim_) <<
-                " -> " << 
+                " -> " <<
                 smack::convert::get_typename<To>();
 
             throw std::invalid_argument(s.str());
@@ -168,21 +174,16 @@ class Command {
     {
         map(
             tf(std::get<S>(params), v[S]) ...
-        ); 
+        );
     }
 
     template <typename Tp>
     static void convert(
         Tp& params,
-        const vector<Input>& argv) 
+        const vector<Input>& argv)
     {
-        constexpr auto sz = std::tuple_size_v<Tp>;
-
-        if (argv.size() != sz)
-            throw std::invalid_argument("Wrong number of arguments.");
-        
         constexpr auto idx =
-            std::make_index_sequence<sz>{};
+            std::make_index_sequence<std::tuple_size_v<Tp>>{};
 
         convertImpl(argv, params, idx);
     }
@@ -289,10 +290,10 @@ public:
      * Call the command with arguments to be converted.
      */
     template <typename ... V>
-    R call(V const & ... argv) const 
+    R call(V const & ... argv) const
     {
         IT va {
-            argv ... 
+            argv ...
         };
 
         return callv( va );
@@ -302,7 +303,7 @@ public:
      * Creates a single-line command description that is displayed
      * in the generated cli help.
      */
-    string to_string() const 
+    string to_string() const
     {
         return helpLine_;
     }
@@ -328,10 +329,30 @@ class Commands {
     struct PListDed {};
 
     /**
-     * Specialisation for free functions. 
+     * Shared implementation for member-function specialisations.
+     */
+    template <typename... Args, typename Functor>
+    static auto makeMemberImpl(
+        Functor functor,
+        const string& name,
+        const string& description,
+        initializer_list<const char*> parameterHelper)
+    {
+        using Tp = std::tuple< typename std::decay<Args>::type ... >;
+        Tp argumentTuple;
+        return Command{
+            name,
+            description,
+            parameterHelper,
+            argumentTuple,
+            functor};
+    }
+
+    /**
+     * Specialisation for free functions.
      */
     template <typename R, typename... Args, auto (F)(Args...)->R>
-    struct PListDed<F> 
+    struct PListDed<F>
     {
         static auto make(
             const string& name,
@@ -343,7 +364,7 @@ class Commands {
             Tp argumentTuple;
             return Command{
                 name,
-                description, 
+                description,
                 parameterHelper,
                 argumentTuple,
                 F};
@@ -351,10 +372,10 @@ class Commands {
     };
 
     /**
-     * Specialisation for instance operations.
+     * Specialisation for instance operations (const and non-const).
      */
     template <typename T, typename R, typename ... Args, R(T::* F)(Args...)>
-    struct PListDed<F> 
+    struct PListDed<F>
     {
         template <typename Ty>
         static auto make(
@@ -363,28 +384,14 @@ class Commands {
             const string& description,
             initializer_list<const char*> parameterHelper = {})
         {
-            auto functor =
-                [instance](Args ... a) {
-                return (instance->*F)(a...);
-            };
-
-            using Tp =
-                std::tuple< typename std::decay<Args>::type ... >;
-            Tp argumentTuple;
-            return Command{
-                name, 
-                description,
-                parameterHelper,
-                argumentTuple, 
-                functor};
+            return makeMemberImpl<Args...>(
+                [instance](Args ... a) { return (instance->*F)(a...); },
+                name, description, parameterHelper);
         }
     };
 
-    /**
-     * Specialisation for const instance operations.
-     */
     template <typename T, typename R, typename ... Args, R(T::* F)(Args...) const>
-    struct PListDed<F> 
+    struct PListDed<F>
     {
         template <typename Ty>
         static auto make(
@@ -393,20 +400,9 @@ class Commands {
             const string& description,
             initializer_list<const char*> parameterHelper = {})
         {
-            auto functor =
-                [instance](Args ... a) {
-                return (instance->*F)(a...);
-            };
-
-            using Tp =
-                std::tuple< typename std::decay<Args>::type ... >;
-            Tp argumentTuple;
-            return Command{
-                name, 
-                description,
-                parameterHelper,
-                argumentTuple, 
-                functor};
+            return makeMemberImpl<Args...>(
+                [instance](Args ... a) { return (instance->*F)(a...); },
+                name, description, parameterHelper);
         }
     };
 
@@ -434,7 +430,7 @@ public:
 
     /**
      * Create a command for a free function.
-     * 
+     *
      * @param F The function reference.
      * @param name The name of the resulting command.
      * @param description A textual description of the command printed in the
@@ -522,7 +518,7 @@ class CliApplication
     static_assert(std::is_same<Command<Result,Input>, CsTy_>());
 
     /**
-     * Holds the user-defined commands. 
+     * Holds the user-defined commands.
      */
     std::array<CsTy_, sizeof ... (Cs)> commands_;
 
@@ -563,9 +559,9 @@ class CliApplication
                 std::filesystem::path path{ name_ };
                 path.replace_extension();
 
-                stream << 
-                    "Usage: " << 
-                    path.filename().string() << 
+                stream <<
+                    "Usage: " <<
+                    path.filename().string() <<
                     " COMMAND arguments\n";
             }
 
@@ -664,8 +660,13 @@ public:
     {
     }
 
+    CliApplication(const CliApplication&) = delete;
+    CliApplication& operator=(const CliApplication&) = delete;
+    CliApplication(CliApplication&&) = delete;
+    CliApplication& operator=(CliApplication&&) = delete;
+
     /**
-     * Launch the application using the passed arguments.  Note that the 
+     * Launch the application using the passed arguments.  Note that the
      * passed arguments must not include the name of the application. Do
      * not pass argv[0].  See and prefer launch( int, char** ) which directly
      * accepts the arguments received in a main()-function.
@@ -708,8 +709,8 @@ public:
             return commands.at( cmdArgv.size() )->callv( cmdArgv );
         }
         catch ( const conversion_failure& e ) {
-            cerr << 
-                "Conversion failed: " << 
+            cerr <<
+                "Conversion failed: " <<
                 e.what() <<
                 endl;
         }
@@ -734,7 +735,7 @@ public:
      * Launch the application using the passed arguments.  Just forward the arguments
      * that were passed to main().  If the application name was not explicitly set
      * then argv[0] is used as application name.
-     * 
+     *
      * @param argc The argument count, as defined by the C/C++ main()-function.
      * @param argc The arguments, as defined by the C/C++ main()-function.
      */

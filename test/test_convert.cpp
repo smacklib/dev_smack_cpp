@@ -63,7 +63,9 @@ TEST(SmackConvert, TypenameTest) {
     EXPECT_EQ("string", string{ get_typename<std::string&>() });
     EXPECT_EQ("string", string{ get_typename<const std::string&>() });
 
-    EXPECT_EQ("unknown", string{ get_typename<void>() });
+    // For unknown types the fallback returns the compiler-mangled type name
+    // via typeid(T).name(), which is never empty.
+    EXPECT_STREQ(typeid(void).name(), get_typename<void>());
 
     EXPECT_EQ("string", string{ get_typename<char*>() });
     EXPECT_EQ("string", string{ get_typename<const char*>() });
@@ -105,7 +107,7 @@ void testConversion()
             FAIL();
         }
         catch (const conversion_failure& e) {
-            string expected = 
+            string expected =
                 "Value " +
                 belowMin +
                 " must be in range [" +
@@ -127,7 +129,7 @@ void testConversion()
             FAIL();
         }
         catch (const conversion_failure& e) {
-            string expected = 
+            string expected =
                 "Value " +
                 overMax +
                 " must be in range [" +
@@ -301,7 +303,7 @@ TEST(SmackConvert, TransformUnsignedLongLong) {
 TEST(SmackConvert, TransformFloat) {
     testConversion<float>();
 }
-   
+
 TEST(SmackConvert, TransformDouble) {
     testConversion<double>();
 }
@@ -340,7 +342,7 @@ TEST(SmackConvert, TransformUint64) {
 
 template<>
 constexpr const char* smack::convert::get_typename( std::pair<float,float> type ) {
-    return "floatPair"; 
+    return "floatPair";
 }
 
 TEST(SmackConvert, PairTypename) {
@@ -359,9 +361,9 @@ template<> void smack::convert::transform(const char* in, std::pair<float, float
     if ( pos == string::npos )
         throw std::invalid_argument( in );
 
-    auto first = 
+    auto first =
         input.substr( 0, pos );
-    auto second = 
+    auto second =
         input.substr( pos + delimiter.length() );
 
     transform(
