@@ -100,6 +100,47 @@ inline constexpr bool ends_with( const std::string_view& in, const std::string_v
 }
 
 /**
+ * Converts a container of one type to a container of another type using a
+ * converter function or lambda.
+ */
+template <typename Container, typename ConverterFn>
+auto transform( const Container& in, ConverterFn converter )
+{
+    using Target = std::decay_t<decltype(converter(std::declval<typename Container::value_type>()))>;
+    std::vector<Target> result;
+    result.reserve(in.size());
+
+    for (const auto& element : in) {
+        result.push_back(converter(element));
+    }
+
+    return result;
+}
+
+/**
+ * Converts a vector of one type to a vector of another type using an
+ * overloaded function pointer. The correct overload is selected based on
+ * the vector's element type.
+ */
+template <typename T, typename Ret>
+std::vector<Ret> transform( const std::vector<T>& in, Ret(*converter)(T) )
+{
+    // The non-deduced context rule is one of those C++ subtleties that bites
+    // everyone at least once. The short version to remember: if T only appears
+    // inside typename SomeTemplate<T>::something, the compiler won't deduce T
+    // from it — it must appear "bare" somewhere in the parameter list.
+
+    std::vector<Ret> result;
+    result.reserve(in.size());
+
+    for (const auto& element : in) {
+        result.push_back(converter(element));
+    }
+
+    return result;
+}
+
+/**
  * Resource management with explicit non-destructor-based release.
  * Used primarily in interfacing to c-based stateful libraries
  * requiring resource management.

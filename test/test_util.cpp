@@ -467,6 +467,38 @@ TEST(SmackNS, endsWith) {
     EXPECT_TRUE(smack::ends_with("prefixAndMore", ""));
 }
 
+TEST(SmackNS, transform_int_to_string) {
+    vector<int> ints = {1, 2, 3};
+    auto strings = smack::transform(ints, [](int i) { return std::to_string(i); });
+    ASSERT_EQ(3u, strings.size());
+    EXPECT_EQ("1", strings[0]);
+    EXPECT_EQ("2", strings[1]);
+    EXPECT_EQ("3", strings[2]);
+}
+TEST(SmackNS, transform_int_to_string_function) {
+    vector<int> ints = {1, 2, 3};
+    auto strings = smack::transform(ints, std::to_string );
+    ASSERT_EQ(3u, strings.size());
+    EXPECT_EQ("1", strings[0]);
+    EXPECT_EQ("2", strings[1]);
+    EXPECT_EQ("3", strings[2]);
+}
+
+TEST(SmackNS, transform_string_to_int) {
+    vector<std::string> strings = {"1", "2", "3"};
+    auto ints = smack::transform(strings, [](const std::string& s) { return std::stoi(s); });
+    ASSERT_EQ(3u, ints.size());
+    EXPECT_EQ(1, ints[0]);
+    EXPECT_EQ(2, ints[1]);
+    EXPECT_EQ(3, ints[2]);
+}
+
+TEST(SmackNS, transformEmpty) {
+    vector<int> ints;
+    auto strings = smack::transform(ints, [](int i) { return std::to_string(i); });
+    EXPECT_EQ(0u, strings.size());
+}
+
 TEST(SmackNS, Disposer) {
     int closed = 0;
     auto cleanup = [&closed](int) { closed++; };
