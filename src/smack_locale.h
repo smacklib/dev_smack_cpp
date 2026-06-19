@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-
+#include <map>
 namespace smack::localisation {
 
 /**
@@ -153,5 +153,11 @@ public:
         s_current = std::make_unique<Locale>(locale.language_, locale.country_);
     }
 };
+
+auto getSystemLocale() -> Locale;
+
+// auto generateSourceFromMap() -> std::string;
+
+// auto generateResourceMap( std::filesystem::path filePath ) -> std::map<Locale, std::string>;
 
 } // namespace smack::localisation

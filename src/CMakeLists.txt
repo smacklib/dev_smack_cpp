@@ -1,8 +1,11 @@
-﻿
+﻿add_subdirectory(cli)
+
+
 configure_file(smack_version.h.in smack_version.h)
 
 set(headers
     smack_locale.h
+    smack_system.h
     smack_cli.hpp
     smack_convert.hpp
     smack_properties.hpp
@@ -15,6 +18,21 @@ set(headers
 
 set(implementation
 smack_locale.cpp
+)
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND implementation smack_system_linux.cpp)
+endif()
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    list(APPEND implementation smack_system_win.cpp)
+endif()
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    list(APPEND implementation smack_system_darwin.cpp)
+endif()
+
+list(APPEND implementation
     smack_convert.cpp
     smack_properties.cpp
 	smack_resource_bundle.cpp
