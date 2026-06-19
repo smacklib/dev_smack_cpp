@@ -1,4 +1,6 @@
 ﻿
+add_subdirectory( cli_localized )
+
 set(headers
   examples_common.h
 )

@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -21,6 +22,9 @@
 
 namespace smack::internal
 {
+
+using Locale = smack::Locale;
+
     const std::string rb_template = R"(/* Smack C++ @ https://github.com/smacklib/dev_smack_cpp
  *
  * Generated at ${creation_date_time}.  Do not modify.
@@ -30,8 +34,9 @@ namespace smack::internal
 
 #include <initializer_list>
 #include <map>
-#include <smack_resource_bundle.h>
 #include <string>
+
+#include <smack_resource_bundle.h>
 
 namespace smack {
 
@@ -40,10 +45,6 @@ inline smack::localisation::ResourceBundleGenerated rb_${bundle_name}{
 "${bundle_name}",
 "${creation_date_time}",
 {
-   {
-       "",
-       ${root_bundle}
-   },
    ${toc}
 }
 #pragma smack format off
@@ -103,39 +104,59 @@ auto indentGeneratedSource( const std::string& source, const std::string& indent
     return result.str();
 }
 
-auto createTocEntry( const smack::localisation::Locale& locale, const smack::util::properties::PropertyMap& map ) -> std::string
+auto createTocEntry( const Locale& locale, const smack::util::properties::PropertyMap& map ) -> std::string
 {
     return "{\n\"" + locale.toString() + "\",\n" + generateSourceFromMap(map) + "\n}";
 }
 
-auto createTocEntry( const std::string& locale, const smack::util::properties::PropertyMap& map ) -> std::string
-{
-    auto parts = smack::split(locale, "_");
+/** TODO smack::util candidate
+ * Removes the passed prefix from the passed buffer and returns the modified string.
+ *
+ * Checks if the `buffer` string starts with the `prefix` string.
+ * If it does, it returns a new string that is the `buffer` with the `prefix` removed
+ * from its beginning. If the `buffer` does not start with the `prefix`, or if the
+ * `prefix` is longer than the `buffer`, the original `buffer` is returned unchanged.
+ *
+ * @param prefix The string to be removed from the beginning of the buffer.
+ * @param buffer The string from which the prefix should be removed.
+ * @return A new string with the prefix removed, or the original buffer if the prefix
+ *         was not found at the beginning.
+ */
+std::string removePrefix(const std::string prefix, const std::string& buffer) {
 
-    if (parts.size() == 1) {
-        return "  // base locale";
-    }
-    if (parts.size() == 2) {
-        smack::localisation::Locale l(parts[1]);
-        return createTocEntry(l, map);
-    }
-    if (parts.size() == 3) {
-        smack::localisation::Locale l(parts[1], parts[2]);
-        return createTocEntry(l, map);
+    if (buffer.length() < prefix.length()) {
+        // Buffer is shorter than the prefix, so it cannot start with it.
+        return buffer;
     }
 
-    return "    // invalid locale";
+    if (smack::starts_with(buffer, prefix)) {
+        return buffer.substr(prefix.length());
+    }
+
+    return buffer;
 }
 
-auto createToc( const std::set<std::filesystem::path>& locales ) -> std::string
+auto createToc(
+    const std::string& bundleName,
+    const std::set<std::filesystem::path>& bundles ) -> std::string
 {
     std::vector<std::string> tocEntries;
 
-    for ( const auto& locale : locales ) {
+    for ( const auto& bundle : bundles ) {
         smack::util::properties::PropertyMap map =
-            smack::util::properties::loadProperties(locale.string());
+            smack::util::properties::loadProperties(bundle.string());
 
-        tocEntries.push_back(createTocEntry(locale.stem().string(), map));
+        auto localeName =
+            smack::trim(
+                removePrefix(
+                    bundleName,
+                    bundle.stem().string()),
+                "_");
+
+        tocEntries.push_back(
+            createTocEntry(
+                Locale::makeLocaleFromName( localeName ),
+                 map ) );
     }
 
     return smack::concat(tocEntries, ",\n");
@@ -176,19 +197,20 @@ auto replaceFirstProperty(
     return result;
 }
 
-
 auto toUnicodeEscapes( const std::string& utf8str ) -> std::string
 {
-    std::stringstream ss;
+    std::stringstream result;
+
     for (unsigned char c : utf8str) {
         if (c < 128) {
-            ss << c;
+            result << c;
         } else {
-            ss << "\\x" << std::hex << std::setw(2) << std::setfill('0')
-               << static_cast<int>(c);
+            result << "\\x" << std::hex << std::setw(2) << std::setfill('0')
+                   << static_cast<int>(c);
         }
     }
-    return ss.str();
+
+    return result.str();
 }
 
 auto generateSourceFromMap( const smack::util::properties::PropertyMap& map ) -> std::string
@@ -211,28 +233,18 @@ auto generateSourceFromMap( const smack::util::properties::PropertyMap& map ) ->
 }
 
 /**
- *  TODO Add documentation
- */
-auto generateSourceFromFile( const std::filesystem::path& filePath ) -> std::string
-{
-    smack::util::properties::PropertyMap map =
-        smack::util::properties::loadProperties(filePath.string());
-
-    return generateSourceFromMap(map);
-}
-
-/**
  * Collects all files in the same directory as 'baseBundle' matching the pattern
- * 'baseBundle_<locale>.properties'.
+ * 'baseBundle_<locale>.properties'.  baseBundle itself is also included in the
+ * result set.
  *
  * @param The 'baseBundle' parameter is a path to the base resource bundle file,
  * for example 'resources/smack.properties'.
  * @return A set of paths to the matching resource bundle files. For example all files
  * 'resources/smack_*.properties'.
  */
-auto collectBundles( std::filesystem::path baseBundle ) -> std::set<std::filesystem::path>
+auto collectBundles( const std::filesystem::path& baseBundle ) -> std::set<std::filesystem::path>
 {
-    std::set<std::filesystem::path> result;
+    std::set<std::filesystem::path> result{baseBundle};
 
     const auto parentDir = baseBundle.parent_path().empty()
         ? std::filesystem::path{"."}
@@ -265,11 +277,10 @@ auto collectBundles( std::filesystem::path baseBundle ) -> std::set<std::filesys
 
 // Bundle base name.
 const std::string BUNDLE_NAME              = "bundle_name";
-const std::string BUNDLE_ROOT              = "root_bundle";
 const std::string BUNDLE_TOC               = "toc";
 const std::string BUNDLE_CREATION_DATETIME = "creation_date_time";
 
-std::string implGenerateResourceBundle( std::string baseBundleName )
+std::string implGenerateResourceBundle( const std::string& baseBundleName )
 {
     std::filesystem::path inPath{ baseBundleName };
 
@@ -284,7 +295,7 @@ std::string implGenerateResourceBundle( std::string baseBundleName )
         throw std::filesystem::filesystem_error(
             "Not a regular file",
             inPath,
-            std::make_error_code( std::errc::not_a_directory ) );
+            std::make_error_code( std::errc::not_supported ) );
     }
 
     if ( inPath.extension() != ".properties" ) {
@@ -316,16 +327,11 @@ std::string implGenerateResourceBundle( std::string baseBundleName )
         result );
 
     result = replaceProperties(
-        BUNDLE_ROOT,
-        generateSourceFromFile(inPath),
-        result );
-
-    result = replaceProperties(
         BUNDLE_TOC,
-        createToc(bundles),
+        createToc( bundleName, bundles ),
         result );
 
-    return result;
+    return indentGeneratedSource(result);
 }
 
 } // namespace smack::internal
@@ -336,11 +342,29 @@ namespace smack::cli
 /**
  * The parameter of the base bundle.  For example 'resources/smack.properties'.
  */
-int cmdGenerateResourceBundle( std::string baseBundleName )
+int cmdGenerateResourceBundle( const std::string& baseBundleName )
 {
     std::cout <<
-        smack::internal::indentGeneratedSource(
-            smack::internal::implGenerateResourceBundle(baseBundleName)) << std::endl;
+        smack::internal::implGenerateResourceBundle(baseBundleName) << std::endl;
+
+    return EXIT_SUCCESS;
+}
+
+int cmdGenerateResourceBundleToDirectory( const std::string& baseBundleName, const std::string& outputDirectory )
+{
+    const std::filesystem::path bundlePath(baseBundleName);
+    const std::string bundleName = bundlePath.stem().string();
+    const std::filesystem::path outputFile =
+        std::filesystem::path(outputDirectory) / ("rb_" + bundleName + ".h");
+
+    std::ofstream out(outputFile);
+
+    if (!out) {
+        throw std::runtime_error("Cannot open output file: " + outputFile.string());
+    }
+
+    out <<
+        smack::internal::implGenerateResourceBundle(baseBundleName) << std::endl;
 
     return EXIT_SUCCESS;
 }

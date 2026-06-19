@@ -2,12 +2,10 @@
  *
  * Type conversions.
  *
- * Copyright © 2021 Michael Binz
+ * Copyright © 2021-2026 Michael Binz
  */
 
 #pragma once
-
-#include "smack_system.h"
 
 #include <cstddef>
 #include <limits>
@@ -15,6 +13,8 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+
+#include "smack_locale.h"
 
 namespace smack::convert {
 

@@ -105,45 +105,7 @@ TEST(GenerateSourceFromMap, EmptyMap) {
     ASSERT_EQ("{\n}", result);
 }
 
-TEST(GenerateMapTypeFromMap, StringToString) {
-    std::map<std::string, std::string> m;
-
-    auto result = smack::internal::generateMapTypeFromMap(m);
-
-    EXPECT_EQ("std::map<std::string, std::string>", result);
-}
-
-TEST(GenerateMapTypeFromMap, UnsignedToString) {
-    std::map<unsigned, std::string> m;
-
-    auto result = smack::internal::generateMapTypeFromMap(m);
-
-    EXPECT_EQ("std::map<unsigned int, std::string>", result);
-}
-
-TEST(ResourceBundleGenerator, resolve_type_to_string)
-{
-    ASSERT_EQ("smack::Version", smack::internal::resolve_type<smack::Version>());
-
-    ASSERT_EQ("bool",   smack::internal::resolve_type<bool>());
-    ASSERT_EQ("short",  smack::internal::resolve_type<short>());
-    ASSERT_EQ("int",    smack::internal::resolve_type<int>());
-    ASSERT_EQ("long",   smack::internal::resolve_type<long>());
-    ASSERT_EQ("float",  smack::internal::resolve_type<float>());
-    ASSERT_EQ("double", smack::internal::resolve_type<double>());
-    ASSERT_EQ("std::string", smack::internal::resolve_type<std::string>());
-    ASSERT_EQ("std::string", smack::internal::resolve_type<char*>());
-    ASSERT_EQ("std::string", smack::internal::resolve_type<const char*>());
-
-    ASSERT_EQ("bool",   smack::internal::resolve_type<const bool&>());
-    ASSERT_EQ("int",    smack::internal::resolve_type<const int&>());
-    ASSERT_EQ("long",   smack::internal::resolve_type<long&>());
-    ASSERT_EQ("double", smack::internal::resolve_type<const double&>());
-    ASSERT_EQ("std::string", smack::internal::resolve_type<const std::string&>());
-    ASSERT_EQ("std::string", smack::internal::resolve_type<std::string&>());
-}
-
-TEST(CollectBundles, CollectsSiblingLocaleBundles)
+TEST(CollectBundles, CollectsLocaleBundles_smack)
 {
     const auto testDir = std::filesystem::temp_directory_path() / "smack_collect_bundles";
     std::filesystem::remove_all(testDir);
@@ -166,6 +128,40 @@ TEST(CollectBundles, CollectsSiblingLocaleBundles)
     const auto result = smack::internal::collectBundles(baseBundle);
 
     const std::set<std::filesystem::path> expected = {
+        baseBundle,
+        englishBundle,
+        britishBundle,
+    };
+
+    EXPECT_EQ(expected, result);
+
+    std::filesystem::remove_all(testDir);
+}
+
+TEST(CollectBundles, CollectsLocaleBundles_cli_localized)
+{
+    const auto testDir = std::filesystem::temp_directory_path() / "cli_localized";
+    std::filesystem::remove_all(testDir);
+    std::filesystem::create_directories(testDir);
+
+    const auto baseBundle = testDir / "cli_localized.properties";
+    const auto englishBundle = testDir / "cli_localized_en.properties";
+    const auto britishBundle = testDir / "cli_localized_en_GB.properties";
+    // Not found, since the prefix is not 'cli_localized'.
+    const auto unrelatedBundle = testDir / "other_en.properties";
+    // Not found, since the extension is not .properties.
+    const auto wrongExtension = testDir / "cli_localized_de.txt";
+
+    std::ofstream(baseBundle.string()).put('\n');
+    std::ofstream(englishBundle.string()).put('\n');
+    std::ofstream(britishBundle.string()).put('\n');
+    std::ofstream(unrelatedBundle.string()).put('\n');
+    std::ofstream(wrongExtension.string()).put('\n');
+
+    const auto result = smack::internal::collectBundles(baseBundle);
+
+    const std::set<std::filesystem::path> expected = {
+        baseBundle,
         englishBundle,
         britishBundle,
     };
@@ -344,7 +340,7 @@ TEST(ImplGenerateResourceBundle, GeneratesValidCppSourceForBaseBundle)
     namespace fs = std::filesystem;
 
     const fs::path baseBundle =
-        smack::test::makeResourcePath("resourceBundle/good/smack.properties");
+        smack::test::makeResourcePath("resourceBundle/smack.properties");
     const std::string result =
         smack::internal::implGenerateResourceBundle(baseBundle.string());
 

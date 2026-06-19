@@ -7,6 +7,7 @@
 
 #include "smack_locale.h"
 #include "smack_system.h"
+#include "smack_util.hpp"
 #include <cxxabi.h>
 
 #include <locale>
@@ -14,7 +15,7 @@
 
 namespace smack::system {
 
-using smack::localisation::Locale;
+using smack::Locale;
 
 /**
  * Returns the system locale by querying the POSIX locale settings.
@@ -32,6 +33,7 @@ auto getLocale() -> Locale
     // No usable locale information available — return the default locale.
     if ( raw.empty()
             || raw == "C"
+            || smack::starts_with(raw, "C.")
             || raw == "POSIX" )
         return Locale{};
 
@@ -54,9 +56,7 @@ auto getLocale() -> Locale
     return Locale{ loc.substr( 0, sep ), loc.substr( sep + 1 ) };
 }
 
-} // namespace smack::system
-
-auto smack::system::demangle(const char* name) -> std::string
+auto demangle(const char* name) -> std::string
 {
     int status{0};
 
@@ -68,3 +68,5 @@ auto smack::system::demangle(const char* name) -> std::string
 
     return (status == 0) ? result.get() : name;
 }
+
+} // namespace smack::system

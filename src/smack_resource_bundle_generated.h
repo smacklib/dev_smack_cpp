@@ -50,7 +50,7 @@ public:
         return baseName_;
     }
 
-    auto hasDefinitions(const smack::localisation::Locale& locale) const
+    auto hasDefinitions(const smack::Locale& locale) const
         -> bool override
     {
         std::string language_country = locale.toString();
@@ -62,16 +62,16 @@ public:
         return false;
     }
 
-    auto listLocales() const -> std::set<smack::localisation::Locale> override
+    auto listLocales() const -> std::set<smack::Locale> override
     {
-        std::set<smack::localisation::Locale> result;
+        std::set<smack::Locale> result;
 
         for (const auto& [localeName, _] : tableOfContents_) {
-            result.insert(smack::localisation::Locale::makeLocaleFromName(localeName));
+            result.insert(smack::Locale::makeLocaleFromName(localeName));
         }
 
         // Remove the root locale from the list.
-        result.erase(smack::localisation::Locale{});
+        result.erase(smack::Locale{});
 
         return result;
     }
@@ -81,7 +81,7 @@ public:
      */
     std::string tl(const std::string& key) const override
     {
-        smack::localisation::Locale currentLocale = smack::localisation::Locale::getCurrent();
+        smack::Locale currentLocale = smack::Locale::getCurrent();
 
         while ( true )
         {
@@ -116,7 +116,7 @@ public:
         result += smack::concat(
             smack::transform(
                 locales,
-                [&](const smack::localisation::Locale& locale) {
+                [&](const smack::Locale& locale) {
                     return locale.toString();
                 } ),
             ", ");

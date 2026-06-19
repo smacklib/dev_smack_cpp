@@ -10,9 +10,9 @@
 #include <set>
 #include <string>
 
-#include "cli/smack_gen.hpp"
+#include <rb_smack.h>
 
-using Locale = smack::localisation::Locale;
+using Locale = smack::Locale;
 
 class RbSmackTest : public ::testing::Test {
 protected:

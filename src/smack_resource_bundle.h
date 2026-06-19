@@ -43,7 +43,7 @@ virtual auto getName() const -> std::string = 0;
  * @param locale The locale to check.
  * @return \b true if the locale is available, otherwise \b false.
  */
-virtual auto hasDefinitions(const Locale& locale) const -> bool = 0;
+virtual auto hasDefinitions(const smack::Locale& locale) const -> bool = 0;
 
 /**
  * List the available locales.
@@ -51,7 +51,7 @@ virtual auto hasDefinitions(const Locale& locale) const -> bool = 0;
  * @return The list of available locales in string format, e.g.
  * "de_DE", "de".
  */
-virtual auto listLocales() const -> std::set<Locale> = 0;
+virtual auto listLocales() const -> std::set<smack::Locale> = 0;
 
 /**
  * Debug support.

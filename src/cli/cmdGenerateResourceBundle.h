@@ -10,10 +10,12 @@
 #include <filesystem>
 #include <map>
 #include <set>
+#include <string>
+
 #include <smack_convert.hpp>
 #include <smack_properties.hpp>
+#include <smack_system.h>
 
-#include <string>
 
 namespace smack::internal
 {
@@ -67,51 +69,10 @@ namespace smack::internal
         const std::string& source ) -> std::string;
 
     /**
-     * Resolves the passed type T to its C++ type name as a string.
-     */
-    template<typename T>
-    auto resolve_type() -> std::string
-    {
-        using U = std::decay_t<T>;
-        if constexpr (std::is_same_v<U, bool>)
-            return "bool";
-        else if constexpr (std::is_same_v<U, short>)
-            return "short";
-        else if constexpr (std::is_same_v<U, int>)
-            return "int";
-        else if constexpr (std::is_same_v<U, long>)
-            return "long";
-        else if constexpr (std::is_same_v<U, double>)
-            return "double";
-        else if constexpr (std::is_same_v<U, float>)
-            return "float";
-        else if constexpr (
-            std::is_same_v<U, char*> || std::is_same_v<U, const char*> || std::is_same_v<U, std::string>)
-            return "std::string";
-        else {
-            return smack::system::demangle<U>();
-        }
-    }
-
-    /**
      * Converts an UTF-8 std::string to an escaped string where non-ASCII bytes
      * are represented as \xHH escape sequences.
      */
     auto toUnicodeEscapes( const std::string& utf8str ) -> std::string;
-
-    /**
-     * Creates a C++ source code string containing
-     * the literal definition of the type of the passed map.
-     */
-    template <typename K, typename V>
-    auto generateMapTypeFromMap( std::map<K,V> ) -> std::string
-    {
-        return std::string("std::map<")
-            + smack::internal::resolve_type<K>()
-            + ", "
-            + smack::internal::resolve_type<V>()
-            + ">";
-    }
 
     /**
      * Generates a literal definition of the passed map in C++ source code.
@@ -131,12 +92,14 @@ namespace smack::internal
      */
     auto generateSourceFromMap( const smack::util::properties::PropertyMap& map ) -> std::string;
 
-    auto collectBundles( std::filesystem::path baseBundle ) -> std::set<std::filesystem::path>;
+    auto collectBundles( const std::filesystem::path& baseBundle ) -> std::set<std::filesystem::path>;
 
-    auto implGenerateResourceBundle( std::string baseBundleName ) -> std::string;
+    auto implGenerateResourceBundle( const std::string& baseBundleName ) -> std::string;
 }
 
 namespace smack::cli
 {
-    auto cmdGenerateResourceBundle( std::string path ) -> int;
+    auto cmdGenerateResourceBundle( const std::string& path ) -> int;
+    auto cmdGenerateResourceBundleToFile( const std::string& path, const std::string& outputFile ) -> int;
+    auto cmdGenerateResourceBundleToDirectory( const std::string& path, const std::string& outputDirectory ) -> int;
 } // namespace smack::cli

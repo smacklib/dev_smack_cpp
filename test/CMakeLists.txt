@@ -38,6 +38,7 @@ target_link_libraries( smack_cpp_test
   gtest
   gmock
   smack_cpp
+  rb_smack
 )
 
 target_compile_definitions(smack_cpp_test PRIVATE
@@ -46,3 +47,5 @@ target_compile_definitions(smack_cpp_test PRIVATE
 
 include(GoogleTest)
 gtest_discover_tests(smack_cpp_test WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_subdirectory(cli-resource-bundle)

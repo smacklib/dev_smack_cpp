@@ -7,13 +7,10 @@
 
 #pragma once
 
+#include "smack_locale.h"
 #include <string>
 #include <typeinfo>
 #include <type_traits>
-
-// Forward declaration — smack_locale.h cannot be included here because it
-// transitively includes smack_system.h (via smack_convert.hpp).
-namespace smack::localisation { class Locale; }
 
 namespace smack::system
 {
@@ -34,6 +31,6 @@ auto demangle() -> std::string
 /**
  * Returns the system locale by querying the underlying operating system.
  */
-auto getLocale() -> smack::localisation::Locale;
+auto getLocale() -> smack::Locale;
 
 } // namespace smack::system

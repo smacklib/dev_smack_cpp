@@ -14,7 +14,7 @@
 
 namespace smack::system {
 
-using smack::localisation::Locale;
+using smack::Locale;
 
 /**
  * Returns the system locale by querying the Core Foundation locale APIs.

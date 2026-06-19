@@ -43,16 +43,16 @@ auto ResourceBundleFile::toString() const -> std::string
         + "\n{ " + localeList + " }";
 }
 
-auto ResourceBundleFile::listLocales() const -> std::set<Locale>
+auto ResourceBundleFile::listLocales() const -> std::set<smack::Locale>
 {
-    std::set<Locale> result;
+    std::set<smack::Locale> result;
 
     for (const auto& [key, _] : availableFiles_) {
-        result.insert(Locale::makeLocaleFromName(key));
+        result.insert(smack::Locale::makeLocaleFromName(key));
     }
 
     // Remove the root locale from the list.
-    result.erase(smack::localisation::Locale{});
+    result.erase(smack::Locale{});
 
     return result;
 }
@@ -86,7 +86,7 @@ auto ResourceBundleFile::resolve(const std::string& locale, const std::string& k
     return keyMap.at(key);
 }
 
-auto ResourceBundleFile::translate(const Locale& locale, const std::string& key) const -> std::string
+auto ResourceBundleFile::tl(const smack::Locale& locale, const std::string& key) const -> std::string
 {
     // Prevent concurrent loading.
     std::lock_guard<std::mutex> lock(mutex_);
@@ -115,14 +115,14 @@ auto ResourceBundleFile::translate(const Locale& locale, const std::string& key)
         }
     }
 
-    return "default." + key;
+    return key;
 }
 
-auto ResourceBundleFile::translate(const std::string& key) const -> std::string
+auto ResourceBundleFile::tl(const std::string& key) const -> std::string
 {
-    auto const currentLocale = Locale::getCurrent();
+    auto const currentLocale = smack::Locale::getCurrent();
 
-    return translate(currentLocale, key);
+    return tl(currentLocale, key);
 }
 
 auto ResourceBundleFile::discoverLocales() -> void
@@ -183,7 +183,7 @@ auto ResourceBundleFile::discoverLocales() -> void
     }
 }
 
-auto ResourceBundleFile::hasDefinitions(const Locale& locale) const -> bool
+auto ResourceBundleFile::hasDefinitions(const smack::Locale& locale) const -> bool
 {
     return availableFiles_.find(locale.toString()) != availableFiles_.end();
 }

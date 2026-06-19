@@ -2,7 +2,6 @@
 add_executable( smack
     cmdGenerateResourceBundle.cpp
     cmdGenerateResourceBundle.h
-    cmdUsePrototype.cpp
     smack.cpp
 )
 

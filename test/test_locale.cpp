@@ -24,9 +24,10 @@
 #include <smack_properties.hpp>
 #include <smack_resource_bundle.h>
 #include <smack_util.hpp>
+#include <smack_system.h>
 #include "test_common.hpp"
 
-using Locale = smack::localisation::Locale;
+using Locale = smack::Locale;
 using PropertyMap = smack::util::properties::PropertyMap;
 using ResourceBundleFile = smack::localisation::ResourceBundleFile;
 using std::string;
@@ -58,6 +59,29 @@ TEST(Locale, constructor)
         ASSERT_EQ("de_DE", l.toString());
         ASSERT_EQ("de", l.getLanguage());
         ASSERT_EQ("DE", l.getCountry());
+    }
+}
+
+TEST(Locale, toString)
+{
+    {
+        Locale l;
+
+        ASSERT_EQ(
+            "",
+            l.toString());
+    }
+    {
+        Locale l("country");
+        ASSERT_EQ(
+            "country",
+            l.toString());
+    }
+    {
+        Locale l("country", "language");
+        ASSERT_EQ(
+            "country_language",
+            l.toString());
     }
 }
 

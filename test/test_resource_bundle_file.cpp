@@ -26,7 +26,7 @@
 #include <smack_util.hpp>
 #include "test_common.hpp"
 
-using Locale = smack::localisation::Locale;
+using Locale = smack::Locale;
 using PropertyMap = smack::util::properties::PropertyMap;
 using ResourceBundleFile = smack::localisation::ResourceBundleFile;
 using std::string;
@@ -37,7 +37,7 @@ namespace properties = smack::util::properties;
 
 namespace {
     const std::filesystem::path PROJ_RESOURCE_DIR =
-        smack::test::TEST_DIR / "resources/resourceBundle/good";
+        smack::test::TEST_DIR / "resources/resourceBundle";
 }
 
 TEST(ResourceBundleFile, resourceDirExists)

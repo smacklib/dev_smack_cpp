@@ -8,9 +8,7 @@
 #include "gtest/gtest.h"
 #include <smack_resource_bundle.h>
 #include <smack_resource_bundle_file.h>
-// TODO: move smack_gen into the test directory to avoid including
-// generated code in the main source tree.
-#include "../src/cli/smack_gen.hpp"
+#include <rb_smack.h>
 
 #include "test_common.hpp"
 
@@ -18,11 +16,11 @@
 #include <string>
 #include <memory>
 
-using Locale = smack::localisation::Locale;
+using Locale = smack::Locale;
 
 namespace {
     const std::filesystem::path PROJ_RESOURCE_DIR =
-        smack::test::TEST_DIR / "resources/resourceBundle/good";
+        smack::test::TEST_DIR / "resources/resourceBundle";
 }
 
 /**
@@ -44,11 +42,11 @@ public:
         return rb_->getName();
     }
 
-    auto hasDefinitions(const smack::localisation::Locale& locale) const -> bool override {
+    auto hasDefinitions(const smack::Locale& locale) const -> bool override {
         return rb_->hasDefinitions(locale);
     }
 
-    auto listLocales() const -> std::set<smack::localisation::Locale> override {
+    auto listLocales() const -> std::set<smack::Locale> override {
         return rb_->listLocales();
     }
 
@@ -80,10 +78,33 @@ protected:
         Locale::setCurrent(Locale::makeLocaleFromName(name));
     }
     // Get the test-specific locale.
-    auto getLocale() const -> smack::localisation::Locale {
+    auto getLocale() const -> smack::Locale {
         return Locale::getCurrent();
     }
 };
+
+TEST_P(T_ResourceBundle, tl_unknown_key) {
+    setLocaleByName("");
+
+    std::string unknownKey{ "unknown.key" };
+
+    ASSERT_EQ(
+        unknownKey,
+        rb->tl(unknownKey));
+}
+
+TEST_P(T_ResourceBundle, tl_root) {
+    setLocaleByName("");
+    ASSERT_EQ(
+        "n/a",
+        rb->tl("locale"));
+    ASSERT_EQ(
+        "_trash",
+        rb->tl("smack.trash"));
+    ASSERT_EQ(
+        "_yes",
+        rb->tl("smack.yes"));
+}
 
 TEST_P(T_ResourceBundle, tl_cn) {
     setLocaleByName("cn");

@@ -80,7 +80,7 @@ public:
      * @param location The position of the resource definition files.
      * @throws std::invalid_argument if the passed location is not a directory.
      * @throws std::invalid_argument if a ResourceBundleFile-file has an invalid
-     * locale defintion like "base_xx_yy_zz".
+     * locale definition like "base_xx_yy_zz".
      */
     ResourceBundleFile(const std::string& name, std::filesystem::path location)
         : baseName_{name}
@@ -115,7 +115,7 @@ public:
      * @param text The text to translate. Looks like "Camera" or "scopes.camera".
      * @throws invalid::argument if there is a syntax error a resource definition file.
      */
-    auto translate(const smack::localisation::Locale& locale, const std::string& key) const -> std::string;
+    auto tl(const smack::Locale& locale, const std::string& key) const -> std::string;
 
     /**
      * Translates the passed \b key using the current locale that can be accessed by
@@ -126,11 +126,7 @@ public:
      * @param text The text to translate. Looks like "Camera" or "scopes.camera".
      * @throws invalid::argument if there is a syntax error a resource definition file.
      */
-    auto translate(const std::string& key) const -> std::string;
-    auto tl(const std::string& key) const -> std::string override
-    {
-        return translate(key);
-    }
+    auto tl(const std::string& key) const -> std::string;
 
     /**
      * Checks if definitions for a \b locale are available.  Only the

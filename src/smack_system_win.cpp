@@ -16,7 +16,7 @@
 
 namespace smack::system {
 
-using smack::localisation::Locale;
+using smack::Locale;
 
 /**
  * Returns the system locale by querying the Windows locale APIs.
@@ -24,7 +24,7 @@ using smack::localisation::Locale;
  *
  * GetUserDefaultLocaleName returns a BCP-47-style tag such as "de-DE" or
  * "en-US".  The language and territory are separated by '-', which we map
- * directly to smack::localisation::Locale(language, country).
+ * directly to smack::Locale(language, country).
  */
 auto getLocale() -> Locale
 {
