@@ -4,7 +4,7 @@
  *
  * Copyright © 2019-2025 Michael Binz
  */
-#include <gtest/gtest.h> // googletest header file
+#include <gtest/gtest.h>
 
 #include <filesystem>
 #include <set>
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#if 0
+#if WIN32
 // Disables warnings when windows.h is included.
 #ifndef NOMINMAX
 # define NOMINMAX
@@ -21,14 +21,14 @@
 #include <WinNls.h>
 #endif
 
-#include <smack_resource_bundle.h>
 #include <smack_properties.hpp>
+#include <smack_resource_bundle.h>
 #include <smack_util.hpp>
 #include "test_common.hpp"
 
 using Locale = smack::localisation::Locale;
 using PropertyMap = smack::util::properties::PropertyMap;
-using ResourceBundle = smack::localisation::ResourceBundle;
+using ResourceBundleFile = smack::localisation::ResourceBundleFile;
 using std::string;
 using std::vector;
 using namespace std::string_literals;
@@ -36,75 +36,46 @@ namespace strings = smack::util::strings;
 namespace properties = smack::util::properties;
 
 namespace {
-    const std::string PROJ_RESOURCE_DIR =
-        "../../test/resources/resourceBundle/good";
+    const std::filesystem::path PROJ_RESOURCE_DIR =
+        smack::test::TEST_DIR / "resources/resourceBundle/good";
 }
 
-TEST(ResourceBundleLocale, resourceDirExists)
+TEST(ResourceBundleFile, resourceDirExists)
 {
     ASSERT_TRUE(
         std::filesystem::exists(PROJ_RESOURCE_DIR));
 }
 
-TEST(ResourceBundleLocale, constructor)
+TEST(ResourceBundleFile, toString)
 {
-    ASSERT_THROW(
-        Locale l("de_"),
-        std::exception
-    );
-    ASSERT_THROW(
-        Locale l("de", "BY_"),
-        std::exception
-    );
-    {
-        Locale l("de");
+    ResourceBundleFile rb{ "smack", PROJ_RESOURCE_DIR };
 
-        ASSERT_EQ("de", l.toString());
-        ASSERT_EQ("de", l.getLanguage());
-        ASSERT_EQ("", l.getCountry());
-    }
-    {
-        Locale l("de", "DE");
-
-        ASSERT_EQ("de_DE", l.toString());
-        ASSERT_EQ("de", l.getLanguage());
-        ASSERT_EQ("DE", l.getCountry());
-    }
+    ASSERT_EQ("ResourceBundleFile{smack@" + PROJ_RESOURCE_DIR.string() + "}", rb.toString());
 }
 
-TEST(ResourceBundleLocale, toString)
+TEST(ResourceBundleFile, listLocales)
 {
-    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
-
-    ASSERT_EQ("ResourceBundle{smack@../../test/resources/resourceBundle/good}", rb.toString());
-}
-
-TEST(ResourceBundleLocale, listLocales)
-{
-    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+    ResourceBundleFile rb{ "smack", PROJ_RESOURCE_DIR };
 
     auto locales = rb.listLocales();
 
     ASSERT_EQ(7U, locales.size());
 
-    smack::sort( locales );
-
-    size_t pos{};
-
-    // Alphabetically sorted.
-    ASSERT_EQ("", locales.at(pos++));
-    ASSERT_EQ("cn", locales.at(pos++));
-    ASSERT_EQ("de", locales.at(pos++));
-    ASSERT_EQ("en", locales.at(pos++));
-    ASSERT_EQ("en_GB", locales.at(pos++));
-    ASSERT_EQ("es", locales.at(pos++));
-    ASSERT_EQ("fr", locales.at(pos++));
+    // std::set<Locale> is already sorted.
+    auto it = locales.begin();
+    ASSERT_EQ(Locale{},           *it++);
+    ASSERT_EQ(Locale{"cn"},       *it++);
+    ASSERT_EQ(Locale{"de"},       *it++);
+    ASSERT_EQ(Locale{"en"},       *it++);
+    ASSERT_EQ(Locale("en", "GB"), *it++);
+    ASSERT_EQ(Locale{"es"},       *it++);
+    ASSERT_EQ(Locale{"fr"},       *it++);
 }
 
-TEST(ResourceBundleLocale, translate_enUs)
+TEST(ResourceBundleFile, translate_enUs)
 {
     Locale en_US{ "en", "US" };
-    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+    ResourceBundleFile rb{ "smack", PROJ_RESOURCE_DIR };
 
     // We have *no* US-language.
     ASSERT_FALSE(rb.hasDefinitions(en_US));
@@ -112,12 +83,10 @@ TEST(ResourceBundleLocale, translate_enUs)
     ASSERT_EQ("Yes"s, rb.translate(en_US, "smack.yes"));
 }
 
-TEST(ResourceBundleLocale, translate_loads_of_stuff)
+auto translate_loads_of_stuff( const ResourceBundleFile& rb ) -> void
 {
     const string LNG = "ISO-639-1"s;
     const string CNT = "ISO-3166-2"s;
-
-    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
 
     {
         Locale cn{ "cn" };
@@ -208,19 +177,34 @@ TEST(ResourceBundleLocale, translate_loads_of_stuff)
             "default.test.undefined"s,
             rb.translate(Locale{ "it" }, "test.undefined"));
     }
+
 }
 
-TEST(ResourceBundleLocale, translate_loads_of_stuff_withCurrentLocale)
+TEST(ResourceBundleFile, translate_loads_of_stuff)
 {
-    ResourceBundle rb{ "smack", PROJ_RESOURCE_DIR };
+    ResourceBundleFile rb{ "smack", PROJ_RESOURCE_DIR };
 
+    translate_loads_of_stuff(rb);
+}
+TEST(ResourceBundleFile, translate_loads_of_stuff2)
+{
+    ResourceBundleFile rb{ PROJ_RESOURCE_DIR / "smack.properties" };
+
+    translate_loads_of_stuff(rb);
+}
+
+TEST(ResourceBundleFile, translate_loads_of_stuff_with_varying_locale)
+{
+    ResourceBundleFile rb{ "smack", PROJ_RESOURCE_DIR };
 
     auto originalLocale = Locale::getCurrent();
 
-    //// Check the default case when the locale is not set yet.
-    ASSERT_EQ(
-        ""s,
-        originalLocale.toString());
+    ASSERT_FALSE( Locale::getCurrent().isEmpty() );
+
+    Locale::setCurrent(Locale{});
+
+    ASSERT_TRUE(
+        Locale::getCurrent().isEmpty());
 
     // Resolve with empty locale.  Results in fallback.
     ASSERT_EQ(
@@ -245,53 +229,6 @@ TEST(ResourceBundleLocale, translate_loads_of_stuff_withCurrentLocale)
         "Wastebasket"s,
         rb.translate("smack.trash"));
 
+    // Cleanup.
     Locale::setCurrent(originalLocale);
 }
-
-TEST(ResourceBundleLocale, current_locale_setGet)
-{
-    // Check the default case when the locale is not set yet.
-    ASSERT_EQ(
-        ""s,
-        Locale::getCurrent().toString());
-
-    Locale::setCurrent(
-        Locale{ "de", "DE" });
-    ASSERT_EQ(
-        "de_DE"s,
-        Locale::getCurrent().toString());
-
-    Locale::setCurrent(
-        Locale{ "en", "US" });
-    ASSERT_EQ(
-        "en_US"s,
-        Locale::getCurrent().toString());
-
-    Locale::setCurrent(
-        Locale{ "it", "US" });
-    ASSERT_EQ(
-        "it_US"s,
-        Locale::getCurrent().toString());
-}
-
-TEST(ResourceBundleLocale, LocaleEq) {
-
-    Locale enUs1{ "en", "US" };
-    Locale enUs2{ "en", "US" };
-    ASSERT_EQ(enUs1, enUs2);
-    Locale enGb{ "en", "GB" };
-    ASSERT_FALSE(enUs1 == enGb);
-}
-
-#ifdef WIN32
-TEST(ResourceBundleLocale, Locale) {
-
-    //ASSERT_EQ( "micbinz", std::locale("").name() );
-    _locale_t loc = _get_current_locale();
-
-    WCHAR wcBuffer[LOCALE_NAME_MAX_LENGTH];
-
-    int x = GetUserDefaultLocaleName(wcBuffer, LOCALE_NAME_MAX_LENGTH);
-    int y = GetLastError();
-}
-#endif

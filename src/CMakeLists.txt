@@ -1,6 +1,5 @@
 ﻿add_subdirectory(cli)
 
-
 configure_file(smack_version.h.in smack_version.h)
 
 set(headers
@@ -10,6 +9,8 @@ set(headers
     smack_convert.hpp
     smack_properties.hpp
 	smack_resource_bundle.h
+	smack_resource_bundle_file.h
+	smack_resource_bundle_generated.h
     smack_scheduler.h
 	smack_threadpool.h
     smack_util.hpp
@@ -17,7 +18,12 @@ set(headers
 )
 
 set(implementation
-smack_locale.cpp
+    smack_convert.cpp
+    smack_locale.cpp
+    smack_properties.cpp
+    smack_resource_bundle_file.cpp
+    smack_util.cpp
+    smack_util_time_probe.cpp
 )
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
@@ -31,14 +37,6 @@ endif()
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     list(APPEND implementation smack_system_darwin.cpp)
 endif()
-
-list(APPEND implementation
-    smack_convert.cpp
-    smack_properties.cpp
-	smack_resource_bundle.cpp
-    smack_util.cpp
-    smack_util_time_probe.cpp
-)
 
 add_library(smack_cpp STATIC
     ${implementation}

@@ -21,23 +21,23 @@ using std::to_string;
 
 namespace {
     int f1(int p1) {
-        return smack::test::common::f(__func__, p1);
+        return smack::test::f(__func__, p1);
     }
 
     int f2(int p1, const char* p2) {
-        return smack::test::common::f(__func__, p1, p2);
+        return smack::test::f(__func__, p1, p2);
     }
 
     int f3(int p1, double p2, const char* p3) {
-        return smack::test::common::f(__func__, p1, p2, p3);
+        return smack::test::f(__func__, p1, p2, p3);
     }
 
     int f4(uint8_t p1) {
-        return smack::test::common::f(__func__, p1);
+        return smack::test::f(__func__, p1);
     }
 
     int fPair(std::pair<int,int> p1) {
-        return smack::test::common::f(__func__, p1.first, p1.second);
+        return smack::test::f(__func__, p1.first, p1.second);
     }
 
     int fError(string p1) {
@@ -142,7 +142,7 @@ TEST(SmackCli, CommandPairHelp) {
     std::vector<string> argv{"212:313"};
 
     // Redirect stdout.
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     cmd.callv( argv );
     // Get stout content.
@@ -159,7 +159,7 @@ TEST(SmackCli, CommandPairExec) {
         { "p1" });
 
     // Redirect stdout.
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     // Execute the command.
     cmd.call("212:313");
@@ -185,7 +185,7 @@ TEST(SmackCli, CommandPairExecCli) {
         cmd
     );
 
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     // Execute the application.
     auto exitCode =
@@ -209,13 +209,13 @@ TEST(SmackCli, CommandCall) {
 
     string expected{"f3( 313, 3.1415, micbinz )\n"};
     {
-        smack::test::common::redir out( std::cout );
+        smack::test::redir out( std::cout );
         cmd.call( "313", "3.1415", "micbinz" );
         EXPECT_EQ(expected, out.str());
     }
     {
         std::vector<string> argv{"313", "3.1415", "micbinz"};
-        smack::test::common::redir out( std::cout );
+        smack::test::redir out( std::cout );
         cmd.callv( argv );
         EXPECT_EQ(expected, out.str());
     }
@@ -232,7 +232,7 @@ TEST(SmackCli, CliErrorCommandNotFound) {
         cmd
     );
 
-    smack::test::common::redir r{ std::cerr };
+    smack::test::redir r{ std::cerr };
 
     std::vector<string> argv{
         "bogus",
@@ -262,7 +262,7 @@ TEST(SmackCli, CliErrorCommandArgMismatch) {
         cmd
     );
 
-    smack::test::common::redir r{ std::cerr };
+    smack::test::redir r{ std::cerr };
 
     std::vector<string> argv{
         cmd.name(),
@@ -293,7 +293,7 @@ TEST(SmackCli, CliErrorCommandException) {
         cmd
     );
 
-    smack::test::common::redir r{ std::cerr };
+    smack::test::redir r{ std::cerr };
 
     std::vector<string> argv{
         cmd.name(),
@@ -322,9 +322,9 @@ TEST(SmackCli, CliTestHelp) {
     );
 
     cli.set_name(
-        smack::test::common::g_gtestExecutableName);
+        smack::test::g_gtestExecutableName);
 
-    smack::test::common::redir r{ std::cerr };
+    smack::test::redir r{ std::cerr };
 
     std::vector<string> argv;
 
@@ -359,9 +359,9 @@ TEST(SmackCli, CliTestHelpExplicit) {
     );
 
     cli.set_name(
-        smack::test::common::g_gtestExecutableName);
+        smack::test::g_gtestExecutableName);
 
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     std::vector<string> argv{ "--help" };
 
@@ -395,9 +395,9 @@ TEST(SmackCli, CliTestHelpSorted) {
     );
 
     cli.set_name(
-        smack::test::common::g_gtestExecutableName);
+        smack::test::g_gtestExecutableName);
 
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     std::vector<string> argv{ "--help" };
 
@@ -433,9 +433,9 @@ TEST(SmackCli, CliTestCommandDescription) {
     );
 
     cli.set_name(
-        smack::test::common::g_gtestExecutableName);
+        smack::test::g_gtestExecutableName);
 
-    smack::test::common::redir r{ std::cout };
+    smack::test::redir r{ std::cout };
 
     std::vector<string> argv{ "--help" };
 

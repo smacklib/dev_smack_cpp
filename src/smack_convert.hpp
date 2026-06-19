@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "smack_system.h"
+
 #include <cstddef>
 #include <limits>
 #include <stdexcept>

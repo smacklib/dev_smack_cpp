@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -14,9 +15,18 @@
 
 #include "smack_util.hpp"
 
-namespace smack::test::common {
+namespace smack::test {
 
 using std::string;
+
+/**
+ * Path to the test source directory.
+ */
+const std::filesystem::path TEST_DIR{TEST_SOURCE_DIR};
+
+inline std::string makeResourcePath(const std::string& filename) {
+    return (smack::test::TEST_DIR / "resources" / filename).string();
+}
 
 /**
  * The test executable name.
@@ -121,4 +131,4 @@ public:
     }
 };
 
-} // namespace smack::test::common
+} // namespace smack::test

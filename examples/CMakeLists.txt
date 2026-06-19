@@ -1,6 +1,6 @@
 ﻿
 set(headers
-  ../test/test_common.hpp
+  examples_common.h
 )
 
 add_executable( cli_hello

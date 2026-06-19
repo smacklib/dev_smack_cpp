@@ -14,7 +14,9 @@
 #endif
 #include <windows.h>
 
-namespace smack::localisation {
+namespace smack::system {
+
+using smack::localisation::Locale;
 
 /**
  * Returns the system locale by querying the Windows locale APIs.
@@ -24,7 +26,7 @@ namespace smack::localisation {
  * "en-US".  The language and territory are separated by '-', which we map
  * directly to smack::localisation::Locale(language, country).
  */
-auto getSystemLocale() -> Locale
+auto getLocale() -> Locale
 {
     wchar_t buf[LOCALE_NAME_MAX_LENGTH]{};
 
@@ -51,4 +53,4 @@ auto getSystemLocale() -> Locale
     return Locale{ loc.substr( 0, sep ), loc.substr( sep + 1 ) };
 }
 
-} // namespace smack::localisation
+} // namespace smack::system

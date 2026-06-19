@@ -6,11 +6,15 @@
  */
 
 #include "smack_locale.h"
+#include "smack_system.h"
+#include <cxxabi.h>
 
 #include <locale>
 #include <string>
 
-namespace smack::localisation {
+namespace smack::system {
+
+using smack::localisation::Locale;
 
 /**
  * Returns the system locale by querying the POSIX locale settings.
@@ -20,7 +24,7 @@ namespace smack::localisation {
  *   language[_territory][.codeset][@modifier]
  * e.g. "de_DE.UTF-8" or "en_US.UTF-8".
  */
-auto getSystemLocale() -> Locale
+auto getLocale() -> Locale
 {
     // Query the system's default locale name.
     const std::string raw = std::locale("").name();
@@ -50,4 +54,17 @@ auto getSystemLocale() -> Locale
     return Locale{ loc.substr( 0, sep ), loc.substr( sep + 1 ) };
 }
 
-} // namespace smack::localisation
+} // namespace smack::system
+
+auto smack::system::demangle(const char* name) -> std::string
+{
+    int status{0};
+
+    // abi::__cxa_demangle returns a malloc()ed ptr.
+    // std::unique_ptr uses std::free() as a user-defined Deleter.
+    // Guru knowledge, rarely used.
+    std::unique_ptr<char, decltype(&std::free)> result{
+        abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
+
+    return (status == 0) ? result.get() : name;
+}

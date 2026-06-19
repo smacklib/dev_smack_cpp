@@ -14,7 +14,7 @@
 #  include <mach-o/dyld.h>
 #endif
 
-std::string smack::test::common::g_gtestExecutableName;
+std::string smack::test::g_gtestExecutableName;
 
 static std::filesystem::path executablePath()
 {
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
 
     if ( argc > 0 )
-        smack::test::common::g_gtestExecutableName = argv[0];
+        smack::test::g_gtestExecutableName = argv[0];
 
     std::filesystem::current_path(executablePath().parent_path());
 

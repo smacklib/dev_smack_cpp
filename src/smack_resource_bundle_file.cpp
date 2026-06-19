@@ -25,56 +25,39 @@ namespace {
             return smack::util::properties::PropertyMap{};
         }
     }
-
-#if 0
-    /*!
-     * Read a file containing key=value definitions.  Does not throw an exception.
-     * The returned map allows to access the filename by the key '::filename'. In
-     * case the file could not be found the value of this key is "FileNotFound".
-     */
-    PropertyMap loadPropertiesOptionalFile(const std::string& filename)
-    {
-        const std::string filenameMetaKey = "::filename";
-
-        try {
-            auto result = loadProperties(filename);
-            result[filenameMetaKey] = filename;
-            return result;
-        }
-        catch (const std::invalid_argument& e) {
-            if (starts_with(e.what(), "FileNotFound")) {
-                PropertyMap result;
-                result[filenameMetaKey] = "FileNotFound";
-                return result;
-            }
-
-            throw;
-        }
-    }
-#endif
 }
 
 namespace smack::localisation {
 
 using namespace std::string_literals;
 
-auto ResourceBundle::toString() const -> std::string
+auto ResourceBundleFile::toString() const -> std::string
 {
-    return "ResourceBundle{" + baseName_ + "@" + location_.string() + "}";
+    std::string localeList;
+    for (const auto& locale : listLocales()) {
+        if (!localeList.empty())
+            localeList += ", ";
+        localeList += locale.toString();
+    }
+    return "ResourceBundleFile{" + baseName_ + "@" + location_.string() + "}"
+        + "\n{ " + localeList + " }";
 }
 
-auto ResourceBundle::listLocales() const -> std::vector<std::string>
+auto ResourceBundleFile::listLocales() const -> std::set<Locale>
 {
-    std::vector<std::string> result;
+    std::set<Locale> result;
 
     for (const auto& [key, _] : availableFiles_) {
-        result.push_back(key);
+        result.insert(Locale::makeLocaleFromName(key));
     }
+
+    // Remove the root locale from the list.
+    result.erase(smack::localisation::Locale{});
 
     return result;
 }
 
-auto ResourceBundle::resolve(const std::string& locale, const std::string& key) -> std::string
+auto ResourceBundleFile::resolve(const std::string& locale, const std::string& key) const -> std::string
 {
     // translationMaps_.contains()
     if (translationMaps_.find(locale) == translationMaps_.end()) {
@@ -103,7 +86,7 @@ auto ResourceBundle::resolve(const std::string& locale, const std::string& key) 
     return keyMap.at(key);
 }
 
-auto ResourceBundle::translate(const Locale& locale, const std::string& key) -> std::string
+auto ResourceBundleFile::translate(const Locale& locale, const std::string& key) const -> std::string
 {
     // Prevent concurrent loading.
     std::lock_guard<std::mutex> lock(mutex_);
@@ -135,14 +118,14 @@ auto ResourceBundle::translate(const Locale& locale, const std::string& key) -> 
     return "default." + key;
 }
 
-auto ResourceBundle::translate(const std::string& key) -> std::string
+auto ResourceBundleFile::translate(const std::string& key) const -> std::string
 {
     auto const currentLocale = Locale::getCurrent();
 
     return translate(currentLocale, key);
 }
 
-auto ResourceBundle::detectLocales() -> void
+auto ResourceBundleFile::discoverLocales() -> void
 {
     if (! std::filesystem::exists(location_)) {
         throw std::invalid_argument{"NotFound:"s + location_.u8string()};
@@ -200,7 +183,7 @@ auto ResourceBundle::detectLocales() -> void
     }
 }
 
-auto ResourceBundle::hasDefinitions(const Locale& locale) const -> bool
+auto ResourceBundleFile::hasDefinitions(const Locale& locale) const -> bool
 {
     return availableFiles_.find(locale.toString()) != availableFiles_.end();
 }

@@ -12,7 +12,9 @@
 #include <string>
 #include <vector>
 
-namespace smack::localisation {
+namespace smack::system {
+
+using smack::localisation::Locale;
 
 /**
  * Returns the system locale by querying the Core Foundation locale APIs.
@@ -21,7 +23,7 @@ namespace smack::localisation {
  * CFLocaleCopyCurrent() returns the locale preferred by the user.
  * The locale identifier has the form "de_DE" or "en_US" (language_TERRITORY).
  */
-auto getSystemLocale() -> Locale
+auto getLocale() -> Locale
 {
     CFLocaleRef cfLocale = CFLocaleCopyCurrent();
     if ( cfLocale == nullptr )
@@ -52,4 +54,4 @@ auto getSystemLocale() -> Locale
     return Locale{ loc.substr( 0, sep ), loc.substr( sep + 1 ) };
 }
 
-} // namespace smack::localisation
+} // namespace smack::system
