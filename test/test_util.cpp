@@ -280,7 +280,7 @@ TEST( SmackUtil, sort_int )
 
 TEST(SmackUtil, OutputRedirection) {
 
-    smack::test::common::redir out{ std::cout };
+    smack::test::redir out{ std::cout };
 
     string test{ "redirected" };
 
@@ -291,7 +291,7 @@ TEST(SmackUtil, OutputRedirection) {
 
 TEST(SmackUtil, OutputRedirectionMultiline) {
 
-    smack::test::common::redir out{ std::cout };
+    smack::test::redir out{ std::cout };
 
     string eins{ "une" };
     string zwei{ "deux" };
@@ -366,18 +366,18 @@ namespace {
 
 std::string tracerName{ "KONG" };
 
-void handleNonConst1(smack::test::common::Tracer t)
+void handleNonConst1(smack::test::Tracer t)
 {
     EXPECT_EQ(1, t.copyCount());
     EXPECT_EQ(tracerName, t.name());
 }
-void handleNonConst2(smack::test::common::Tracer& t)
+void handleNonConst2(smack::test::Tracer& t)
 {
     EXPECT_EQ(0, t.copyCount());
     EXPECT_EQ(tracerName, t.name());
 }
 
-void handleConst(const smack::test::common::Tracer& t)
+void handleConst(const smack::test::Tracer& t)
 {
     EXPECT_EQ(0, t.copyCount());
     EXPECT_EQ(tracerName, t.name());
@@ -387,9 +387,9 @@ void handleConst(const smack::test::common::Tracer& t)
 
 TEST(SmackUtil, CopyTracer) {
 
-    smack::test::common::redir out{ std::cout };
+    smack::test::redir out{ std::cout };
 
-    smack::test::common::Tracer tracer(tracerName);
+    smack::test::Tracer tracer(tracerName);
     handleNonConst1(tracer);
     handleNonConst2(tracer);
     handleConst(tracer);

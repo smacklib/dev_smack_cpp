@@ -451,6 +451,17 @@ public:
             description,
             parameterHelper);
     }
+    template <auto F>
+    static auto make(
+        const char* name,
+        const std::string& description,
+        initializer_list<const char*> parameterHelper = {})
+    {
+        return PListDed<F>::make(
+            name,
+            description,
+            parameterHelper);
+    }
 
     /**
      * Create a command for a member function.

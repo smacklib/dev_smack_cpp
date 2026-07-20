@@ -1,6 +1,15 @@
 {
   "files.trimTrailingWhitespace": true,
   "editor.trimAutoWhitespace": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.generator": "Unix Makefiles",
+  "cmake.configureArgs": [
+    "-DCMAKE_C_COMPILER=/usr/bin/gcc",
+    "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DENABLE_TESTS=ON",
+    "-DENABLE_EXAMPLES=ON"
+  ],
 
     "files.associations": {
         "type_traits": "cpp",

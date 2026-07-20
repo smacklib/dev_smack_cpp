@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-#include "../test/test_common.hpp"
+#include "examples_common.h"
 
 #include <smack_cli.hpp>
 
@@ -16,35 +16,35 @@ namespace {
 using smack::cli::Commands;
 
 int f1(int p1) {
-    return smack::test::common::f(__func__, p1);
+    return smack::examples::f(__func__, p1);
 }
 
 int f2(int p1, const char* p2) {
-    return smack::test::common::f(__func__, p1, p2);
+    return smack::examples::f(__func__, p1, p2);
 }
 
 int f3(int p1, double p2, const char* p3) {
-    return smack::test::common::f(__func__, p1, p2, p3);
+    return smack::examples::f(__func__, p1, p2, p3);
 }
 
 int f4(const std::string p1) {
-    return smack::test::common::f(__func__, p1);
+    return smack::examples::f(__func__, p1);
 }
 
 int f5(const std::string& p1) {
-    return smack::test::common::f(__func__, p1);
+    return smack::examples::f(__func__, p1);
 }
 
 int f6(bool p1) {
-    return smack::test::common::f(__func__, p1);
+    return smack::examples::f(__func__, p1);
 }
 
 int f7(int p1) {
-    return smack::test::common::f(__func__, p1);
+    return smack::examples::f(__func__, p1);
 }
 
 int f7(int p1, double p2) {
-    return smack::test::common::f(__func__, p1, p2);
+    return smack::examples::f(__func__, p1, p2);
 }
 
 } // namespace anonymous
