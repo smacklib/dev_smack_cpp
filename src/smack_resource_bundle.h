@@ -36,12 +36,13 @@ virtual auto tl(const std::string& key) const -> std::string = 0;
 virtual auto getName() const -> std::string = 0;
 
 /**
- * Checks if definitions for a \b locale are available.  Only the
- * concrete locale that is passed is checked, no resolution is
- * performed.
+ * Checks if definitions for a \b locale are available.  The
+ * passed locale is checked against the actually available locales.
+ * For the root locale (empty locale) this returns false.
  *
  * @param locale The locale to check.
- * @return \b true if the locale is available, otherwise \b false.
+ * @return \b true if the locale is available, otherwise \b false.  For the root
+ * locale this returns false.
  */
 virtual auto hasDefinitions(const smack::Locale& locale) const -> bool = 0;
 
@@ -49,7 +50,8 @@ virtual auto hasDefinitions(const smack::Locale& locale) const -> bool = 0;
  * List the available locales.
  *
  * @return The list of available locales in string format, e.g.
- * "de_DE", "de".
+ * "de_DE", "de".  The list only contains the locales that are
+ * available in the resource bundle, not the root locale.
  */
 virtual auto listLocales() const -> std::set<smack::Locale> = 0;
 

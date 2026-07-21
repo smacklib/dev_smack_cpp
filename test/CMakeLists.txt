@@ -26,6 +26,7 @@ add_executable( smack_cpp_test
   test_locale.cpp
   test_properties.cpp
   test_resource_bundle.cpp
+  test_resource_bundle_file.cpp
   test_resource_bundle_generated.cpp
   test_resource_bundle_generator.cpp
   test_scheduler.cpp
@@ -43,6 +44,10 @@ target_link_libraries( smack_cpp_test
 
 target_compile_definitions(smack_cpp_test PRIVATE
   TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_compile_definitions( smack_cpp_test PRIVATE
+  SMACK_TEST_RESOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources"
 )
 
 include(GoogleTest)

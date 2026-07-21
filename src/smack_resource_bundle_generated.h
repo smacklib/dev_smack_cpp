@@ -50,18 +50,18 @@ public:
         return baseName_;
     }
 
+    /**
+     * See ResourceBundle::hasDefinitions() for details.
+     */
     auto hasDefinitions(const smack::Locale& locale) const
         -> bool override
     {
-        std::string language_country = locale.toString();
-
-        if (tableOfContents_.count(language_country) > 0) {
-            return true;
-        }
-
-        return false;
+        return listLocales().count(locale) > 0;
     }
 
+    /**
+     * See ResourceBundle::listLocales() for details.
+     */
     auto listLocales() const -> std::set<smack::Locale> override
     {
         std::set<smack::Locale> result;
@@ -77,7 +77,7 @@ public:
     }
 
     /**
-     * Sample input "smack.trash" -> Output "Trashcan" for English locale, "Papierkorb" for German locale, etc.
+     * See ResourceBundle::tl() for details.
      */
     std::string tl(const std::string& key) const override
     {
@@ -105,6 +105,9 @@ public:
         return key;
     }
 
+    /**
+     * See ResourceBundle::toString() for details.
+     */
     auto toString() const -> std::string override
     {
         std::string result = "ResourceBundle:";

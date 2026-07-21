@@ -5,9 +5,10 @@
  * Copyright © 2026 Michael Binz
  */
 
-#include "smack_locale.h"
-
 #include <string>
+
+#include "smack_locale.h"
+#include "smack_util.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
@@ -17,6 +18,18 @@
 namespace smack::system {
 
 using smack::Locale;
+
+auto demangle(const char* name) -> std::string
+{
+    if (
+        smack::starts_with(name, "class") ||
+        smack::starts_with(name, "struct") )
+    {
+        return smack::split( name, " " ).back();
+    }
+
+    return name;
+}
 
 /**
  * Returns the system locale by querying the Windows locale APIs.
@@ -54,3 +67,4 @@ auto getLocale() -> Locale
 }
 
 } // namespace smack::system
+

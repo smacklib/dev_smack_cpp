@@ -25,8 +25,8 @@ namespace {
 
 /**
  * Holds an existing instance of ResourceBundle.  This is used to wrap
- * the generated resource bundle instance in a way that allows it to be
- * used in the parameterized tests.
+ * the generated resource bundle instance so that it can be used in the
+ * parameterized tests.
  */
 class RbHolder : public smack::localisation::ResourceBundle {
     smack::localisation::ResourceBundle* rb_;
@@ -65,6 +65,18 @@ protected:
     std::unique_ptr<smack::localisation::ResourceBundle> rb;
     Locale savedLocale_;
 
+    const Locale l_en = Locale::makeLocaleFromName( "en" );
+    const Locale l_de = Locale::makeLocaleFromName( "de" );
+    const Locale l_cn = Locale::makeLocaleFromName( "cn" );
+    const Locale l_fr = Locale::makeLocaleFromName( "fr" );
+    const Locale l_es = Locale::makeLocaleFromName( "es" );
+    const Locale l_en_GB = Locale::makeLocaleFromName( "en_GB" );
+
+    const Locale l_unknown_1 = Locale::makeLocaleFromName( "ja" );
+    const Locale l_unknown_2 = Locale::makeLocaleFromName( "en_US" );
+
+    const Locale l_empty;
+
     void SetUp() override {
         // The factory function is part of the parameter, call it to create the instance.
         rb = GetParam().factory();
@@ -73,10 +85,12 @@ protected:
     void TearDown() override {
         Locale::setCurrent(savedLocale_);
     }
+
     // Set the locale for the current test.
-    void setLocaleByName(const std::string& name) {
-        Locale::setCurrent(Locale::makeLocaleFromName(name));
+    void setLocale(const Locale& locale) {
+        Locale::setCurrent(locale);
     }
+
     // Get the test-specific locale.
     auto getLocale() const -> smack::Locale {
         return Locale::getCurrent();
@@ -84,7 +98,7 @@ protected:
 };
 
 TEST_P(T_ResourceBundle, tl_unknown_key) {
-    setLocaleByName("");
+    setLocale(l_empty);
 
     std::string unknownKey{ "unknown.key" };
 
@@ -93,8 +107,21 @@ TEST_P(T_ResourceBundle, tl_unknown_key) {
         rb->tl(unknownKey));
 }
 
+TEST_P(T_ResourceBundle, tl_unknown_locale) {
+    setLocale(l_unknown_1);
+
+    std::string unknownKey{ "unknown.key" };
+
+    ASSERT_EQ(
+        "_trash",
+        rb->tl("smack.trash"));
+    ASSERT_EQ(
+        "_yes",
+        rb->tl("smack.yes"));
+}
+
 TEST_P(T_ResourceBundle, tl_root) {
-    setLocaleByName("");
+    setLocale(l_empty);
     ASSERT_EQ(
         "n/a",
         rb->tl("locale"));
@@ -107,20 +134,20 @@ TEST_P(T_ResourceBundle, tl_root) {
 }
 
 TEST_P(T_ResourceBundle, tl_cn) {
-    setLocaleByName("cn");
+    setLocale(l_cn);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl("locale"));
     ASSERT_EQ(
-        u8"\xe5\x9e\x83\xe5\x9c\xbe\xe6\xa1\xb6",
+        u8"\u5783\u573e\u6876",
         rb->tl("smack.trash"));
     ASSERT_EQ(
-        u8"\xe6\x98\xaf",
+        u8"\u662f",
         rb->tl("smack.yes"));
 }
 
 TEST_P(T_ResourceBundle, tl_de) {
-    setLocaleByName("de");
+    setLocale(l_de);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl("locale"));
@@ -133,7 +160,7 @@ TEST_P(T_ResourceBundle, tl_de) {
 }
 
 TEST_P(T_ResourceBundle, tl_en) {
-    setLocaleByName("en");
+    setLocale(l_en);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl( "locale"));
@@ -146,7 +173,7 @@ TEST_P(T_ResourceBundle, tl_en) {
 }
 
 TEST_P(T_ResourceBundle, tl_en_GB) {
-    setLocaleByName("en_GB");
+    setLocale(l_en_GB);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl("locale"));
@@ -159,12 +186,12 @@ TEST_P(T_ResourceBundle, tl_en_GB) {
 }
 
 TEST_P(T_ResourceBundle, tl_es) {
-    setLocaleByName("es");
+    setLocale(l_es);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl("locale"));
     ASSERT_EQ(
-        u8"S\xc3\xad",
+        u8"S\u00ed",
         rb->tl("smack.yes"));
     ASSERT_EQ(
         "_trash",
@@ -172,7 +199,7 @@ TEST_P(T_ResourceBundle, tl_es) {
 }
 
 TEST_P(T_ResourceBundle, tl_fr) {
-    setLocaleByName("fr");
+    setLocale(l_fr);
     ASSERT_EQ(
         getLocale().toString(),
         rb->tl("locale"));
@@ -188,17 +215,26 @@ TEST_P(T_ResourceBundle, getName) {
     ASSERT_EQ( "smack", rb->getName());
 }
 
-TEST_P(T_ResourceBundle, hasDefinitions) {
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("en")));
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("de")));
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("cn")));
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("fr")));
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("es")));
-    ASSERT_TRUE(rb->hasDefinitions(Locale::makeLocaleFromName("en_GB")));
+TEST_P(T_ResourceBundle, hasDefinitions_KnownLocalesReturnTrue)
+{
+    ASSERT_TRUE(rb->hasDefinitions(l_en));
+    ASSERT_TRUE(rb->hasDefinitions(l_de));
+    ASSERT_TRUE(rb->hasDefinitions(l_cn));
+    ASSERT_TRUE(rb->hasDefinitions(l_fr));
+    ASSERT_TRUE(rb->hasDefinitions(l_es));
+    ASSERT_TRUE(rb->hasDefinitions(l_en_GB));
+}
 
-    ASSERT_FALSE(rb->hasDefinitions(Locale::makeLocaleFromName("ja")));
-    ASSERT_FALSE(rb->hasDefinitions(Locale::makeLocaleFromName("pl")));
-    ASSERT_FALSE(rb->hasDefinitions(Locale::makeLocaleFromName("en_US")));
+TEST_P(T_ResourceBundle, hasDefinitions_DefaultLocaleReturnsTrue)
+{
+    // The root (empty) locale is not present in the bundle.
+    ASSERT_FALSE(rb->hasDefinitions(l_empty));
+}
+
+TEST_P(T_ResourceBundle, hasDefinitions_UnknownLocaleReturnsFalse)
+{
+    ASSERT_FALSE(rb->hasDefinitions(l_unknown_1));
+    ASSERT_FALSE(rb->hasDefinitions(l_unknown_2));
 }
 
 TEST_P(T_ResourceBundle, listLocales) {
@@ -207,25 +243,12 @@ TEST_P(T_ResourceBundle, listLocales) {
 
     ASSERT_EQ(6U, locales.size());
 
-    auto it = locales.begin();
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("cn"),
-        *it++);
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("de"),
-        *it++);
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("en"),
-        *it++);
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("en_GB"),
-        *it++);
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("es"),
-        *it++);
-    ASSERT_EQ(
-        Locale::makeLocaleFromName("fr"),
-        *it++);
+    ASSERT_TRUE(locales.find(l_cn) != locales.end());
+    ASSERT_TRUE(locales.find(l_de) != locales.end());
+    ASSERT_TRUE(locales.find(l_en) != locales.end());
+    ASSERT_TRUE(locales.find(l_en_GB) != locales.end());
+    ASSERT_TRUE(locales.find(l_es) != locales.end());
+    ASSERT_TRUE(locales.find(l_fr) != locales.end());
 }
 
 TEST_P(T_ResourceBundle, toString) {

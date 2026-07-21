@@ -16,6 +16,7 @@
 #include "test_common.hpp"
 #include "smack_common.h"
 #include "smack_convert.hpp"
+#include "smack_locale.h"
 #include "smack_system.h"
 
 using std::string;
@@ -387,10 +388,16 @@ TEST(SmackConvert, PairTransform) {
 
 TEST(SmackConvert, demangle)
 {
-    smack::Version version{1, 2, 3};
-
-    ASSERT_EQ( "smack::Version", smack::system::demangle( typeid(version).name() ) );
-    ASSERT_EQ( "smack::Version", smack::system::demangle<smack::Version>() );
-    ASSERT_EQ( "int", smack::system::demangle<decltype(1)>() );
-    ASSERT_EQ( "unsigned int", smack::system::demangle<decltype(1u)>() );
+    ASSERT_EQ(
+        "smack::Locale",
+        smack::system::demangle<decltype(smack::Locale{})>() );
+    ASSERT_EQ(
+        "smack::Version",
+        smack::system::demangle<smack::Version>() );
+    ASSERT_EQ(
+        "int",
+        smack::system::demangle<decltype(1)>() );
+    ASSERT_EQ(
+        "unsigned int",
+        smack::system::demangle<decltype(1u)>() );
 }

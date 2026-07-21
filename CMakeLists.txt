@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default.")
 set(CMAKE_INSTALL_PREFIX "./dist" CACHE STRING "Default.")
 
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 #
 # Common for all architectures..
 #

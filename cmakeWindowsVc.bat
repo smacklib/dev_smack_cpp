@@ -9,6 +9,6 @@ md %buildDir%
 cd %buildDir%
 
 rem Generation of tests and examples is enabled here.
-"%programfiles%"\CMake\bin\cmake.exe -DENABLE_TESTS=ON -DENABLE_EXAMPLES=ON -G "Visual Studio 17 2022" ..
+"%programfiles%"\CMake\bin\cmake.exe -DENABLE_TESTS=ON -DENABLE_EXAMPLES=ON -G "Visual Studio 18 2026" ..
 
 cd ..
