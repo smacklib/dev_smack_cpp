@@ -31,18 +31,6 @@ namespace smack::localisation {
 
 using namespace std::string_literals;
 
-auto ResourceBundleFile::toString() const -> std::string
-{
-    std::string localeList;
-    for (const auto& locale : listLocales()) {
-        if (!localeList.empty())
-            localeList += ", ";
-        localeList += locale.toString();
-    }
-    return "ResourceBundleFile{" + baseName_ + "@" + location_.string() + "}"
-        + "\n{ " + localeList + " }";
-}
-
 auto ResourceBundleFile::listLocales() const -> std::set<smack::Locale>
 {
     std::set<smack::Locale> result;
@@ -169,7 +157,7 @@ auto ResourceBundleFile::discoverLocales() -> void
             base = base.substr(1);
         }
 
-        // Validate the remaining locale definitions.  Expected DE, DE_de.
+        // Validate the remaining locale definitions.  Expected de, de_DE.
         auto locales = smack::split(base, "_");
         if (locales.size() == 1) {
             ;
@@ -185,7 +173,20 @@ auto ResourceBundleFile::discoverLocales() -> void
 
 auto ResourceBundleFile::hasDefinitions(const smack::Locale& locale) const -> bool
 {
-    return availableFiles_.find(locale.toString()) != availableFiles_.end();
+    return listLocales().count(locale) > 0;
 }
+
+auto ResourceBundleFile::toString() const -> std::string
+{
+    std::string localeList;
+    for (const auto& locale : listLocales()) {
+        if (!localeList.empty())
+            localeList += ", ";
+        localeList += locale.toString();
+    }
+    return "ResourceBundleFile{" + baseName_ + "@" + location_.string() + "}"
+        + "\n{ " + localeList + " }";
+}
+
 
 } // namespace smack::localisation

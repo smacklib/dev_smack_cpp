@@ -25,7 +25,6 @@ namespace smack::localisation {
  * $pos/name_de.properties
  * $pos/name_en.properties
  * $pos/name_en_GB.properties
- * $pos/name.properties
  */
 class ResourceBundleFile : public ResourceBundle {
 
@@ -118,43 +117,27 @@ public:
     auto tl(const smack::Locale& locale, const std::string& key) const -> std::string;
 
     /**
-     * Translates the passed \b key using the current locale that can be accessed by
-     * Locale::getCurrent().  If the passed key is not
-     * found in the properties, then it is returned with prefix 'default.'.
-     *
-     * @param locale The locale to be used for the translation, looks like "en_US", "en".
-     * @param text The text to translate. Looks like "Camera" or "scopes.camera".
-     * @throws invalid::argument if there is a syntax error a resource definition file.
+     * See ResourceBundle::tl() for details.
      */
-    auto tl(const std::string& key) const -> std::string;
+    auto tl(const std::string& key) const -> std::string override;
 
     /**
-     * Checks if definitions for a \b locale are available.  Only the
-     * concrete local that is passed is checked, no resolution is
-     * performed.
-     *
-     * @param locale The locale to check.
-     * @return \b true if the locale is available, otherwise \b false.
+     * See ResourceBundle::hasDefinitions() for details.
      */
     auto hasDefinitions(const Locale& locale) const -> bool override;
 
     /**
-     * List the available locales.
-     *
-     * @return The list of available locales in string format, e.g.
-     * "de_DE", "de", "".  The latter represents the root localisation
-     * file.
+     * See ResourceBundle::listLocales() for details.
      */
     auto listLocales() const -> std::set<Locale> override;
 
     /**
-     * Debug support.
+     * See ResourceBundle::toString() for details.
      */
     auto toString() const -> std::string override;
 
     /**
-     * Returns the base name of the resource bundle.
-     * This is the name of the resource bundle without any suffixes.
+     * See ResourceBundle::getName() for details.
      */
     auto getName() const -> std::string override
     {

@@ -12,6 +12,8 @@
 
 #if defined(__APPLE__)
 #  include <mach-o/dyld.h>
+#elif defined(_WIN32)
+#  include <windows.h>
 #endif
 
 std::string smack::test::g_gtestExecutableName;
@@ -24,6 +26,10 @@ static std::filesystem::path executablePath()
     std::string buf(size, '\0');
     _NSGetExecutablePath(buf.data(), &size);
     return std::filesystem::canonical(buf);
+#elif defined(_WIN32)
+    wchar_t buf[MAX_PATH];
+    DWORD len = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+    return std::filesystem::path(buf, buf + len);
 #else
     return std::filesystem::read_symlink("/proc/self/exe");
 #endif
