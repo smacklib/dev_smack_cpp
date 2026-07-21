@@ -12,7 +12,7 @@ add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 #
-# Common for all architectures..
+# Common for all architectures ...
 #
 set(SMACK_CXX_STANDARD 17)
 
@@ -22,6 +22,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(smack_cpp VERSION ${SMACK_CXX_STANDARD}.1.0 LANGUAGES CXX)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(SmackResourceBundle)
 
 option(ENABLE_TESTS "Enable testing" OFF)
 option(ENABLE_EXAMPLES "Enable building examples" OFF)

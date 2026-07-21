@@ -8,3 +8,11 @@ Set-Location $buildDir
 
 # Generation of tests and examples is enabled here.
 cmake -DENABLE_TESTS=ON -DENABLE_EXAMPLES=ON -G "Visual Studio 18 2026" ..
+
+#
+# Sample commands (this is a multi-configuration generator, so you can build Debug or Release):
+# * Build: cmake --build . --config Debug/Release
+# * Test: ctest -C Debug/Release
+# * Clean: cmake --build . --config Debug/Release --target clean
+# * Run: cmake --build . --config Debug/Release --target run
+#
