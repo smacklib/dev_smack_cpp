@@ -12,29 +12,11 @@
 #include <string>
 #include <vector>
 
-#if WIN32
-// Disables warnings when windows.h is included.
-#ifndef NOMINMAX
-# define NOMINMAX
-#endif
-#include <Windows.h>
-#include <WinNls.h>
-#endif
-
-#include <smack_properties.hpp>
-#include <smack_resource_bundle.h>
 #include <smack_util.hpp>
 #include <smack_system.h>
 #include "test_common.hpp"
 
 using Locale = smack::Locale;
-using PropertyMap = smack::util::properties::PropertyMap;
-using ResourceBundleFile = smack::localisation::ResourceBundleFile;
-using std::string;
-using std::vector;
-using namespace std::string_literals;
-namespace strings = smack::util::strings;
-namespace properties = smack::util::properties;
 
 TEST(Locale, constructor)
 {
@@ -97,19 +79,19 @@ TEST(Locale, current_locale_setGet)
     Locale::setCurrent(
         Locale{ "de", "DE" });
     ASSERT_EQ(
-        "de_DE"s,
+        "de_DE",
         Locale::getCurrent().toString());
 
     Locale::setCurrent(
         Locale{ "en", "US" });
     ASSERT_EQ(
-        "en_US"s,
+        "en_US",
         Locale::getCurrent().toString());
 
     Locale::setCurrent(
         Locale{ "it", "US" });
     ASSERT_EQ(
-        "it_US"s,
+        "it_US",
         Locale::getCurrent().toString());
 
     Locale::setCurrent(
@@ -181,16 +163,3 @@ TEST(Locale, CurrentLocaleEqualsSystemLocale) {
         Locale::getCurrent(),
         smack::system::getLocale() );
 }
-
-#ifdef WIN32
-TEST(Locale, Locale) {
-
-    //ASSERT_EQ( "micbinz", std::locale("").name() );
-    _locale_t loc = _get_current_locale();
-
-    WCHAR wcBuffer[LOCALE_NAME_MAX_LENGTH];
-
-    int x = GetUserDefaultLocaleName(wcBuffer, LOCALE_NAME_MAX_LENGTH);
-    int y = GetLastError();
-}
-#endif

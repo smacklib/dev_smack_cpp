@@ -2,10 +2,10 @@
  *
  * Localisation support.
  *
- * Copyright © 2025 Michael Binz
+ * Copyright © 2025-2026 Michael Binz
  */
 
-#include "smack_resource_bundle.h"
+#include "smack_resource_bundle_file.h"
 
 #include "smack_util.hpp"
 

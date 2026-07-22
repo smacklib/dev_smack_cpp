@@ -650,7 +650,7 @@ public:
      * help page.
      * @param commands The commands that are to be supported.
      */
-    CliApplication(const char* description, const Cs& ... commands) :
+    CliApplication(const string& description, const Cs& ... commands) :
         commands_{ commands ... },
         description_(description)
     {
@@ -777,6 +777,15 @@ public:
         name_ = name;
     }
 };
+
+// Deduction guides: prevent a string-literal description from being deduced
+// into Cs and then failing common_type_t.
+template <typename... Cs>
+CliApplication(const char*, const Cs& ...) -> CliApplication<int, string, Cs...>;
+template <typename... Cs>
+CliApplication(const string&, const Cs& ...) -> CliApplication<int, string, Cs...>;
+template <typename... Cs>
+CliApplication(const Cs& ...) -> CliApplication<int, string, Cs...>;
 
 /**
  * Create a CliApplication instance.

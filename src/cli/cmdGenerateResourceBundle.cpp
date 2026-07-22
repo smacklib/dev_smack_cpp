@@ -36,7 +36,7 @@ using Locale = smack::Locale;
 #include <map>
 #include <string>
 
-#include <smack_resource_bundle.h>
+#include <smack_resource_bundle_generated.h>
 
 namespace smack {
 

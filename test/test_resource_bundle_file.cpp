@@ -2,13 +2,13 @@
  *
  * Tests.
  *
- * Copyright © 2019-2025 Michael Binz
+ * Copyright © 2019-2026 Michael Binz
  */
 #include <gtest/gtest.h>
 
 #include <filesystem>
 
-#include <smack_resource_bundle.h>
+#include <smack_resource_bundle_file.h>
 #include <smack_util.hpp>
 #include "test_common.hpp"
 
