@@ -21,7 +21,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(smack_cpp VERSION ${SMACK_CXX_STANDARD}.1.0 LANGUAGES CXX)
+# Define a custom platform variable to be used in source code and
+# in the remaing cmake definitions.  *Only use these in smack.*
+if(WIN32)
+    set(CURRENT_PLATFORM "SMACK_WINDOWS")
+elseif(APPLE)
+    set(CURRENT_PLATFORM "SMACK_MAC")
+elseif(UNIX) # Covers Linux, BSD, etc.
+    set(CURRENT_PLATFORM "SMACK_LINUX")
+else()
+    set(CURRENT_PLATFORM "SMACK_UNKNOWN")
+endif()
+# Pass it to the preprocessor.
+add_compile_definitions(${CURRENT_PLATFORM})
+# Tell the user which platform was detected.
+message(STATUS "CURRENT_PLATFORM=${CURRENT_PLATFORM}")
+
+project(smack_cpp VERSION ${SMACK_CXX_STANDARD}.8.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(SmackResourceBundle)

@@ -38,6 +38,7 @@ int divide(float p1, float p2) {
 int main(int argc, char**argv) {
 
     smack::cli::CliApplication cli(
+        smack::rb_cli_localized.tl("app.description"),
         Commands::make<add>(
             "add",
             smack::rb_cli_localized.tl("doc.plus"),
@@ -48,7 +49,7 @@ int main(int argc, char**argv) {
             { "p1", "p2" }),
         Commands::make<multiply>(
             "multiply",
-            smack::rb_cli_localized.tl("doc.times"),
+            smack::rb_cli_localized.tl("doc.multiply"),
             { "p1", "p2" }),
         Commands::make<divide>(
             "divide",

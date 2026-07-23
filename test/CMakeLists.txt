@@ -18,6 +18,11 @@ set(headers
   test_common.hpp
 )
 
+smack_add_resource_bundle(
+    NAME  smack
+    INPUT "${CMAKE_SOURCE_DIR}/test/resources/resourceBundle/smack.properties"
+)
+
 add_executable( smack_cpp_test
   main.cpp
   ../src/cli/cmdGenerateResourceBundle.cpp

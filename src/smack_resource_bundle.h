@@ -62,6 +62,3 @@ virtual auto toString() const -> std::string = 0;
 };
 
 } // namespace smack::localisation
-
-#include "smack_resource_bundle_generated.h"
-#include "smack_resource_bundle_file.h"

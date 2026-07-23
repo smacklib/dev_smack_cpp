@@ -1,17 +1,20 @@
-# Development setup for Linux.
-#
-buildDir=build
+# Linux versions tested
+# g++ : 13.3.0
+# cmake : 3.28.3
+
+buildDir=".\build"
 
 rm -rf $buildDir
 mkdir $buildDir
+
+# CMake presets project generation.
+cmake --preset linux-make
 cd $buildDir
 
-# Generation of tests and examples is enabled.
-cmake \
-    -G "Unix Makefiles" \
-    -DCMAKE_C_COMPILER=/usr/bin/gcc \
-    -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    -DENABLE_TESTS=ON \
-    -DENABLE_EXAMPLES=ON \
-    ..
+#
+# Sample commands:
+# * Build: cmake --build . [--config Debug/Release] [-j]
+# * Test: ctest -C Debug/Release
+# * Clean: cmake --build . --config Debug/Release --target clean
+# * Run: cmake --build . --config Debug/Release --target run
+#

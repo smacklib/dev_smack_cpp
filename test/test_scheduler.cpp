@@ -75,7 +75,7 @@ TEST(Scheduler, cyclic) {
 TEST(Scheduler, cyclicWithPool) {
     smack::ThreadPool pool;
     smack::Scheduler scheduler( [&pool]( smack::THUNK t ){
-        pool.exec( move(t) );
+        pool.exec( std::move(t) );
     } );
 
     ASSERT_TRUE(
@@ -90,7 +90,7 @@ TEST(Scheduler, cyclicWithPool) {
 TEST(Scheduler, cyclicWithPool_quickExit) {
     smack::ThreadPool pool;
     smack::Scheduler scheduler( [&pool]( smack::THUNK t ){
-        pool.exec( move(t) );
+        pool.exec( std::move(t) );
     } );
 
     ASSERT_TRUE(

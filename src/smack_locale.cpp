@@ -5,6 +5,8 @@
  * Copyright © 2025-2026 Michael Binz
  */
 
+#include <stdexcept>
+
 #include "smack_locale.h"
 #include "smack_system.h"
 

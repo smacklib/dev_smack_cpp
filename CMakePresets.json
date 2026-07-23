@@ -1,0 +1,53 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-vs",
+      "displayName": "Windows (Visual Studio 2026)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "ENABLE_TESTS": "ON",
+        "ENABLE_EXAMPLES": "ON"
+      }
+    },
+    {
+      "name": "linux-make",
+      "displayName": "Linux (Unix Makefiles)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/gcc",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "ENABLE_TESTS": "ON",
+        "ENABLE_EXAMPLES": "ON"
+      }
+    },
+    {
+      "name": "mac-make",
+      "displayName": "macOS (Unix Makefiles)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "ENABLE_TESTS": "ON",
+        "ENABLE_EXAMPLES": "ON"
+      }
+    }
+  ]
+}
