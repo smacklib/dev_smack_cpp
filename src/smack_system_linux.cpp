@@ -5,13 +5,14 @@
  * Copyright © 2026 Michael Binz
  */
 
+#include <locale>
+#include <memory>
+#include <string>
+
 #include "smack_locale.h"
 #include "smack_system.h"
 #include "smack_util.hpp"
 #include <cxxabi.h>
-
-#include <locale>
-#include <string>
 
 namespace smack::system {
 
@@ -67,6 +68,11 @@ auto demangle(const char* name) -> std::string
         abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free};
 
     return (status == 0) ? result.get() : name;
+}
+
+auto executablePath() -> std::filesystem::path
+{
+    return std::filesystem::read_symlink("/proc/self/exe");
 }
 
 } // namespace smack::system

@@ -195,7 +195,7 @@ public:
                 throw std::runtime_error("pool already stopped.");
             }
 
-            tasks_.emplace(move(task));
+            tasks_.emplace(std::move(task));
         }
 
         cv_.notify_one();

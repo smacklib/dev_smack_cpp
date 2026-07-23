@@ -192,7 +192,7 @@ public:
             }
             ptasks_.emplace(
                 std::chrono::system_clock::now() + duration,
-                move(task));
+                std::move(task));
         }
 
         cv_.notify_one();
@@ -208,7 +208,7 @@ public:
     auto schedule(THUNK task) -> bool
     {
         return scheduleIn(
-            move(task),
+            std::move(task),
             0s );
     }
 
@@ -231,7 +231,7 @@ public:
             }
             ptasks_.emplace(
                 time,
-                move(task));
+                std::move(task));
         }
 
         cv_.notify_one();

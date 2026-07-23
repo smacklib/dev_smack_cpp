@@ -7,10 +7,12 @@
 
 #pragma once
 
-#include "smack_locale.h"
 #include <string>
 #include <typeinfo>
 #include <type_traits>
+#include <filesystem>
+
+#include "smack_locale.h"
 
 namespace smack::system
 {
@@ -32,5 +34,10 @@ auto demangle() -> std::string
  * Returns the system locale by querying the underlying operating system.
  */
 auto getLocale() -> smack::Locale;
+
+/**
+ * Returns the path to the currently running executable.
+ */
+auto executablePath() -> std::filesystem::path;
 
 } // namespace smack::system

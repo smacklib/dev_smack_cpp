@@ -26,15 +26,15 @@ set(implementation
     smack_util_time_probe.cpp
 )
 
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+if(CURRENT_PLATFORM STREQUAL "SMACK_LINUX")
     list(APPEND implementation smack_system_linux.cpp)
 endif()
 
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+if(CURRENT_PLATFORM STREQUAL "SMACK_WINDOWS")
     list(APPEND implementation smack_system_win.cpp)
 endif()
 
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+if(CURRENT_PLATFORM STREQUAL "SMACK_MAC")
     list(APPEND implementation smack_system_darwin.cpp)
 endif()
 
@@ -42,6 +42,11 @@ add_library(smack_cpp STATIC
     ${implementation}
     ${headers}
 )
+
+if(CURRENT_PLATFORM STREQUAL "SMACK_MAC")
+find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+target_link_libraries(smack_cpp PRIVATE ${CORE_FOUNDATION_FRAMEWORK})
+endif()
 
 target_include_directories(smack_cpp INTERFACE .
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

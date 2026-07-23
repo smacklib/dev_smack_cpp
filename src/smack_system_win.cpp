@@ -9,6 +9,7 @@
 
 #include "smack_locale.h"
 #include "smack_util.hpp"
+#include "smack_system.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
@@ -64,6 +65,19 @@ auto getLocale() -> Locale
         return Locale{ loc };
 
     return Locale{ loc.substr( 0, sep ), loc.substr( sep + 1 ) };
+}
+
+auto executablePath() -> std::filesystem::path
+{
+    wchar_t buf[MAX_PATH];
+
+    DWORD len =
+        GetModuleFileNameW(
+            nullptr,
+            buf,
+            MAX_PATH);
+
+    return std::filesystem::path(buf, buf + len);
 }
 
 } // namespace smack::system

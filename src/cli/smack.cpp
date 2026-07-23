@@ -11,6 +11,7 @@
 #include <smack_cli.hpp>
 #include <smack_common.h>
 #include <smack_locale.h>
+#include <smack_system.h>
 
 #include "cmdGenerateResourceBundle.h"
 
@@ -24,13 +25,30 @@ int getLocale() {
     return EXIT_SUCCESS;
 }
 
+int cmdSelf() {
+    std::cout << "Executable Path: " << smack::system::executablePath() << std::endl;
+    return EXIT_SUCCESS;
+}
+
 int version() {
-    std::cout <<
-        smack::version.major <<
-        "." <<
-        smack::version.minor <<
-        "." <<
-        smack::version.patch << std::endl;
+    std::cout
+        << smack::version.major
+        << "."
+        << smack::version.minor
+        << "."
+        << smack::version.patch
+        << " "
+#if defined(SMACK_LINUX)
+        << "SMACK_LINUX"
+#elif defined(SMACK_WINDOWS)
+        << "SMACK_WINDOWS"
+#elif defined(SMACK_MAC)
+        << "SMACK_MAC"
+#else
+        << "SMACK_UNKNOWN"
+#endif
+
+    << std::endl;
 
     return EXIT_SUCCESS;
 }
@@ -50,6 +68,8 @@ int main( int argc, char** argv) {
             {"baseBundleFile", "outputDir"}),
         Commands::make<getLocale>(
             "locale"),
+        Commands::make<cmdSelf>(
+            "self"),
         Commands::make<version>(
             "version")
     );

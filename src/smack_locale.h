@@ -7,16 +7,11 @@
 
 #pragma once
 
-#include <memory>
 #include <mutex>
 #include <optional>
-#include <stdexcept>
 #include <map>
-#include <iomanip>
-#include <sstream>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
 #include "smack_util.hpp"
 

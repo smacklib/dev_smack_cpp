@@ -403,7 +403,7 @@ TEST(SmackUtil, CopyTracer) {
 
 TEST(SmackVersion, members_match_project_version) {
     EXPECT_EQ(17u, smack::version.major);
-    EXPECT_EQ(1u,  smack::version.minor);
+    EXPECT_EQ(8u,  smack::version.minor);
     EXPECT_EQ(0u,  smack::version.patch);
 }
 
@@ -477,7 +477,10 @@ TEST(SmackNS, transform_int_to_string) {
 }
 TEST(SmackNS, transform_int_to_string_function) {
     vector<int> ints = {1, 2, 3};
-    auto strings = smack::transform(ints, std::to_string );
+    // gcc and msvc do not need the static_cast, but clang does.
+    // clang strictly follows the C++17 standard (per-pair parameter deduction).
+    // gcc and msvc use 'cross-parameter deduction'.
+    auto strings = smack::transform(ints, static_cast<std::string(*)(int)>( std::to_string ) );
     ASSERT_EQ(3u, strings.size());
     EXPECT_EQ("1", strings[0]);
     EXPECT_EQ("2", strings[1]);

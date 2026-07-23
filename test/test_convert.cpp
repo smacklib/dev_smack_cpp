@@ -47,7 +47,7 @@ TEST(SmackConvert, TypenameTest) {
     EXPECT_EQ("uint", string{ get_typename<unsigned>() });
     EXPECT_EQ("int", string{ get_typename<int>() });
 
-#ifndef _WIN32
+#ifndef SMACK_WINDOWS
     // On Windows long is equivalent to int.
     EXPECT_EQ("ulong", string{ get_typename<unsigned long>() });
     EXPECT_EQ("long", string{ get_typename<long>() });
@@ -55,8 +55,8 @@ TEST(SmackConvert, TypenameTest) {
 
     EXPECT_EQ("float", string{ get_typename<float>() });
     EXPECT_EQ("double", string{ get_typename<double>() });
-#ifndef _WIN32
-    // On Windows long double is equivalent to double.
+#ifdef SMACK_LINUX
+    // On Windows and Mac long double is equivalent to double.
     EXPECT_EQ("ldouble", string{ get_typename<long double>() });
 #endif
 
