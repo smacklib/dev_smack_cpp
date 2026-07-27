@@ -39,7 +39,10 @@ message(STATUS "CURRENT_PLATFORM=${CURRENT_PLATFORM}")
 
 project(smack_cpp VERSION ${SMACK_CXX_STANDARD}.8.0 LANGUAGES CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+# Required for FetchContent. FC pulls in a project as if it was
+# added with add_subdirectory.  This means that settings like
+# CMAKE_SOURCE_DIR point to the host project's directory.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(SmackResourceBundle)
 
 option(ENABLE_TESTS "Enable testing" OFF)
